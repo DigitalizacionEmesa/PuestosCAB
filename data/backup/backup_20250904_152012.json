@@ -1,0 +1,12 @@
+{
+  "fvName": "SCH ES1",
+  "project": "ES1",
+  "productionCapture": [],
+  "timeCapture": [
+    {
+      "group": "51 Picking",
+      "center": "Indirect_ES1",
+      "activity": "Picking line"
+    }
+  ]
+}

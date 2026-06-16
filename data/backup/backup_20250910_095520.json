@@ -1,0 +1,14 @@
+{
+  "fvName": "Cutting",
+  "productionCapture": [
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 3030 6kW",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [],
+  "targetSettings": {
+    "targetEfficiency": 60
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "fvName": "AAA",
+  "productionCapture": [
+    {
+      "group": "18 PEM Serter",
+      "center": "Bending 4",
+      "activity": "Kompletace nekompletních beden"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "CON"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 20
+  }
+}

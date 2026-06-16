@@ -1,0 +1,15 @@
+{
+  "fvName": "AAAAA",
+  "productionCapture": [],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "FG001"
+    },
+    {
+      "cod_tipoproducto": "FG002"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 60
+  }
+}

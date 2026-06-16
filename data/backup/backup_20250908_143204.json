@@ -1,0 +1,22 @@
+{
+  "fvName": "ES5",
+  "project": "ES5",
+  "productionCapture": [
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Assembly_17",
+      "activity": "--"
+    },
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Assembly_18",
+      "activity": "--"
+    },
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Assembly_19",
+      "activity": "--"
+    }
+  ],
+  "timeCapture": []
+}

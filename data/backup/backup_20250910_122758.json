@@ -1,0 +1,29 @@
+{
+  "fvName": "Laser",
+  "productionCapture": [
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 5030",
+      "activity": "--"
+    },
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 5030 12kW",
+      "activity": "--"
+    },
+    {
+      "group": "15 Bending",
+      "center": "Bending 1",
+      "activity": "brackety Indie"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "FG002"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 50
+  },
+  "editMode": true
+}

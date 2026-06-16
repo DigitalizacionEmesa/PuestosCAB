@@ -1,0 +1,1996 @@
+/* ===================== Estilos Generales ===================== */
+:root {
+  --primary-blue: #3880c7;
+  --primary-dark: #3880c7;
+  --primary-light: #cce7f6;
+  --white: #fff;
+  --gray: #e1dfe1;
+  --font-main: 'Open Sans', Arial, sans-serif;
+}
+ 
+body {
+  font-family: 'Open Sans', Arial, sans-serif;
+  background: #e6f2fb;
+  margin: 0;
+  padding: 0;
+}
+ 
+.header {
+  background: #3880c7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 0px 0 12px;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  gap: 18px;
+  position: relative;
+  height: 80px;
+}
+.header .home-icon {
+  width: 44px;
+  height: 44px;
+  margin-right: 10px;
+  cursor: pointer;
+  fill: #fff;
+  background: transparent;
+  border: none;
+}
+.header .logo {
+  height: 38px;
+  margin-left: 18px;
+}
+.header .emesa-logo {
+  height: 38px;
+  margin-left: 18px;
+}
+.header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-left: 90px;
+}
+ 
+@media (max-width: 900px) {
+  .main-grid { grid-template-columns: 1fr; gap: 18px; }
+  .card { min-height: 220px; }
+  .bottom-row { flex-direction: column; gap: 18px; }
+}
+ 
+.logout-icon {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'%3E%3C/path%3E%3Cpolyline points='16 17 21 12 16 7'%3E%3C/polyline%3E%3Cline x1='21' y1='12' x2='9' y2='12'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 80%;
+}
+ 
+.logout-icon:hover {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'%3E%3C/path%3E%3Cpolyline points='16 17 21 12 16 7'%3E%3C/polyline%3E%3Cline x1='21' y1='12' x2='9' y2='12'%3E%3C/line%3E%3C/svg%3E");
+}
+
+.home-icon {
+    width: 44px;
+    height: 44px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 50%; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 2rem;
+}
+
+
+ 
+/* ===================== Estilos de Pantalla_principal_general.html ===================== */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  max-width: 900px;
+  margin: 20px auto 0 auto;
+}
+.card {
+  background: #cbe7fa;
+  border-radius: 12px;
+  border: 2px solid #b3d6ee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 12px 12px 12px;
+  min-height: 320px;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  cursor: pointer;
+}
+.card:hover {
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+  background: #b3d6ee;
+}
+.card-title {
+  color: #2980c7;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.card img {
+  max-width: 85%;
+  max-height: 240px;
+  margin-bottom: 24px;
+}
+.bottom-row {
+  max-width: 900px;
+  margin: 0 auto 0 auto;
+  margin-top: 14px;
+  display: flex;
+  gap: 16px;
+}
+.bottom-card {
+  background: #cbe7fa;
+  border-radius: 12px;
+  border: 2px solid #b3d6ee;
+  flex: 1 1 0;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2980c7;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s;
+}
+.bottom-card:hover {
+  background: #b3d6ee;
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+}
+ 
+/* ===================== Estilos de scrCambiarPassword.html ===================== */
+.cambiar-header {
+  background: #3880c7;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 0px 0 12px;
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    gap: 18px;
+    position: relative;
+    height: 80px;
+}
+.cambiar-header .home-icon {
+  width: 38px;
+  height: 38px;
+  margin-right: 18px;
+  cursor: pointer;
+  fill: #ffffff;
+  background: transparent;
+  border: none;
+}
+.cambiar-main {
+  max-width: 1100px;
+  margin: 36px auto 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 36px 32px 32px 32px;
+}
+.cambiar-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px 32px;
+  margin-bottom: 32px;
+}
+.cambiar-label {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #222;
+}
+.cambiar-input {
+  width: 80%;
+  padding: 16px;
+  font-size: 1.1rem;
+  border: 2px solid #3880c7;
+  border-radius: 7px;
+  margin-bottom: 18px;
+  background: #fafbff;
+}
+.cambiar-row {
+  display: flex;
+  flex-direction: column;
+}
+.cambiar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-top: 12px;
+  padding-right: 60px;
+}
+.cambiar-msg {
+  color: #222;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.cambiar-btn {
+  background: #bfc6d9;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  padding: 16px 32px;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: background 0.2s, opacity 0.2s;
+}
+.cambiar-btn.enabled {
+  background: #3880c7;
+  opacity: 1;
+}
+.cambiar-btn:disabled {
+  cursor: not-allowed;
+}
+@media (max-width: 900px) {
+  .cambiar-main { padding: 18px 4vw; }
+  .cambiar-grid { grid-template-columns: 1fr; gap: 18px 0; }
+}
+ 
+/* ===================== Estilos de Seleccion_Estanterias.html ===================== */
+.main-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+.main-content label {
+  font-size: 1.3rem;
+  margin-bottom: 32px;
+  margin-top: 12px;
+  color: #222;
+  display: block;
+  text-align: center;
+}
+.input-estanteria {
+  width: 500px;
+  max-width: 90vw;
+  font-size: 1.5rem;
+  padding: 16px;
+  border: 2px solid #222b7a;
+  border-radius: 7px;
+  margin-bottom: 48px;
+  margin-top: 12px;
+  text-align: center;
+  background: #fff;
+  color: #222;
+  outline: none;
+  transition: border 0.2s;
+}
+.input-estanteria:focus {
+  border: 2.5px solid #3a59b6;
+}
+.btn-ir {
+  background: #888;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 48px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  display: block;
+}
+.btn-ir:active {
+  background: #666;
+}
+
+.error-tooltip {
+    position: absolute;
+    top: 220px; 
+    background-color: #fbe9e7; 
+    color: #c85028;           
+    border: 1px solid #ffab91; 
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 14px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.error-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent #ffab91 transparent;
+}
+
+.error-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+
+@media (max-width: 600px) {
+  .input-estanteria { width: 95vw; font-size: 1.1rem; }
+  .btn-ir { font-size: 1.2rem; padding: 12px 18px; }
+}
+
+/* ===================== Estilos de Search_material.html ===================== */
+.search-bar-row {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  margin-top: 32px;
+  margin-bottom: 18px;
+}
+.search-btn {
+  background: #3a59b6;
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 38px;
+  cursor: pointer;
+  margin: 0 12px;
+  transition: background 0.2s;
+}
+.search-btn:active {
+  background: #2a3e8c;
+}
+.search-input-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.search-input {
+  width: 420px;
+  max-width: 90vw;
+  font-size: 1.3rem;
+  padding: 16px;
+  border: 2px solid #3a59b6;
+  border-radius: 7px;
+  text-align: center;
+  color: #222;
+  outline: none;
+}
+#arrow-left, #arrow-right {
+  width: 38px;
+  height: 38px;
+  fill: #3a59b6;
+  display: none;
+}
+#arrow-left {
+  margin-right: 12px;
+  transform: scaleX(1) rotate(0deg);
+}
+#arrow-right {
+  margin-left: 12px;
+  transform: rotate(180deg);
+}
+.almacenes-list {
+  max-width: 900px;
+  margin: 0 auto;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.almacen-row {
+  display: flex;
+  align-items: center;
+  border: 3px solid #191970;
+  border-radius: 16px;
+  margin-bottom: 0;
+  background: #fff;
+  overflow: hidden;
+}
+.almacen-btn {
+  background: #3a59b6;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 38px;
+  margin: 12px 0 12px 12px;
+  cursor: pointer;
+  flex: 1 1 0;
+  text-align: left;
+  transition: background 0.2s;
+}
+.almacen-btn:active {
+  background: #2a3e8c;
+}
+.resultados {
+  font-size: 1.3rem;
+  color: #191970;
+  font-weight: 500;
+  margin-left: 24px;
+  flex: 1 1 0;
+}
+@media (max-width: 900px) {
+  .almacenes-list { max-width: 98vw; }
+  .almacen-btn { font-size: 1.1rem; padding: 10px 10px; }
+  .resultados { font-size: 1rem; margin-left: 8px; }
+  .search-input { width: 95vw; font-size: 1.1rem; }
+}
+ 
+/* ===================== Estilos de Pantalla_principal_Chapa.html ===================== */
+.chapa-header {
+  background: #2196d3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 32px 0 12px;
+  min-height: 90px;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  gap: 18px;
+  box-shadow: 0 4px 16px rgba(33,150,211,0.10);
+}
+.chapa-home-icon {
+  width: 54px;
+  height: 54px;
+  margin-right: 10px;
+  cursor: pointer;
+  fill: #fff;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.chapa-home-icon:focus {
+  outline: 2px solid #fff;
+  background: #1976a7;
+}
+.chapa-header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 2px #1976a7;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #fff;
+}
+.chapa-header-logo {
+  height: 48px;
+  margin-left: 18px;
+}
+.chapa-main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+.chapa-card {
+  background: #cbe7fa;
+  border-radius: 12px;
+  border: 2px solid #b3d6ee;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 32px 16px 16px 16px;
+  min-height: 320px;
+  transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.10);
+  cursor: pointer;
+  outline: none;
+}
+.chapa-card:focus, .chapa-card:hover {
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+  background: #b3d6ee;
+  border: 2.5px solid #2196d3;
+}
+.chapa-card-title {
+  color: #2980c7;
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.chapa-card img {
+  max-width: 85%;
+  max-height: 180px;
+  margin-bottom: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.10);
+}
+.chapa-bottom-row {
+  max-width: 900px;
+  margin: 0 auto;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: row;
+  gap: 27px;
+}
+.chapa-bottom-card {
+  background: #cbe7fa;
+  border-radius: 12px;
+  border: 2px solid #b3d6ee;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.7rem;
+  font-weight: bold;
+  color: #2980c7;
+  margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+  flex: 1 1 0;
+  outline: none;
+}
+.chapa-bottom-card:focus, .chapa-bottom-card:hover {
+  background: #b3d6ee;
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+  border: 2.5px solid #2196d3;
+}
+.chapa-bottom-card-full {
+  width: 100%;
+  flex: 1 1 100%;
+  margin-right: 0;
+}
+@media (max-width: 900px) {
+  .chapa-main-grid { grid-template-columns: 1fr; gap: 18px; }
+  .chapa-card { min-height: 220px; }
+  .chapa-bottom-row { flex-direction: column; gap: 10px; }
+}
+ 
+/* ===================== Estilos de Pantalla_login.html ===================== */
+.login-container {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.13);
+  padding: 48px 48px 40px 48px;
+  width: 520px;
+  min-height: 480px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin: 0 auto;
+}
+.login-header {
+  background: #0079bb;
+  color: #fff;
+  border-radius: 12px 12px 0 0;
+  padding: 28px 0 20px 0;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+.login-form {
+  margin-top: 40px;
+}
+.login-form label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: #333;
+  font-size: 1.2rem;
+}
+.login-form input {
+  width: 80%;
+  padding: 14px;
+  margin-bottom: 28px;
+  border: 1.5px solid #0079bb;
+  border-radius: 6px;
+  font-size: 1.1rem;
+}
+.login-form button {
+  width: 100%;
+  padding: 18px;
+  background: #0079bb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+.login-form button:hover {
+  background: #005f8a;
+}
+ 
+/* Iconos de navegación para Search_material.html */
+.back-icon, .refresh-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 10px;
+  cursor: pointer;
+  fill: #fff;
+  background: transparent;
+  border: none;
+  display: flex;
+   align-items: center;
+  transition: background 0.2s, box-shadow 0.2s;
+  border-radius: 8px;
+}
+.back-icon:focus, .refresh-icon:focus {
+  outline: 2px solid #fff;
+  background: #1976a7;
+}
+ 
+/* Ajuste para el SVG dentro de los iconos */
+.back-icon svg, .refresh-icon svg {
+  display:block;
+  width: 48px;
+  height: 48px;
+}
+ 
+/* ===================== Estilos de Ubicar_Chapa.html y Coger_Chapa.html ===================== */
+.chapa-header {
+  background: #3880c7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 0px 0 12px;
+  min-height: 90px;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  gap: 18px;
+  box-shadow: 0 4px 16px rgba(33,150,211,0.10);
+}
+.chapa-header-title {
+  flex: 1;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+  text-shadow: 1px 1px 2px #1976a7;
+  margin-left: 100px;
+}
+.chapa-header-logo {
+  height: 48px;
+  margin-left: 18px;
+}
+.chapa-home-icon {
+  width: 54px;
+  height: 54px;
+  margin-right: 10px;
+  cursor: pointer;
+  fill: #fff;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.chapa-home-icon:focus {
+  outline: 2px solid #fff;
+  background: #1976a7;
+}
+ 
+/* Main content para Ubicar y Coger Chapa */
+.chapa-main-content, .main-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 80px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.chapa-main-content label, .main-content label {
+  font-size: 2rem;
+  margin-bottom: 25px;
+  margin-top: 12px;
+  color: #222;
+  display: block;
+  text-align: center;
+}
+.chapa-main-content .input-estanteria, .main-content .input-estanteria {
+  width: 500px;
+  max-width: 90vw;
+  font-size: 1.5rem;
+  padding: 16px;
+  border: 2px solid #222b7a;
+  border-radius: 7px;
+  margin-bottom: 12px;
+  margin-top: 12px;
+  text-align: center;
+  background: #fff;
+  color: #222;
+  outline: none;
+  transition: border 0.2s;
+}
+.chapa-main-content .input-estanteria:focus, .main-content .input-estanteria:focus {
+  border: 2.5px solid #2196d3;
+}
+.chapa-main-content .btn-ir, .main-content .btn-ir {
+  background: #888;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 48px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  display: block;
+}
+.chapa-main-content .btn-ir:active, .main-content .btn-ir:active {
+  background: #666;
+}
+ 
+@media (max-width: 600px) {
+  .chapa-main-content .input-estanteria, .main-content .input-estanteria { width: 95vw; font-size: 1.1rem; }
+  .chapa-main-content .btn-ir, .main-content .btn-ir { font-size: 1.2rem; padding: 12px 18px; }
+}
+ 
+/* ===================== Estilos de Buscar_Chapa.html ===================== */
+/* Reutiliza los estilos de Search_material.html, pero la lista de almacenes es de 2 filas. */
+/* Si quieres personalizar más, puedes añadir aquí reglas específicas para .almacen-row o .almacen-btn de Buscar_Chapa.html */
+ 
+/* ===================== Estilos de Configurar_Estanterias.html ===================== */
+.estconf-header {
+  background: #3880c7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+}
+.estconf-header-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.estconf-main-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 210px) 1fr; /* Tarjeta nunca se corta, tabla ocupa el resto */
+  gap: 2rem;
+  max-width: 100vw;
+  margin: 2rem 1vw 2rem 1vw; /* Añade margen lateral para evitar corte */
+  align-items: start;
+  justify-content: start;
+}
+.estconf-tarjeta-compacta {
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  max-width: 160px;
+  width: 100%;
+  padding: 12px 8px;
+  margin-top: 15px;
+  margin-left: 50px;
+  font-size: 0.97rem;
+  box-sizing: border-box;
+}
+.estconf-card-title {
+  color: var(--azul-oscuro);
+  font-weight: bold;
+  margin-bottom: 6px;
+  font-size: 1.18rem;
+  text-align: center;
+}
+.estconf-busqueda-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+.estconf-busqueda-bar label {
+  font-size: 1.13rem;
+  font-weight: 500;
+  color: #3880c7;
+  margin-bottom: 2px;
+}
+.estconf-search-bar {
+  font-size: 1.13rem;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1.5px solid var(--azul-borde);
+  outline: none;
+  flex: 1;
+  margin-bottom: 10px;
+}
+
+.estconf-btn-borrar-filtros {
+  background: var(--gris-btn);
+  color: #3880c7;
+  font-size: 1.08rem;
+  font-weight: bold;
+  border: 2px solid var(--gris-borde);
+  border-radius: 7px;
+  padding: 7px 0 7px 0;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  box-shadow: 0 2px 8px rgba(13,71,161,0.07);
+  margin: 8px 0 0 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.estconf-btn-borrar-filtros:hover {
+  background: var(--gris-btn-hover);
+  color: var(--azul-medio);
+}
+.estconf-filtros {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.estconf-filtros select,
+.estconf-filtros input[type="text"] {
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #b0c4de;
+  font-size: 1rem;
+}
+.estconf-btn {
+  background: #3880c7;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.4rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.estconf-btn:hover {
+  background: #25609a;
+}
+.estconf-table-scroll {
+  overflow-x: visible; /* Quita scroll horizontal */
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  margin-left: 0;
+}
+.estconf-table {
+  width: 100%;
+  min-width: 0;
+  max-width: 100vw;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  table-layout: auto;
+}
+.estconf-table th, .estconf-table td {
+  padding: 0.35rem 0.45rem; /* Menos espacio */
+  border-bottom: 1px solid #b0c4de;
+  text-align: left;
+  white-space: nowrap; /* Evita saltos de línea */
+}
+.estconf-table th {
+  background: #3880c7;
+  color: #fff;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.estconf-table tr:last-child td {
+  border-bottom: none;
+}
+.estconf-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.estconf-msg {
+  font-size: 1.13rem;
+  font-weight: bold;
+  padding: 10px 10px;
+  border-radius: 8px;
+  min-width: 100px;
+  display: block;
+  box-shadow: 0 2px 8px rgba(13,71,161,0.07);
+  transition: background 0.2s, color 0.2s;
+  text-align: center;
+  margin-top:5px;  
+}
+.estconf-msg.success {
+  background: #e8f5e9;
+  color: #228b22;
+}
+.estconf-msg.error {
+  background: #ffebee;
+  color: #ef0a01;
+}
+@media (max-width: 1100px) {
+  .estconf-main-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    max-width: 100vw;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .estconf-tarjeta-compacta {
+    min-width: 0;
+    max-width: 100vw;
+    width: 100%;
+    margin-top: 0;
+    padding: 10px 4vw;
+    font-size: 0.97rem;
+  }
+  .estconf-table {
+    min-width: 900px;
+    font-size: 0.95rem;
+  }
+}
+
+body, input, button, select, textarea, .main-content, .chapa-card-title, .chapa-bottom-card, .btn-ir, .info-tooltip, .error-tooltip, label {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif !important;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: #2d3a4a;
+  letter-spacing: 0.2px;
+  margin: 5px
+}
+
+label {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #3880c7;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.input-estanteria {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #2d3a4a;
+  border: 2px solid #3880c7;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  background: #fafdff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.input-estanteria:focus {
+  border-color: #1a5fa0;
+  box-shadow: 0 0 0 2px #b3d6ee;
+  outline: none;
+}
+
+.chapa-card-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #3880c7;
+  letter-spacing: 0.5px;
+}
+
+.chapa-bottom-card {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2980c7;
+  letter-spacing: 0.5px;
+}
+
+.info-tooltip, .error-tooltip {
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 12px;
+  margin: 6px 0 10px 0;
+}
+
+.btn-ir {
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 10px;
+  padding: 14px 0;
+  background: #3880c7;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-ir:focus, .btn-ir:hover {
+  background: #1a5fa0;
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+}
+
+/* ====== Estilos específicos de Busqueda_Material_Almacen.html ====== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+}
+th, td {
+  border: 1px solid #3a59b6;
+  padding: 0.5em;
+  text-align: center;
+}
+th {
+  background: #3880c7;
+  color: #fff;
+}
+tr:nth-child(even) {
+  background: #eaf0fa;
+}
+tr:nth-child(odd) {
+  background: #fff;
+}
+
+.back-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+ 
+ /* ====== Estilo para filas destacadas (empezadas) ====== */
+tr.fila-empezada {
+  background-color: #fff3cd; /* Un amarillo suave, tipo "alerta" */
+  font-weight: bold; /* Opcional: hace el texto más grueso para destacarlo */
+}
+
+/* Para asegurar que el color se aplique también a las filas pares */
+tr.fila-empezada:nth-child(even) {
+  background-color: #fff3cd;
+}
+/* Estilo para la celda del contenedor en la vista de ubicación */
+td.contenedor-cell {
+  vertical-align: middle !important; /* Centra el texto verticalmente */
+  font-weight: bold;
+  font-size: 1.2em;
+}
+/* Estilos para la celda de acciones */
+td.acciones-cell {
+  vertical-align: middle !important;
+  text-align: center;
+}
+
+/* Estilo base para los botones de acción */
+.action-button {
+  font-size: 0.9em;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  margin: 4px;
+  transition: opacity 0.2s;
+}
+
+.action-button:hover {
+  opacity: 0.85;
+}
+
+/* Botón para desubicar (tipo advertencia) */
+.btn-desubicar {
+  background-color: #f44336; /* Rojo */
+}
+
+/* Botón para modificar (tipo edición/información) */
+.btn-modificar {
+  background-color: #2196F3; /* Azul */
+}
+/* Estilos para el formulario de Modificacion_de_contenedor.html */
+.paquete-table {
+  width: 100%;
+  max-width: 900px;
+  margin: 2em auto;
+}
+
+/* Celda para la cantidad que se podrá editar */
+.cantidad-cell {
+  min-width: 150px; /* Damos espacio para el input y el botón */
+}
+
+/* Input para editar la cantidad */
+.input-cantidad-edit {
+  width: 60px;
+  padding: 6px;
+  font-size: 1em;
+  text-align: center;
+  border: 2px solid #2196F3;
+  border-radius: 4px;
+}
+
+/* Botón para guardar cambios en una fila */
+.btn-guardar {
+  background-color: #4CAF50; /* Verde */
+  margin-left: 8px;
+}
+
+/* Botón para desubicar un paquete específico */
+.btn-desubicar-paquete {
+  background-color: #ff9800; /* Naranja */
+}
+/* Botón grande para guardar todo el contenedor */
+.btn-guardar-contenedor {
+  display: block;
+  width: 90%;
+  max-width: 600px;
+  margin: 2em auto; /* Centrado y con espacio */
+  padding: 16px;
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #4CAF50; /* Verde */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.btn-guardar-contenedor:hover {
+  background-color: #45a049;
+}
+
+.btn-mover { background-color: #2196F3; } 
+.btn-cambiar { background-color: #ff9800; } 
+.btn-eliminar { background-color: #f44336; } 
+
+/* --- ESTILOS PARA LA PANTALLA DE GALERIA DE ESTANTERIAS --- */
+
+/* El nuevo contenedor principal que crea las 4 columnas */
+.gallery-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Crea exactamente 4 columnas de igual tamaño */
+    gap: 15px; /* Espacio entre columnas */
+    padding: 15px;
+    height: calc(100vh - 70px); /* Ocupa toda la altura menos la del header (ajusta 70px si es necesario) */
+}
+
+/* Cada una de las 4 columnas verticales */
+.gallery-column {
+    display: flex;
+    flex-direction: column; /* Apila las tarjetas de ubicación una debajo de otra */
+    gap: 15px; /* Espacio entre tarjetas dentro de la misma columna */
+}
+
+/* Cada tarjeta de ubicación (ej. OA1.4.1) */
+.location-cell {
+    display: flex;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden; /* Para que los bordes redondeados se apliquen bien */
+}
+
+.location-label {
+    flex-shrink: 0;
+    background-color: #e9ecef;
+    padding: 0 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-direction: column; 
+    color: #495057; /* Mantenemos el color del texto */
+    border-right: 1px solid #ccc;
+    min-width: 145px;
+    /* --- NUEVOS ESTILOS PARA HACERLO INTERACTIVO --- */
+    cursor: pointer; /* Cambia el cursor a una mano para indicar que es clicable */
+    text-decoration: none; /* Si es un link <a>, quita el subrayado */
+    transition: background-color 0.2s ease-in-out; /* Transición suave para el hover */
+}
+
+/* 3. NUEVA REGLA: Efecto al pasar el ratón por encima del label */
+.location-label:hover {
+    background-color: #d6dbdf; /* Un gris un poco más oscuro al pasar el ratón */
+}
+
+.slots-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around; /* Distribuye el espacio entre los slots */
+    padding: 8px;
+    gap: 3px; 
+}
+
+.slot {
+    padding: 8px;
+    border-radius: 3px;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    min-height: 20px; /* Asegura una altura mínima */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slot.occupied {
+    background-color: #e53935; 
+}
+
+.slot.empty {
+    background-color: #008100; 
+}
+
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.2em;
+    color: #555;
+}
+
+/* Estilo para el botón contenedor */
+.refresh-icon {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 44px; 
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Estilo para el icono <i> en sí */
+.refresh-icon i {
+    font-size: 24px; 
+    color: white;  
+    transition: transform 0.3s ease;
+}
+
+.refresh-icon:hover i {
+    transform: rotate(90deg); 
+}
+.modal-overlay {
+  display: none; 
+  position: fixed; 
+  z-index: 1000; 
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6); 
+}
+
+.modal-overlay.show {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+.modal-close {
+  color: #aaa;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.modal-close:hover,
+.modal-close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-title {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; 
+}
+
+.modal-button {
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1em;
+  font-weight: bold;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.modal-button:hover {
+  opacity: 0.9;
+}
+/* Botón para la impresión de matrícula */
+.btn-imprimir-matricula {
+  display: block;
+  width: 90%;
+  max-width: 600px;
+  margin: 1em auto; /* Lo ponemos encima del botón de guardar */
+  padding: 16px;
+  font-size: 1.5em;
+  font-weight: bold;
+  cursor: pointer;
+  background-color: #673AB7; /* Morado */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+}
+
+.btn-imprimir-matricula:hover {
+  background-color: #512DA8;
+}
+.btn-identificar-bulto {
+  background-color: #9C27B0; 
+}
+
+/* =====================  Para Ubicar_Chapa.html y Seleccion_Estanterias_Chapa.html ===================== */
+.info-tooltip, .error-tooltip {
+    padding: 5px;
+    border-radius: 5px;
+    text-align: center;
+    font-weight: bold;
+    visibility: hidden; /* Oculto por defecto */
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.info-tooltip.visible, .error-tooltip.visible {
+    visibility: visible;
+    opacity: 1;
+}
+
+.info-tooltip.success, .error-tooltip.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.info-tooltip.error, .error-tooltip.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+.btn-add {
+  background-color: #28a745; /* Un verde para 'añadir' */
+  color: white;
+  font-weight: bold;
+}
+.btn-add:hover {
+  background-color: #218838;
+}
+
+/* Estilo para la nueva fila de entrada */
+.fila-nueva {
+  background-color: #e2f0fb !important; /* Un azul claro para destacar que es nueva */
+}
+/* Estilo para el botón de 'Añadir Paquete +' */
+.btn-add {
+  background-color: #28a745; /* Verde para acciones positivas */
+  color: white;
+  font-weight: bold;
+}
+.btn-add:hover {
+  background-color: #218838;
+}
+
+/* Estilo para resaltar las nuevas filas que se añaden */
+.fila-nueva {
+  background-color: #e2f0fb !important; /* Azul claro para destacar */
+}
+
+/* Estilo para el botón de 'Quitar' en las nuevas filas */
+.btn-remover-fila {
+  background-color: #dc3545; /* Rojo para acciones de eliminar */
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn-remover-fila:hover {
+  background-color: #c82333;
+}
+
+/* Estilo para los inputs en la nueva fila */
+.input-codigo-nuevo {
+  width: 150px;
+}
+.fila-reubicada {
+  background-color: #d1ecf1 !important; /* Cian claro para indicar que es un paquete existente */
+  color: #0c5460;
+}
+.fila-reubicada input {
+    background-color: #e9ecef; /* Un poco gris para indicar que no es editable */
+    cursor: not-allowed;
+}
+/* ======================================================= */
+/* ESTILOS PARA LA TABLA DE MODIFICACIÓN DE CONTENEDOR     */
+/* ======================================================= */
+
+/* Contenedor para los botones en la celda de Acciones */
+.actions-cell {
+  display: flex;
+  justify-content: center; /* Centra los botones en la celda */
+  align-items: center;
+  gap: 8px; /* Espacio entre los botones */
+}
+
+/* Estilo base para todos los botones de acción dentro de la tabla */
+.action-button-in-table {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  background-color: #f0f0f0;
+  color: #333;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.action-button-in-table:hover {
+  border-color: #aaa;
+  background-color: #e9e9e9;
+}
+
+/* Estilo específico para el botón de 'Identificar' (más neutro) */
+.btn-identificar {
+  background-color: #007bff; /* Azul primario */
+  color: white;
+  border-color: #007bff;
+}
+.btn-identificar:hover {
+  background-color: #0056b3;
+  border-color: #0056b3;
+}
+
+/* Estilo específico para el botón de 'Desubicar' (más de advertencia) */
+.btn-desubicar {
+  background-color: #ffc107; /* Amarillo de advertencia */
+  color: #212529;
+  border-color: #ffc107;
+}
+.btn-desubicar:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+}
+
+/* Estilo para el botón 'Guardar' en una nueva fila */
+.btn-guardar-fila {
+  background-color: #28a745; /* Verde de éxito */
+  color: white;
+  border-color: #28a745;
+}
+.btn-guardar-fila:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+/* El botón de Quitar ya tenía un estilo, pero lo estandarizamos */
+.btn-remover-fila {
+  background-color: #dc3545; /* Rojo de peligro */
+  color: white;
+  border-color: #dc3545;
+}
+.btn-remover-fila:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* ===================== Cambios Generales ===================== */
+.input-estanteria {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #2d3a4a;
+  border: 2px solid #3880c7;
+  border-radius: 8px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  background: #fafdff;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+.input-estanteria:focus {
+  border-color: #1a5fa0;
+  box-shadow: 0 0 0 2px #b3d6ee;
+  outline: none;
+}
+
+label {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #3880c7;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.chapa-card-title {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #3880c7;
+}
+
+.main-content {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+}
+
+.info-tooltip, .error-tooltip {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 12px;
+  margin: 6px 0 10px 0;
+}
+
+.btn-ir {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  border-radius: 10px;
+  padding: 14px 0;
+  background: #3880c7;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.btn-ir:focus, .btn-ir:hover {
+  background: #1a5fa0;
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+}
+
+
+/* ===================== Estilos ANDON GENERAL ===================== */
+.andon-header {
+  background: #3880c7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  min-height: 80px;
+  margin-bottom: 18px;
+}
+.andon-header-title {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  margin-left: 135px;
+}
+.andon-header-logo {
+  height: 48px;
+  margin-left: 18px;
+}
+.andon-home-icon {
+  width: 44px;
+  height: 44px;
+  margin-right: 10px;
+  cursor: pointer;
+  fill: #fff;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.andon-main-panel {
+  background: #fafdff;
+  border-radius: 16px;
+  margin: 0 auto;
+  max-width: 900px;
+  display: flex;
+  gap: 24px;
+  padding: 32px 24px 32px 24px;
+  justify-content: center;
+}
+.andon-card {
+  background: #eafbe6;
+  border-radius: 12px;
+  flex: 1 1 0;
+  min-width: 280px;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(41,128,199,0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s, background 0.2s, border 0.2s;
+  border: 2px solid #b3d6ee;
+  margin: 0 0 0 0;
+}
+.andon-card:hover {
+  background: #d2f0c7;
+  box-shadow: 0 6px 24px rgba(41,128,199,0.18);
+}
+.andon-card-title {
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #3880c7;
+  text-align: center;
+  margin-bottom: 18px;
+  margin-top: 0;
+  line-height: 1.1;
+  min-height: 70px; /* Fuerza la misma altura para ambos títulos */
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.andon-card-img {
+  max-width: 250px;
+  max-height: 150px;
+  margin-top: 12px;
+}
+@media (max-width: 700px) {
+  .andon-main-panel {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 6px;
+  }
+  .andon-card {
+    min-width: 0;
+    min-height: 220px;
+  }
+  .andon-header {
+    font-size: 1.3rem;
+    padding: 0 8px;
+  }
+  .andon-header-logo {
+    height: 32px;
+  }
+  .andon-card-title {
+    font-size: 1.3rem;
+  }
+}
+
+/* ===================== Estilos Andon_Recogida.html ===================== */
+.andon-form-header {
+  background: #3880c7;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  min-height: 70px;
+  border-radius: 0 0 0 0;
+  margin-bottom: 24px;
+}
+.andon-form-title {
+  flex: 1;
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+.andon-close-icon, .andon-check-icon {
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.andon-form {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px 12px 12px 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  padding: 0px 32px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.andon-form label {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #25609a;
+  margin-bottom: 1px;
+  margin-top: 12px;
+}
+.andon-input {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  border: 2px solid #3880c7;
+  border-radius: 7px;
+  margin-bottom: 8px;
+  margin-top: 3px;
+  background: #fafbff;
+  color: #222;
+  box-sizing: border-box;
+}
+.andon-label-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 0;
+}
+.andon-required {
+  color: #e65100;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.andon-select-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  position: relative;
+}
+.andon-select-btn {
+  background: #3880c7;
+  border: none;
+  border-radius: 0 7px 7px 0;
+  height: 100%;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: -2px;
+  transition: background 0.2s;
+}
+.andon-select-btn:hover {
+  background: #25609a;
+}
+.andon-select-btn svg {
+  display: block;
+}
+@media (max-width: 900px) {
+  .andon-form {
+    padding: 18px 4vw;
+  }
+}
+
+.andon-separator {
+  border: none;
+  border-top: 3px solid #25609a;
+  margin: 0px;
+  width: 100%;
+}
+
+/* Placeholder gris claro para la opción por defecto de los selects tipo andon */
+select.andon-input option[disabled][selected] {
+  color: #b0b0b0 !important;
+}
+
+/* SOLO la opción por defecto de los selects tipo andon en gris, el resto negras */
+select.andon-input option {
+  color: #222;
+}
+
+/* Estilo para la opción por defecto de los selects tipo placeholder */
+select:invalid,
+select option[disabled][selected] {
+  color: #b0b0b0 !important;
+}
+
+.andon-input#material {
+  padding-right: 180px !important;
+}
+#material-descripcion {
+  position: absolute;
+  right: 12px;
+  pointer-events: none;
+  color: #b0b0b0;
+  font-size: 1.05rem;
+  font-style: italic;
+  white-space: nowrap;
+  background: transparent;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Quitar la flecha del input de tipo text (material) en todos los navegadores */
+.andon-input#material::-webkit-calendar-picker-indicator,
+.andon-input#material::-webkit-inner-spin-button,
+.andon-input#material::-webkit-outer-spin-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+.andon-input#material[type="text"]::-ms-clear {
+  display: none;
+}
+.andon-input#material[type="text"]::-ms-reveal {
+  display: none;
+}
+.andon-input#material[type="text"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+/* ====== ANDON MODAL (Resumen Solicitud con DIVS) ====== */
+.andon-modal-body {
+  padding: 0 18px 18px 18px;
+  font-family: 'Open Sans', Arial, sans-serif;
+  font-size: 1.15rem;
+}
+
+.modal-row {
+  display: flex;
+  width: 100%;
+}
+
+.full-width-row {
+  padding: 10px 16px;
+  text-align: center;
+  border: 1px solid #3880c7 !important;
+  border-bottom: 1px solid #3880c7 !important;
+  font-weight: bold;
+  background-color: #f3f3f3;
+}
+
+.andon-modal-body .modal-row:last-child {
+  border-bottom: 1px solid #3880c7;
+}
+
+.modal-cell {
+  flex: 1;
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: bold;
+  background-color: #e6e6e6;
+  border: 1px solid #3880c7;
+  border-left: none;
+}
+
+.andon-modal-body .modal-cell:first-child {
+  border-left: 1px solid #3880c7;
+}
+
+.andon-modal-body .modal-row:last-child .modal-cell {
+  border-bottom: none;
+}
+
+/* ===================== Estilos para Modal de Contenedor Vacío ===================== */
+.modal-contenedor-vacio-botones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.modal-contenedor-vacio-botones .modal-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 15px;
+  padding: 15px 20px;
+  text-align: left;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.modal-contenedor-vacio-botones .modal-button span {
+  font-size: 24px;
+  min-width: 30px;
+  text-align: center;
+}
+
+.modal-contenedor-vacio-botones .modal-button div {
+  flex: 1;
+}
+
+.modal-contenedor-vacio-botones .modal-button strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.modal-contenedor-vacio-botones .modal-button small {
+  display: block;
+  font-size: 13px;
+  opacity: 0.8;
+  font-weight: normal;
+}
+
+.modal-contenedor-vacio-botones .btn-obsoleto {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.modal-contenedor-vacio-botones .btn-obsoleto:hover {
+  background-color: #138496;
+}
+
+.modal-contenedor-vacio-botones .btn-mover {
+  background-color: #28a745;
+  color: white;
+}
+
+.modal-contenedor-vacio-botones .btn-mover:hover {
+  background-color: #218838;
+}
+
+.modal-contenedor-vacio-botones .btn-eliminar {
+  background-color: #dc3545;
+  color: white;
+}
+
+.modal-contenedor-vacio-botones .btn-eliminar:hover {
+  background-color: #c82333;
+}
+
+.modal-contenedor-vacio-botones .btn-nada {
+  background-color: #6c757d;
+  color: white;
+}
+
+.modal-contenedor-vacio-botones .btn-nada:hover {
+  background-color: #5a6268;
+}
+
+

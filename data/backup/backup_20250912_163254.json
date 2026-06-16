@@ -1,0 +1,17 @@
+{
+  "fvName": "ES1",
+  "project": "ES1",
+  "timeCapture": [
+    {
+      "group": "51 Picking",
+      "center": "Indirect_ES1",
+      "activity": "Picking line"
+    }
+  ],
+  "targetSettings": {
+    "salesOrderWeek": 180,
+    "shiftsWeek": 10,
+    "workersShift": 3,
+    "targetEfficiency": 70
+  }
+}

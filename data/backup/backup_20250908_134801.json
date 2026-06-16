@@ -1,0 +1,18 @@
+{
+  "fvName": "KONE MOD3",
+  "project": "NSTD",
+  "productionCapture": [
+    {
+      "group": "16 Bending cell",
+      "center": "Bending 3",
+      "activity": "Jiné - Other"
+    }
+  ],
+  "timeCapture": [
+    {
+      "group": "99 Maintenance",
+      "center": "CTM_SO_Picking_9",
+      "activity": "Broušení pedestalů - Svary"
+    }
+  ]
+}

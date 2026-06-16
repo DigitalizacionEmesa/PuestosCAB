@@ -1,0 +1,17 @@
+{
+  "fvName": "MOD3",
+  "project": "NSTD",
+  "timeCapture": [
+    {
+      "group": "15 Folding",
+      "center": "CTM_Assembly_18",
+      "activity": "Broušení pedestalů - Svary"
+    }
+  ],
+  "targetSettings": {
+    "salesOrderWeek": 3,
+    "shiftsWeek": 3,
+    "workersShift": 3,
+    "targetEfficiency": 3
+  }
+}

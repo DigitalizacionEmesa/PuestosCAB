@@ -1,0 +1,14 @@
+{
+  "fvName": "Plegado",
+  "productionCapture": [
+    {
+      "group": "15 Bending",
+      "center": "Bending 1",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [],
+  "targetSettings": {
+    "targetEfficiency": 0
+  }
+}

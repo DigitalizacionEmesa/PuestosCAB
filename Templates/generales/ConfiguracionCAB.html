@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Configuración CAB</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS de respaldo en caso de problemas de ruta -->
+  <style>
+    body { 
+      background: #e6f2fb !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    .header { 
+      background: #3880c7 !important; 
+      color: #fff !important; 
+      height: 80px !important; 
+      display: flex !important; 
+      align-items: center !important; 
+    }
+    .card { 
+      background: #cbe7fa !important; 
+      border: 2px solid #b3d6ee !important; 
+      border-radius: 12px !important; 
+      min-height: 120px !important; 
+    }
+  </style>
+
+  <style>
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important;
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important;
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+      width: auto !important;
+      transform: none !important;
+    }
+    
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    /* Estilos específicos de la pantalla de configuración */
+    .config-title {
+      text-align: center;
+      font-size: 2.5rem;
+      color: #3880c7;
+      margin: 40px 0;
+      font-weight: 600;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .config-card {
+      background: #cbe7fa;
+      border: 2px solid #b3d6ee;
+      border-radius: 16px;
+      padding: 40px 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .config-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 8px 24px rgba(56, 128, 199, 0.3);
+      border-color: #3880c7;
+    }
+
+    .config-card-icon {
+      font-size: 100px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+    }
+
+    .config-card-title {
+      font-size: 1.8rem;
+      color: #2c6aa6;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .config-card-description {
+      font-size: 1rem;
+      color: #555;
+      line-height: 1.5;
+    }
+
+
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      text-align: center !important;
+    }
+
+    /* Ajustar el contenedor principal para dejar espacio al header */
+    .main-container {
+      padding-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header">
+    <button class="back-icon" onclick="volverAtras()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="help-icon" onclick="goToManual()" aria-label="Manual de Usuario">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+    </button>
+    <div class="header-title">CONFIGURACIÓN CAB</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de usuario -->
+  <div id="userSessionWidget" class="user-session-widget">
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
+  </div>
+
+  <!-- Contenedor principal -->    
+    <div class="config-grid", style="padding: 2rem;">
+      <!-- Card 1: Configurar Puestos -->
+      <div class="config-card" onclick="goToCrearPuesto()">
+        <div class="config-card-title">Configurar Puestos</div>
+        <div class="config-card-icon">🏭</div>
+      </div>
+
+      <!-- Card 2: Administrar Faltantes -->
+      <div class="config-card" onclick="goToAdminFaltantes()">
+        <div class="config-card-title">Administrar Faltantes</div>
+        <div class="config-card-icon">📋</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Función para volver a la página anterior
+    function volverAtras() {
+      if (document.referrer && document.referrer.includes(window.location.hostname)) {
+        window.history.back();
+      } else {
+        window.location.href = '/templates/generales/PuestosCAB.html';
+      }
+    }
+
+    // Función para ir a Crear Puesto
+    function goToCrearPuesto() {
+      console.log('🏭 Navegando a Crear Puesto...');
+      window.location.href = '/templates/generales/Crearpuesto.html';
+    }
+
+    // Función para ir a Administrar Faltantes
+    function goToAdminFaltantes() {
+      console.log('📋 Navegando a Administrar Motivos Faltante...');
+      window.location.href = '/templates/generales/AdminMotivosFaltante.html';
+    }
+
+    // Función para ir al Manual de Usuario
+    function goToManual() {
+      console.log('📚 Navegando al Manual de Usuario...');
+      window.location.href = '/templates/generales/Manual.html';
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('⚙️ Página de Configuración CAB cargada');
+    });
+  </script>
+  
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>

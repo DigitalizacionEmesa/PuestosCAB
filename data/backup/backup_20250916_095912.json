@@ -1,0 +1,210 @@
+{
+  "fvName": "Bending 1",
+  "productionCapture": [
+    {
+      "group": "15 Folding",
+      "center": "Bending 1",
+      "activity": "--"
+    },
+    {
+      "group": "15 Folding",
+      "center": "Bending 2",
+      "activity": "--"
+    },
+    {
+      "group": "15 Folding",
+      "center": "Bending 3",
+      "activity": "--"
+    },
+    {
+      "group": "15 Folding",
+      "center": "Bending 4",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "--"
+    },
+    {
+      "cod_tipoproducto": "AST"
+    },
+    {
+      "cod_tipoproducto": "CON"
+    },
+    {
+      "cod_tipoproducto": "FG001"
+    },
+    {
+      "cod_tipoproducto": "FG002"
+    },
+    {
+      "cod_tipoproducto": "FG003"
+    },
+    {
+      "cod_tipoproducto": "MP00"
+    },
+    {
+      "cod_tipoproducto": "MP01"
+    },
+    {
+      "cod_tipoproducto": "MP03"
+    },
+    {
+      "cod_tipoproducto": "MP04"
+    },
+    {
+      "cod_tipoproducto": "MP05"
+    },
+    {
+      "cod_tipoproducto": "MP06"
+    },
+    {
+      "cod_tipoproducto": "MP07"
+    },
+    {
+      "cod_tipoproducto": "MP08"
+    },
+    {
+      "cod_tipoproducto": "MP09"
+    },
+    {
+      "cod_tipoproducto": "MP10"
+    },
+    {
+      "cod_tipoproducto": "MP11"
+    },
+    {
+      "cod_tipoproducto": "MP12"
+    },
+    {
+      "cod_tipoproducto": "MP13"
+    },
+    {
+      "cod_tipoproducto": "MP14"
+    },
+    {
+      "cod_tipoproducto": "MP15"
+    },
+    {
+      "cod_tipoproducto": "MP18"
+    },
+    {
+      "cod_tipoproducto": "MP19"
+    },
+    {
+      "cod_tipoproducto": "MP20"
+    },
+    {
+      "cod_tipoproducto": "MP21"
+    },
+    {
+      "cod_tipoproducto": "MP22"
+    },
+    {
+      "cod_tipoproducto": "MP23"
+    },
+    {
+      "cod_tipoproducto": "MP24"
+    },
+    {
+      "cod_tipoproducto": "MP25"
+    },
+    {
+      "cod_tipoproducto": "MP26"
+    },
+    {
+      "cod_tipoproducto": "MP27"
+    },
+    {
+      "cod_tipoproducto": "MP28"
+    },
+    {
+      "cod_tipoproducto": "MP29"
+    },
+    {
+      "cod_tipoproducto": "MP30"
+    },
+    {
+      "cod_tipoproducto": "MP31"
+    },
+    {
+      "cod_tipoproducto": "MP32"
+    },
+    {
+      "cod_tipoproducto": "MP33"
+    },
+    {
+      "cod_tipoproducto": "MP34"
+    },
+    {
+      "cod_tipoproducto": "MP35"
+    },
+    {
+      "cod_tipoproducto": "MP36"
+    },
+    {
+      "cod_tipoproducto": "MP37"
+    },
+    {
+      "cod_tipoproducto": "MP38"
+    },
+    {
+      "cod_tipoproducto": "MP39"
+    },
+    {
+      "cod_tipoproducto": "MP40"
+    },
+    {
+      "cod_tipoproducto": "MP41"
+    },
+    {
+      "cod_tipoproducto": "MP42"
+    },
+    {
+      "cod_tipoproducto": "SEA"
+    },
+    {
+      "cod_tipoproducto": "SEF"
+    },
+    {
+      "cod_tipoproducto": "SEFSEF"
+    },
+    {
+      "cod_tipoproducto": "SEK"
+    },
+    {
+      "cod_tipoproducto": "SEM"
+    },
+    {
+      "cod_tipoproducto": "SEN"
+    },
+    {
+      "cod_tipoproducto": "SEP"
+    },
+    {
+      "cod_tipoproducto": "SEY"
+    },
+    {
+      "cod_tipoproducto": "SEZ"
+    },
+    {
+      "cod_tipoproducto": "SF001"
+    },
+    {
+      "cod_tipoproducto": "SF002"
+    },
+    {
+      "cod_tipoproducto": "SF003"
+    },
+    {
+      "cod_tipoproducto": "XPS"
+    },
+    {
+      "cod_tipoproducto": "XPV"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 90
+  }
+}

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema CAB - EMESA</title>
+  <link rel="stylesheet" href="/assets/css/global-styles.css">
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <style>
+    /* ========================================= */
+    /* HEADER CON LOGO IZQUIERDA, TÍTULO CENTRO, WIDGET DERECHA */
+    /* ========================================= */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      position: relative;
+    }
+ 
+    .emesa-logo {
+      height: 45px;
+      width: auto;
+      margin-right: 20px;
+      flex-shrink: 0; /* No se reduce */
+    }
+ 
+    .header-title {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%); /* Centrado perfecto */
+      white-space: nowrap;
+    }
+ 
+    /* ========================================= */
+    /* WIDGET DE USUARIO - POSICIÓN FIJA DERECHA */
+    /* ========================================= */
+    #userSessionWidget {
+      position: fixed !important;
+      top: 15px !important;
+      right: 15px !important;
+      z-index: 10001 !important;
+      max-width: 250px !important;
+    }
+ 
+    /* ========================================= */
+    /* RESPONSIVE DESIGN */
+    /* ========================================= */
+    @media (max-width: 1024px) {
+      .header {
+        padding: 8px 15px;
+      }
+     
+      .emesa-logo {
+        height: 38px;
+        margin-right: 15px;
+      }
+ 
+      #userSessionWidget {
+        top: 12px !important;
+        right: 12px !important;
+        transform: scale(0.95) !important;
+      }
+    }
+ 
+    @media (max-width: 768px) {
+      .header {
+        padding: 8px 10px;
+      }
+     
+      .header-title {
+        position: static;
+        transform: none;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        flex: 1;
+      }
+     
+      .emesa-logo {
+        height: 32px;
+        margin-right: 10px;
+      }
+ 
+      #userSessionWidget {
+        top: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+      }
+    }
+ 
+    @media (max-width: 480px) {
+      .emesa-logo {
+        height: 28px;
+      }
+ 
+      #userSessionWidget {
+        top: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+      }
+    }
+ 
+    /* ========================================= */
+    /* CONTENEDOR DE FILTROS CON BORDES Y CENTRADO */
+    /* ========================================= */
+    .dashboard-filter-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 15px 20px;
+      border: 2px solid #4a90e2;
+      border-radius: 8px;
+      background-color: #f8f9fa;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+ 
+    .dashboard-filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+ 
+    .dashboard-filter-bar__group {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+ 
+    .dashboard-filter-bar__group label {
+      position: absolute;
+      top: -8px;
+      left: 12px;
+      background-color: #f8f9fa;
+      padding: 0 4px;
+      font-weight: 600;
+      color: #4a90e2;
+      font-size: 12px;
+      z-index: 1;
+    }
+ 
+    .dashboard-filter-bar__group input {
+      padding: 12px 16px;
+      border: 1px solid #4a90e2;
+      border-radius: 4px;
+      font-size: 14px;
+      width: 160px;
+      background-color: white;
+    }
+ 
+    .dashboard-filter-bar__button {
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+ 
+    .dashboard-filter-bar__button:hover {
+      background-color: #357abd;
+    }
+ 
+    .dashboard-filter-bar__button.secondary {
+      background-color: #28a745;
+      margin-left: 10px;
+    }
+ 
+    .dashboard-filter-bar__button.secondary:hover {
+      background-color: #218838;
+    }
+ 
+    /* ========================================= */
+    /* RESPONSIVE PARA FILTROS */
+    /* ========================================= */
+    @media (max-width: 768px) {
+      .dashboard-filter-container {
+        margin: 15px;
+        padding: 15px;
+      }
+ 
+      .dashboard-filter-bar {
+        flex-direction: column;
+        gap: 15px;
+      }
+ 
+      .dashboard-filter-bar__group {
+        width: 100%;
+      }
+ 
+      .dashboard-filter-bar__group input {
+        width: 100%;
+        min-width: auto;
+      }
+ 
+      .dashboard-filter-bar__button {
+        width: 100%;
+        padding: 12px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="Logo EMESA">
+    <span class="header-title">EFICIENCIAS EMESA </span>
+    
+    <!-- Widget de usuario -->
+    <div id="userSessionWidget" class="user-session-widget">
+      <!-- El widget se rellenará dinámicamente por loginModal.js -->
+    </div>
+  </div>
+ 
+  <div class="dashboard-filter-container">
+    <div class="dashboard-filter-bar">
+      <div class="dashboard-filter-bar__group">
+        <label for="filterStartDate">Desde</label>
+        <input type="date" id="filterStartDate" name="fecha_inicio">
+      </div>
+      <div class="dashboard-filter-bar__group">
+        <label for="filterEndDate">Hasta</label>
+        <input type="date" id="filterEndDate" name="fecha_fin">
+      </div>
+      <div class="dashboard-filter-bar__buttons">
+        <button id="applyFiltersBtn" class="dashboard-filter-bar__button" type="button">Actualizar</button>
+        <button class="dashboard-filter-bar__button secondary" type="button" onclick="window.location.href='/Pantallas/Pantallas_Configuracion/Secciones.html'">Gestionar secciones</button>
+      </div>
+    </div>
+  </div>
+ 
+  <main class="dashboard-wrapper">
+   
+ 
+    <div id="sectionsLoader" class="dashboard-loader">Cargando secciones...</div>
+    <div id="sectionsError" class="dashboard-error state-hidden"></div>
+    <div id="sectionsEmpty" class="dashboard-empty state-hidden">
+      <p>No hay secciones configuradas todavia.</p>
+      <button type="button" class="dashboard-config-btn" onclick="window.location.href='/Pantallas/Pantallas_Configuracion/Secciones.html'">Crear seccion</button>
+    </div>
+ 
+    <div id="sectionsGrid" class="sections-grid"></div>
+  </main>
+  <script src="/assets/fechas-globales.js"></script>
+  <script src="/assets/css/loginModal.js"></script>
+  <script src="/assets/dashboard.js"></script>
+  <script>
+    // Inicialización manual del widget de usuario
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.LoginModal) {
+        LoginModal.createUserWidget();
+        LoginModal.startAutoCheck();
+      } else {
+        console.error('LoginModal no está disponible. Verifica la ruta del script.');
+      }
+    });
+  </script>
+</body>
+</html>
+ 
+ 

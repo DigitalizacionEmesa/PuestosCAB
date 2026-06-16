@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Indicadores CAB</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS de respaldo en caso de problemas de ruta -->
+  <style>
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      text-align: center !important;
+    }
+    
+    body { 
+      background: #e6f2fb !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    .header { 
+      background: #3880c7 !important; 
+      color: #fff !important; 
+      height: 80px !important; 
+      display: flex !important; 
+      align-items: center !important; 
+    }
+  </style>
+
+  <!-- Estilos específicos para indicadores -->
+  <style>
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    :root{
+      --bg:#e6f2fb;               /* Mismo fondo que las otras pantallas */
+      --card:#ffffff;             /* Tarjetas blancas */
+      --card-secondary:#f8fbff;   /* Tarjetas secundarias azul muy claro */
+      --muted:#666666;            /* Texto muted más suave */
+      --ok:#1fa971;               /* Verde para OK - mantener */
+      --warn:#e6a700;             /* Amarillo para warning - mantener */
+      --bad:#e05252;              /* Rojo para error - mantener */
+      --accent:#3880c7;           /* Azul principal de la app */
+      --text:#2c6aa6;             /* Texto principal azul */
+      --border:#b3d6ee;           /* Bordes azules claros */
+      --chip:#d6e8f5;             /* Chips azul claro */
+    }
+
+    /* Contenedor principal para indicadores */
+    .indicadores-container {
+      background: var(--bg);
+      color: var(--text);
+      margin: 20px auto;
+      max-width: 1200px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border: 2px solid var(--border);
+    }
+
+    .indicadores-header {
+      background: var(--accent);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .indicadores-header h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      color: #fff;
+    }
+
+    .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: #ffffff33;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid #ffffff22;
+    }
+
+    .indicadores-main {
+      padding: 20px;
+      background: var(--bg);
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--card);
+      border-radius: 12px;
+      border: 2px solid var(--border);
+    }
+
+    .toolbar label {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .toolbar select, .toolbar input {
+      background: var(--card);
+      color: var(--text);
+      border: 2px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .toolbar select:focus, .toolbar input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.1);
+    }
+
+    .cards {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    @media (min-width: 700px) {
+      .cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1000px) {
+      .cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .card-indicador {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-indicador:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    }
+
+    .card-indicador h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .kpi {
+      background: var(--card-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .kpi label {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi .val {
+      font-weight: 700;
+      font-size: 14px;
+      margin-top: 4px;
+      color: var(--text);
+    }
+
+    .bar {
+      height: 10px;
+      background: var(--card-secondary);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      transition: width 0.6s ease;
+    }
+
+    .pct {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .pct.ok {
+      color: var(--ok);
+    }
+
+    .pct.warn {
+      color: var(--warn);
+    }
+
+    .pct.bad {
+      color: var(--bad);
+    }
+
+    .summary {
+      margin-top: 20px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
+    @media(min-width: 800px) {
+      .summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .stat {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .stat:hover {
+      transform: translateY(-1px);
+    }
+
+    .stat label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .stat .val {
+      font-size: 24px;
+      font-weight: 800;
+      margin-top: 8px;
+      color: var(--text);
+    }
+
+    .footer-indicadores {
+      margin-top: 20px;
+      padding: 12px;
+      background: var(--card-secondary);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* Estilo especial para indicar que es control de jefe */
+    .control-header {
+      background: linear-gradient(135deg, #ff8c33, #ffb366) !important;
+      color: #fff !important;
+    }
+    
+    /* Estilos para pestañas */
+    .tabs-container {
+      margin-bottom: 20px;
+    }
+    
+    .tabs-nav {
+      display: flex;
+      background: var(--card);
+      border-radius: 12px 12px 0 0;
+      border: 2px solid var(--border);
+      border-bottom: none;
+      overflow: hidden;
+    }
+    
+    .tab-button {
+      flex: 1;
+      padding: 14px 20px;
+      background: var(--card-secondary);
+      border: none;
+      color: var(--text);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    
+    .tab-button:hover {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .tab-button.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: inset 0 -3px 0 rgba(255,255,255,0.3);
+    }
+    
+    .tab-content {
+      display: none;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: 0 0 12px 12px;
+      padding: 20px;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Estilos para filtros compactos */
+    .toolbar.compact {
+      display: none;
+    }
+    
+    .compact-filters {
+      display: none;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 15px;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      align-items: center;
+      gap: 20px;
+      justify-content: space-between;
+    }
+    
+    .compact-filters.show {
+      display: flex;
+    }
+    
+    .filter-values {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    
+    .filter-value {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .filter-value .icon {
+      font-size: 14px;
+    }
+    
+    .edit-filters-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .edit-filters-btn:hover {
+      background: var(--accent-dark, #e05252);
+      transform: translateY(-1px);
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header control-header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">INDICADORES CAB</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de sesión de usuario -->
+  <div id="userSessionWidget" class="user-session-widget"></div>
+
+  <!-- Contenedor principal de indicadores -->
+  <div class="indicadores-container">
+    <div class="indicadores-header">
+      <h1>Rendimiento del Turno</h1>
+      <div class="meta">
+        <div class="chip" id="turnoChip">Turno: Mañana (06:00–14:00)</div>
+        <div class="chip" id="fechaChip">Fecha: ---</div>
+      </div>
+    </div>
+
+    <div class="indicadores-main">
+      <!-- Filtros compartidos -->
+      <div class="toolbar" id="toolbar">
+        <label>
+          Turno:
+          <select id="turnoSel">
+            <option value="TM">TM</option>
+            <option value="TT">TT</option>
+            <option value="TN">TN</option>
+          </select>
+        </label>
+        <label>
+          Fecha:
+          <input type="date" id="fechaSel">
+        </label>
+      </div>
+
+      <!-- Filtros compactos (ocultos inicialmente) -->
+      <div class="compact-filters" id="compactFilters">
+        <div class="filter-values">
+          <div class="filter-value">
+            <span class="icon">🕐</span>
+            <span id="compactTurno">Turno: TM</span>
+          </div>
+          <div class="filter-value">
+            <span class="icon">📅</span>
+            <span id="compactFecha">Fecha: ---</span>
+          </div>
+        </div>
+        <button class="edit-filters-btn" onclick="showFilters()">✏️ Editar</button>
+      </div>
+
+      <!-- Pestañas -->
+      <div class="tabs-container">
+        <div class="tabs-nav">
+          <!-- Pestaña Puestos comentada -->
+          <!--
+          <button class="tab-button active" onclick="switchTab('puestos')">
+            📊 Puestos CAB
+          </button>
+          -->
+          <button class="tab-button active" onclick="switchTab('operarios')">
+            👤 Operarios CAB
+          </button>
+        </div>
+
+        <!-- Contenido de la pestaña Puestos - COMENTADO -->
+        <!--
+        <div id="puestosTab" class="tab-content active">
+          <section id="cardsPuestos" class="cards" aria-live="polite"></section>
+
+          <section class="summary" id="summaryPuestos">
+            <div class="stat">
+              <label>Total minutos teóricos</label>
+              <div class="val" id="sumTeoPuestos">—</div>
+            </div>
+            <div class="stat">
+              <label>Total minutos capacidad</label>
+              <div class="val" id="sumCapPuestos">—</div>
+            </div>
+            <div class="stat">
+              <label>Rendimiento medio</label>
+              <div class="val" id="avgPctPuestos">—</div>
+            </div>
+          </section>
+
+          <div class="footer-indicadores">
+            <span>Regla de color: <strong class="pct bad">≤ 85%</strong> · <strong class="pct warn">85–100%</strong> · <strong class="pct ok">≥ 100%</strong></span>
+          </div>
+        </div>
+        -->
+
+        <!-- Contenido de la pestaña Operarios -->
+        <div id="operariosTab" class="tab-content active">
+          <!-- Tarjetas por operario -->
+          <section id="cardsOperarios" class="cards" aria-live="polite"></section>
+
+          <!-- Resumen del turno para operarios -->
+          <section class="summary" id="summaryOperarios">
+            <div class="stat">
+              <label>Total minutos teóricos</label>
+              <div class="val" id="sumTeoOperarios">—</div>
+            </div>
+            <div class="stat">
+              <label>Total minutos capacidad</label>
+              <div class="val" id="sumCapOperarios">—</div>
+            </div>
+            <div class="stat">
+              <label>Rendimiento medio</label>
+              <div class="val" id="avgPctOperarios">—</div>
+            </div>
+          </section>
+
+          <div class="footer-indicadores">
+            <span>Regla de color: <strong class="pct bad">≤ 85%</strong> · <strong class="pct warn">85–100%</strong> · <strong class="pct ok">≥ 100%</strong></span>
+            <span style="margin-left: 20px;"><strong class="pct bad">🔴 Sin capacidad definida</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
+    // Se unifica con la inicialización de indicadores para evitar peticiones simultáneas
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Paso 1: Validar acceso
+      try {
+        console.log('🔒 Verificando permisos de acceso a indicadores.html...');
+        const response = await fetch('/api/validar-acceso-pantalla', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pantalla: 'indicadores.html' })
+        });
+
+        if (response.ok) {
+          const accesoData = await response.json();
+          console.log('Resultado validación acceso:', accesoData);
+          
+          if (!accesoData.success || !accesoData.acceso_permitido) {
+            console.log('❌ Acceso denegado - Redirigiendo...');
+            alert('No tiene permisos suficientes para acceder a esta pantalla.');
+            window.location.href = '/templates/generales/PuestosCAB.html';
+            return;
+          } else {
+            console.log('✅ Acceso permitido - Cargando página...');
+          }
+        } else {
+          console.warn('No se pudo validar el acceso - Permitiendo por defecto');
+        }
+      } catch (error) {
+        console.error('Error al validar acceso:', error);
+        // En caso de error, permitir acceso por defecto para no bloquear la funcionalidad
+      }
+      
+      // Paso 2: Cargar indicadores (después de validar acceso)
+      console.log('📊 Indicadores CAB cargados');
+      loadIndicadores(); // Empezar con la pestaña de operarios
+    });
+
+    // --- Variables globales ---
+    // let currentDataPuestos = []; // COMENTADO - Solo operarios
+    let currentDataOperarios = [];
+    let isLoading = false;
+    let activeTab = 'operarios'; // Cambiar por defecto a operarios
+
+    // --- Utilidades ---
+    const fmt = (n) => new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(n);
+    function getPct(teo, cap){
+      if (!cap) return 0;
+      return (teo / cap) * 100;
+    }
+    function pctClass(p){
+      if (p < 85) return "bad";
+      if (p < 100) return "warn";
+      return "ok";
+    }
+
+    // --- Elementos DOM ---
+    // const $cardsPuestos = document.getElementById('cardsPuestos'); // COMENTADO
+    const $cardsOperarios = document.getElementById('cardsOperarios');
+    // const $sumTeoPuestos = document.getElementById('sumTeoPuestos'); // COMENTADO
+    // const $sumCapPuestos = document.getElementById('sumCapPuestos'); // COMENTADO
+    // const $avgPctPuestos = document.getElementById('avgPctPuestos'); // COMENTADO
+    const $sumTeoOperarios = document.getElementById('sumTeoOperarios');
+    const $sumCapOperarios = document.getElementById('sumCapOperarios');
+    const $avgPctOperarios = document.getElementById('avgPctOperarios');
+    const $turnoSel = document.getElementById('turnoSel');
+    const $fechaSel = document.getElementById('fechaSel');
+    const $turnoChip = document.getElementById('turnoChip');
+    const $fechaChip = document.getElementById('fechaChip');
+    const $toolbar = document.getElementById('toolbar');
+    const $compactFilters = document.getElementById('compactFilters');
+    const $compactTurno = document.getElementById('compactTurno');
+    const $compactFecha = document.getElementById('compactFecha');
+
+    // --- Funciones para filtros compactos ---
+    function hideFilters() {
+      $toolbar.classList.add('compact');
+      $compactFilters.classList.add('show');
+      updateCompactFilterValues();
+    }
+
+    function showFilters() {
+      $toolbar.classList.remove('compact');
+      $compactFilters.classList.remove('show');
+    }
+
+    function updateCompactFilterValues() {
+      const turno = $turnoSel.value;
+      const fecha = $fechaSel.value;
+      
+      const turnoText = turno === 'TM' ? 'Mañana' : turno === 'TT' ? 'Tarde' : 'Noche';
+      $compactTurno.textContent = `Turno: ${turnoText}`;
+      $compactFecha.textContent = `Fecha: ${fecha}`;
+    }
+
+    // --- Funciones de pestañas ---
+    function switchTab(tab) {
+      // Solo permitir operarios
+      if (tab !== 'operarios') {
+        console.warn('Solo está disponible la pestaña de operarios');
+        tab = 'operarios';
+      }
+      
+      activeTab = tab;
+      
+      // Actualizar botones
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.tab-button[onclick="switchTab('${tab}')"]`).classList.add('active');
+      
+      // Actualizar contenido
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`${tab}Tab`).classList.add('active');
+      
+      // Cargar datos de operarios si es necesario
+      if (currentDataOperarios.length === 0) {
+        loadIndicadoresOperarios();
+      } else {
+        renderOperarios();
+      }
+    }
+
+    // Inicializa fecha a hoy
+    (function initDate(){
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth()+1).padStart(2,'0');
+      const dd = String(today.getDate()).padStart(2,'0');
+      $fechaSel.value = `${yyyy}-${mm}-${dd}`;
+      // Actualizar chips inmediatamente con la fecha de hoy
+      updateChips();
+      updateCompactFilterValues();
+    })();
+
+    // Función para cargar datos de puestos desde la API - COMENTADA
+    /*
+    async function loadIndicadoresPuestos() {
+      const turno = $turnoSel.value;
+      const fecha = $fechaSel.value;
+      
+      if (!turno || !fecha) {
+        console.warn('Turno y fecha son requeridos');
+        return;
+      }
+
+      if (isLoading) return;
+      
+      try {
+        isLoading = true;
+        
+        // Mostrar loading
+        $cardsPuestos.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Cargando indicadores de puestos...</div>';
+        
+        console.log(`📊 Cargando indicadores de puestos para turno: ${turno}, fecha: ${fecha}`);
+        
+        const params = new URLSearchParams({
+          turno: turno,
+          fecha: fecha
+        });
+
+        const response = await fetch(`/api/indicadores-puestos?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('📊 Respuesta de indicadores puestos:', data);
+
+        if (data.success && data.indicadores) {
+          currentDataPuestos = data.indicadores;
+          console.log(`✅ ${data.tarjetas_mostradas} tarjetas cargadas de ${data.total_puestos} puestos`);
+          if (data.tarjetas_omitidas > 0) {
+            console.log(`ℹ️ ${data.tarjetas_omitidas} tarjetas omitidas por falta de datos`);
+          }
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('❌ Error cargando indicadores de puestos:', error);
+        
+        // Mostrar mensaje de error
+        $cardsPuestos.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #e05252;">
+            Error cargando indicadores: ${error.message}<br>
+            <small>Verifique que los datos estén disponibles en la base de datos</small>
+          </div>
+        `;
+        
+        currentDataPuestos = [];
+        
+      } finally {
+        isLoading = false;
+        renderPuestos();
+        // Ocultar filtros si se cargaron datos exitosamente
+        if (currentDataPuestos.length > 0) {
+          hideFilters();
+        }
+      }
+    }
+    */
+
+    // Función para cargar datos de operarios desde la API
+    async function loadIndicadoresOperarios() {
+      const turno = $turnoSel.value;
+      const fecha = $fechaSel.value;
+      
+      if (!turno || !fecha) {
+        console.warn('Turno y fecha son requeridos');
+        return;
+      }
+
+      if (isLoading) return;
+      
+      try {
+        isLoading = true;
+        
+        // Mostrar loading
+        $cardsOperarios.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #666;">Cargando indicadores de operarios...</div>';
+        
+        console.log(`👤 Cargando indicadores de operarios para turno: ${turno}, fecha: ${fecha}`);
+        
+        const params = new URLSearchParams({
+          turno: turno,
+          fecha: fecha
+        });
+
+        const response = await fetch(`/api/indicadores-operarios?${params.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('👤 Respuesta de indicadores operarios:', data);
+
+        if (data.success && data.indicadores) {
+          currentDataOperarios = data.indicadores;
+          console.log(`✅ ${data.tarjetas_mostradas} tarjetas cargadas de ${data.total_operarios} operarios`);
+          if (data.tarjetas_omitidas > 0) {
+            console.log(`ℹ️ ${data.tarjetas_omitidas} tarjetas omitidas por falta de datos`);
+          }
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('❌ Error cargando indicadores de operarios:', error);
+        
+        // Mostrar mensaje de error
+        $cardsOperarios.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #e05252;">
+            Error cargando indicadores: ${error.message}<br>
+            <small>Verifique que los datos estén disponibles en la base de datos</small>
+          </div>
+        `;
+        
+        currentDataOperarios = [];
+        
+      } finally {
+        isLoading = false;
+        renderOperarios();
+        // Ocultar filtros si se cargaron datos exitosamente
+        if (currentDataOperarios.length > 0) {
+          hideFilters();
+        }
+      }
+    }
+
+    /*
+    function renderPuestos(){
+      const data = currentDataPuestos;
+      $cardsPuestos.innerHTML = "";
+
+      // Si no hay datos, mostrar mensaje informativo
+      if (!data || data.length === 0) {
+        $cardsPuestos.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+            <div style="color: #666; font-size: 18px; margin-bottom: 10px;">📊</div>
+            <div style="color: #666; font-size: 16px; font-weight: 600; margin-bottom: 8px;">
+              No hay datos disponibles
+            </div>
+            <div style="color: #999; font-size: 14px;">
+              No se encontraron datos de capacidad y tiempos teóricos para el turno y fecha seleccionados.
+            </div>
+          </div>
+        `;
+        
+        // Limpiar resumen
+        $sumTeoPuestos.textContent = "0 min";
+        $sumCapPuestos.textContent = "0 min";
+        $avgPctPuestos.innerHTML = `<span class="pct">0%</span>`;
+        
+        return;
+      }
+
+      let sumTeo=0, sumCap=0;
+
+      data.forEach(row=>{
+        const pct = getPct(row.minTeoricos, row.minCapacidad);
+        sumTeo += row.minTeoricos;
+        sumCap += row.minCapacidad;
+
+        const card = document.createElement('article');
+        card.className = 'card-indicador';
+        card.innerHTML = `
+          <h3>${row.puesto}</h3>
+          <div class="kpis">
+            <div class="kpi">
+              <label>Min. teóricos</label>
+              <div class="val">${fmt(row.minTeoricos)} min</div>
+            </div>
+            <div class="kpi">
+              <label>Min. capacidad</label>
+              <div class="val">${fmt(row.minCapacidad)} min</div>
+            </div>
+          </div>
+
+          <div class="kpi">
+            <label>% rendimiento</label>
+            <div class="val pct ${pctClass(pct)}">${fmt(pct)}%</div>
+            <div class="bar" title="${fmt(pct)}%">
+              <span style="width:${Math.min(pct,140)}%; background:${
+                pct < 85 ? 'var(--bad)' : pct < 100 ? 'var(--warn)' : 'var(--ok)'
+              }"></span>
+            </div>
+          </div>
+        `;
+        $cardsPuestos.appendChild(card);
+      });
+
+      const avgPct = getPct(sumTeo, sumCap);
+      $sumTeoPuestos.textContent = fmt(sumTeo) + " min";
+      $sumCapPuestos.textContent = fmt(sumCap) + " min";
+      $avgPctPuestos.innerHTML = `<span class="pct ${pctClass(avgPct)}">${fmt(avgPct)}%</span>`;
+
+      updateChips();
+    }
+    */
+
+    function renderOperarios(){
+      const data = currentDataOperarios;
+      $cardsOperarios.innerHTML = "";
+
+      // Si no hay datos, mostrar mensaje informativo
+      if (!data || data.length === 0) {
+        $cardsOperarios.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 40px;">
+            <div style="color: #666; font-size: 18px; margin-bottom: 10px;">📊</div>
+            <div style="color: #666; font-size: 16px; font-weight: 600; margin-bottom: 8px;">
+              No hay datos disponibles
+            </div>
+            <div style="color: #999; font-size: 14px;">
+              No se encontraron datos de capacidad y tiempos teóricos para el turno y fecha seleccionados.
+            </div>
+          </div>
+        `;
+        
+        // Limpiar resumen
+        $sumTeoOperarios.textContent = "0 min";
+        $sumCapOperarios.textContent = "0 min";
+        $avgPctOperarios.innerHTML = `<span class="pct">0%</span>`;
+        
+        // Actualizar chips con la fecha/turno actual aunque no haya datos
+        updateChips();
+        
+        return;
+      }
+
+      let sumTeo=0, sumCap=0;
+
+      data.forEach(row=>{
+        const pct = getPct(row.minTeoricos, row.minCapacidad);
+        sumTeo += row.minTeoricos;
+        sumCap += row.minCapacidad;
+
+        const card = document.createElement('article');
+        card.className = 'card-indicador';
+        
+        // Determinar si mostrar en rojo por falta de capacidad
+        const isRedCard = row.minCapacidad === 0;
+        if (isRedCard) {
+          card.style.border = '2px solid var(--bad)';
+          card.style.background = 'linear-gradient(135deg, #fff0f0, #ffe8e8)';
+        }
+
+        card.innerHTML = `
+          <h3>${row.operario} ${isRedCard ? '🔴' : ''}</h3>
+          <div class="kpis">
+            <div class="kpi">
+              <label>Min. teóricos</label>
+              <div class="val">${fmt(row.minTeoricos)} min</div>
+            </div>
+            <div class="kpi">
+              <label>Min. capacidad</label>
+              <div class="val ${isRedCard ? 'pct bad' : ''}">${fmt(row.minCapacidad)} min</div>
+            </div>
+          </div>
+
+          <div class="kpi">
+            <label>% rendimiento</label>
+            <div class="val pct ${isRedCard ? 'bad' : pctClass(pct)}">${isRedCard ? 'Sin cap.' : fmt(pct) + '%'}</div>
+            ${!isRedCard ? `<div class="bar" title="${fmt(pct)}%">
+              <span style="width:${Math.min(pct,140)}%; background:${
+                pct < 85 ? 'var(--bad)' : pct < 100 ? 'var(--warn)' : 'var(--ok)'
+              }"></span>
+            </div>` : ''}
+          </div>
+        `;
+        $cardsOperarios.appendChild(card);
+      });
+
+      // Calcular promedio solo con operarios que tienen capacidad
+      const dataWithCap = data.filter(row => row.minCapacidad > 0);
+      const sumTeoWithCap = dataWithCap.reduce((sum, row) => sum + row.minTeoricos, 0);
+      const sumCapWithCap = dataWithCap.reduce((sum, row) => sum + row.minCapacidad, 0);
+      const avgPct = getPct(sumTeoWithCap, sumCapWithCap);
+      
+      $sumTeoOperarios.textContent = fmt(sumTeo) + " min";
+      $sumCapOperarios.textContent = fmt(sumCap) + " min";
+      $avgPctOperarios.innerHTML = `<span class="pct ${pctClass(avgPct)}">${fmt(avgPct)}%</span>`;
+
+      updateChips();
+    }
+
+    function updateChips() {
+      const turno = $turnoSel.value;
+      const turnoText = turno === 'TM' ? 'Mañana (06:00–14:00)' : turno === 'TT' ? 'Tarde (14:00–22:00)' : 'Noche (22:00–06:00)';
+      $turnoChip.textContent = `Turno: ${turnoText}`;
+      $fechaChip.textContent = `Fecha: ${$fechaSel.value}`;
+    }
+
+    // Función principal para cargar datos según la pestaña activa
+    function loadIndicadores() {
+      // Solo cargar operarios ya que puestos está comentado
+      loadIndicadoresOperarios();
+    }
+
+    // Eventos
+    $turnoSel.addEventListener('change', () => {
+      // Mostrar filtros cuando se cambian
+      showFilters();
+      // Limpiar datos y recargar solo operarios
+      currentDataOperarios = [];
+      loadIndicadores();
+    });
+    
+    $fechaSel.addEventListener('change', () => {
+      // Mostrar filtros cuando se cambian
+      showFilters();
+      // Limpiar datos y recargar solo operarios
+      currentDataOperarios = [];
+      loadIndicadores();
+    });
+
+    // Función global para el botón de editar filtros
+    window.showFilters = showFilters;
+  </script>
+  
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+</body>
+</html>

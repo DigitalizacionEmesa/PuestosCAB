@@ -1,0 +1,28 @@
+{
+  "fvName": "Techos",
+  "productionCapture": [
+    {
+      "group": "15 Folding",
+      "center": "Bending 2",
+      "activity": "Broušení pedestalů - Svary"
+    },
+    {
+      "group": "16 Bending cell",
+      "center": "Bending 2",
+      "activity": "Broušení pedestalů - Svary"
+    },
+    {
+      "group": "18 PEM Serter",
+      "center": "Bending 2",
+      "activity": "Broušení pedestalů - Svary"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "FG001"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 30
+  }
+}

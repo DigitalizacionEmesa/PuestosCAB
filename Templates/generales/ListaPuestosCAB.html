@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Listado Puestos Cabinas</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS de respaldo en caso de problemas de ruta -->
+  <style>
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important; /* Quitar el margen izquierdo fijo */
+      margin-right: 0 !important; /* Quitar cualquier margen derecho */
+      text-align: center !important; /* Asegurar que esté centrado */
+    }
+    
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    body { 
+      background: #e6f2fb !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    .header { 
+      background: #3880c7 !important; 
+      color: #fff !important; 
+      height: 80px !important; 
+      display: flex !important; 
+      align-items: center !important; 
+    }
+    .card { 
+      background: #cbe7fa !important; 
+      border: 2px solid #b3d6ee !important; 
+      border-radius: 16px !important; 
+      min-height: 120px !important; 
+    }
+  </style>
+
+  <style>
+    /* Contenedor con 2 columnas fijas (50% cada una) y salto a nueva fila */
+    .puestos-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); /* 2 por fila */
+      gap: 16px;
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 0 12px;
+    }
+
+    /* “Botón” con el look de tus tarjetas azules claras */
+    .puesto-card {
+      text-decoration: none;            /* sin subrayado */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 18px;               /* un poco más que la fuente */
+      min-height: 56px;                 /* altura homogénea y compacta */
+      font-size: 1.6rem;                /* como los tiles grandes */
+      font-weight: 700;
+      color: #2c6aa6;                   /* azul texto como en la captura */
+      /* hereda fondo/borde/sombra de .card */
+    }
+
+    /* Asegura que .card no expanda por contenido vertical */
+    .card.puesto-card { 
+      line-height: 1.1;
+    }
+
+    /* Hover suave (respeta tu paleta) */
+    .card.puesto-card:hover {
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+      transition: 0.15s ease;
+    }
+
+    /* Estilo especial para Jefe de Equipo - Naranja */
+    .puesto-card.jefe-equipo {
+      background: #ffb366 !important;  /* Fondo naranja claro */
+      border: 2px solid #ff8c33 !important;  /* Borde naranja */
+      color: #cc4400 !important;       /* Texto naranja oscuro */
+    }
+
+    .puesto-card.jefe-equipo:hover {
+      background: #ff9933 !important;  /* Naranja más intenso en hover */
+      border-color: #e67300 !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">PUESTOS CAB</div>
+    <!-- USER INFO COMENTADO - NO FUNCIONA -->
+    <!-- <div class="user-info"></div> -->
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de sesión de usuario -->
+  <div id="userSessionWidget" class="user-session-widget"></div>
+
+  <!-- Contenido -->
+  <main>
+    <div id="loading-message" style="text-align: center; padding: 20px; display: block;">
+      <p>Cargando puestos...</p>
+    </div>
+    <div id="error-message" style="text-align: center; padding: 20px; color: #dc3545; display: none;">
+      <p>Error al cargar puestos. Mostrando lista de respaldo.</p>
+    </div>
+    <div class="puestos-grid" id="puestos-grid">
+      <!-- Los puestos se cargarán dinámicamente aquí -->
+    </div>
+  </main>
+
+  <script>
+    // Forzar recarga de CSS
+    if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
+      window.location.reload(true);
+    }
+    
+    // Cargar puestos dinámicamente desde la API
+    async function cargarPuestos() {
+      const loadingMessage = document.getElementById('loading-message');
+      const errorMessage = document.getElementById('error-message');
+      const puestosGrid = document.getElementById('puestos-grid');
+      
+      try {
+        loadingMessage.style.display = 'block';
+        errorMessage.style.display = 'none';
+        
+        console.log('Cargando puestos desde la API...');
+        
+        const response = await fetch('/api/puestos-mapping', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de la API:', data);
+
+        if (data.success && data.puestos) {
+          // Limpiar grid
+          puestosGrid.innerHTML = '';
+          
+          // Crear tarjetas dinámicamente usando el mapeo
+          data.puestos.forEach(puestoInfo => {
+            const nombrePuesto = puestoInfo.nombre;
+            const codigoPuesto = puestoInfo.codigo;
+            
+            const card = document.createElement('a');
+            card.href = '#';
+            card.className = 'card puesto-card';
+            card.setAttribute('data-puesto', nombrePuesto);
+            card.setAttribute('data-codigo', codigoPuesto);
+            card.textContent = nombrePuesto;
+            
+            // Agregar evento de click con navegación real
+            card.addEventListener('click', (e) => {
+              e.preventDefault();
+              console.log(`Puesto seleccionado: ${nombrePuesto} (${codigoPuesto})`);
+              
+              // Navegar a PuestoCAB.html con el código del puesto
+              window.location.href = `/templates/generales/PuestoCAB.html?puesto=${encodeURIComponent(codigoPuesto)}`;
+            });
+            
+            puestosGrid.appendChild(card);
+          });
+
+          // Verificar permisos del usuario antes de agregar Jefe de Equipo
+          try {
+            console.log('🔍 INICIANDO VERIFICACIÓN DE PERMISOS EN ListaPuestosCAB.html...');
+            const permisosResponse = await fetch('/api/obtener-permisos-usuario', {
+              method: 'GET',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              }
+            });
+
+            console.log('📡 Permisos Response status:', permisosResponse.status);
+            console.log('📡 Permisos Response ok:', permisosResponse.ok);
+
+            if (permisosResponse.ok) {
+              const permisosData = await permisosResponse.json();
+              console.log('📊 DATOS COMPLETOS DE PERMISOS (MAIN):', JSON.stringify(permisosData, null, 2));
+              console.log('🔑 Nivel_Permisos recuperado (MAIN):', permisosData.nivel_permisos);
+              console.log('🔑 Tipo de dato (MAIN):', typeof permisosData.nivel_permisos);
+              console.log('🔑 Success flag (MAIN):', permisosData.success);
+              console.log('🔑 Condición (nivel_permisos > 1):', permisosData.nivel_permisos > 1);
+              
+              // Solo agregar Jefe de Equipo si el usuario tiene permisos suficientes (Nivel_Permisos > 1)
+              if (permisosData.success && permisosData.nivel_permisos > 1) {
+                // Agregar Jefe de Equipo al final (puesto especial por defecto)
+                const jefeCard = document.createElement('a');
+                jefeCard.href = '#';
+                jefeCard.className = 'card puesto-card jefe-equipo';
+                jefeCard.setAttribute('data-puesto', 'Jefe de Equipo');
+                jefeCard.setAttribute('data-codigo', 'JEFEEQUIPO');
+                jefeCard.textContent = 'Jefe de Equipo';
+                
+                jefeCard.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  console.log(`Accediendo al Panel de Control - Jefe de Equipo`);
+                  
+                  // Navegar a control.html (panel especial para jefe de equipo)
+                  window.location.href = `/templates/generales/control.html`;
+                });
+                
+                puestosGrid.appendChild(jefeCard);
+                console.log('✅ Card de Jefe de Equipo AGREGADA - Nivel_Permisos:', permisosData.nivel_permisos);
+              } else {
+                console.log('❌ Card de Jefe de Equipo NO AGREGADA - Nivel_Permisos:', permisosData.nivel_permisos);
+                console.log('❌ Success:', permisosData.success);
+                console.log('❌ Condición fallida');
+              }
+            } else {
+              const errorText = await permisosResponse.text();
+              console.warn('⚠️ No se pudieron obtener los permisos del usuario');
+              console.warn('⚠️ Error response:', errorText);
+            }
+          } catch (permisosError) {
+            console.error('💥 Error al verificar permisos:', permisosError);
+          }
+
+          loadingMessage.style.display = 'none';
+          
+          console.log(`${data.total} puestos cargados correctamente`);
+          
+          if (data.message) {
+            errorMessage.textContent = data.message;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+              errorMessage.style.display = 'none';
+            }, 3000);
+          }
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando puestos:', error);
+        
+        loadingMessage.style.display = 'none';
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Error al cargar puestos. Mostrando lista de respaldo.';
+        
+        // Cargar puestos de respaldo con mapeo
+        const puestosRespaldo = [
+          { nombre: 'Clinchado', codigo: 'CLINCAB1' },
+          { nombre: 'Decoración', codigo: 'DECOCAB1' },
+          { nombre: 'Especiales', codigo: 'ESPECIALES' },
+          { nombre: 'Suelos', codigo: 'MONTCAB1' },
+          { nombre: 'Techos', codigo: 'MONTCAB2' },
+          { nombre: 'Bajotecho', codigo: 'MONTCAB3' }
+        ];
+        
+        puestosGrid.innerHTML = '';
+        
+        puestosRespaldo.forEach(puestoInfo => {
+          const card = document.createElement('a');
+          card.href = '#';
+          card.className = 'card puesto-card';
+          card.setAttribute('data-puesto', puestoInfo.nombre);
+          card.setAttribute('data-codigo', puestoInfo.codigo);
+          card.textContent = puestoInfo.nombre;
+          
+          card.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log(`Puesto seleccionado (respaldo): ${puestoInfo.nombre} (${puestoInfo.codigo})`);
+            
+            // Navegar a PuestoCAB.html con el código del puesto
+            window.location.href = `/templates/generales/PuestoCAB.html?puesto=${encodeURIComponent(puestoInfo.codigo)}`;
+          });
+          
+          puestosGrid.appendChild(card);
+        });
+
+        // Verificar permisos del usuario antes de agregar Jefe de Equipo en modo respaldo
+        try {
+          console.log('🔍 INICIANDO VERIFICACIÓN DE PERMISOS EN MODO RESPALDO...');
+          const permisosResponse = await fetch('/api/obtener-permisos-usuario', {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+
+          console.log('📡 Permisos Response status (RESPALDO):', permisosResponse.status);
+          console.log('📡 Permisos Response ok (RESPALDO):', permisosResponse.ok);
+
+          if (permisosResponse.ok) {
+            const permisosData = await permisosResponse.json();
+            console.log('📊 DATOS COMPLETOS DE PERMISOS (RESPALDO):', JSON.stringify(permisosData, null, 2));
+            console.log('🔑 Nivel_Permisos recuperado (RESPALDO):', permisosData.nivel_permisos);
+            console.log('🔑 Tipo de dato (RESPALDO):', typeof permisosData.nivel_permisos);
+            console.log('🔑 Success flag (RESPALDO):', permisosData.success);
+            console.log('🔑 Condición (nivel_permisos > 1) (RESPALDO):', permisosData.nivel_permisos > 1);
+            
+            // Solo agregar Jefe de Equipo si el usuario tiene permisos suficientes (Nivel_Permisos > 1)
+            if (permisosData.success && permisosData.nivel_permisos > 1) {
+              // Agregar Jefe de Equipo también en modo respaldo
+              const jefeCard = document.createElement('a');
+              jefeCard.href = '#';
+              jefeCard.className = 'card puesto-card jefe-equipo';
+              jefeCard.setAttribute('data-puesto', 'Jefe de Equipo');
+              jefeCard.setAttribute('data-codigo', 'JEFEEQUIPO');
+              jefeCard.textContent = 'Jefe de Equipo';
+              
+              jefeCard.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log(`Accediendo al Panel de Control - Jefe de Equipo (respaldo)`);
+                
+                // Navegar a control.html (panel especial para jefe de equipo)
+                window.location.href = `/templates/generales/control.html`;
+              });
+              
+              puestosGrid.appendChild(jefeCard);
+              console.log('✅ Card de Jefe de Equipo AGREGADA en respaldo - Nivel_Permisos:', permisosData.nivel_permisos);
+            } else {
+              console.log('❌ Card de Jefe de Equipo NO AGREGADA en respaldo - Nivel_Permisos:', permisosData.nivel_permisos);
+              console.log('❌ Success (RESPALDO):', permisosData.success);
+              console.log('❌ Condición fallida (RESPALDO)');
+            }
+          } else {
+            const errorText = await permisosResponse.text();
+            console.warn('⚠️ No se pudieron obtener los permisos del usuario (respaldo)');
+            console.warn('⚠️ Error response (respaldo):', errorText);
+          }
+        } catch (permisosError) {
+          console.error('💥 Error al verificar permisos (respaldo):', permisosError);
+        }
+      }
+    }
+    
+    // Cargar puestos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarPuestos();
+    });
+  </script>
+
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+</body>
+</html>

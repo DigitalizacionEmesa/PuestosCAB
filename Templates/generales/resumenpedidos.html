@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Resumen de Pedidos - CAB</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS específico para la página de resumen -->
+  <style>
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    /* Variables de colores como en indicadores.html */
+    :root{
+      --bg:#e6f2fb;               /* Mismo fondo que las otras pantallas */
+      --card:#ffffff;             /* Tarjetas blancas */
+      --card-secondary:#f8fbff;   /* Tarjetas secundarias azul muy claro */
+      --muted:#666666;            /* Texto muted más suave */
+      --ok:#1fa971;               /* Verde para OK - mantener */
+      --warn:#e6a700;             /* Amarillo para warning - mantener */
+      --bad:#e05252;              /* Rojo para error - mantener */
+      --accent:#3880c7;           /* Azul principal de la app */
+      --text:#2c6aa6;             /* Texto principal azul */
+      --border:#b3d6ee;           /* Bordes azules claros */
+      --chip:#d6e8f5;             /* Chips azul claro */
+    }
+
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      text-align: center !important;
+    }
+    
+    body { 
+      background: var(--bg) !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    
+    /* Header estilo naranja para gestión de jefe de equipo */
+    .control-header {
+      background: linear-gradient(135deg, #ff8c33, #ffb366) !important;
+      color: #fff !important;
+      height: 80px !important; 
+      display: flex !important; 
+      align-items: center !important;
+    }
+    
+    /* Botones de navegación del header */
+    .back-icon, .home-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      margin: 0 10px;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .back-icon:hover, .home-icon:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Logo EMESA */
+    .emesa-logo {
+      height: 50px;
+      margin-left: auto;
+      margin-right: 20px;
+    }
+    
+    .card { 
+      background: var(--card) !important; 
+      border: 2px solid var(--border) !important; 
+      border-radius: 16px !important; 
+      min-height: 80px !important; 
+    }
+
+    /* Estilos de la tabla de resumen - Basado en PuestoCAB */
+    .resumen-table {
+      width: 100%;
+      border-collapse: separate; /* Cambiado de collapse para mejor control */
+      border-spacing: 0; /* Sin espaciado entre celdas */
+      font-size: 14px;
+      min-width: 800px; /* Ancho mínimo para scroll horizontal */
+      table-layout: fixed; /* Importante para permitir reordenar columnas */
+    }
+
+    .resumen-table th {
+      background: var(--accent); /* Azul para cabeceras de tabla */
+      color: white;
+      padding: 12px 8px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #2a5a8a;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      cursor: grab; /* Indicador de que se puede arrastrar */
+      user-select: none; /* Evita selección de texto al arrastrar */
+    }
+    
+    /* Añadir iconos de arrastre solo a la primera fila de cabeceras */
+    .resumen-table > thead > tr:first-child > th::before {
+      content: "⋮⋮";
+      margin-right: 6px;
+      opacity: 0.6;
+      font-size: 14px;
+      transition: opacity 0.2s;
+      display: inline-block;
+    }
+    
+    .resumen-table > thead > tr:first-child > th:hover::before {
+      opacity: 1;
+    }
+    
+    /* No mostrar icono de arrastre en la fila de filtros (segunda fila) */
+    .resumen-table > thead > tr.filtros-row > th::before {
+      content: none;
+    }
+    
+    /* Estilos para botón ocultar/mostrar columna */
+    .toggle-column-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 3px;
+      color: white;
+      width: 22px;
+      height: 22px;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 6px;
+      float: right;
+      opacity: 0.7;
+      transition: all 0.2s ease;
+    }
+    
+    .toggle-column-btn:hover {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Estilos para columnas ocultas - Forzar ocultamiento para todos los elementos */
+    .col-hidden,
+    .resumen-table th.col-hidden,
+    .resumen-table td.col-hidden,
+    tr.filtros-row th.col-hidden,
+    tr.filtros-row th.col-hidden * {
+      display: none !important;
+    }
+    
+    /* Botón para mostrar columna oculta */
+    .show-columns-dropdown {
+      position: relative;
+      display: inline-block;
+      margin: 10px 0;
+      z-index: 95; /* Alto z-index para mantener por encima de otros elementos */
+    }
+    
+    .show-columns-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      position: relative; /* Establecer posición relativa para el botón */
+    }
+    
+    .columns-dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #ffffff; /* Fondo blanco más visible */
+      min-width: 200px; /* Un poco más ancho para mejor visualización */
+      box-shadow: 0px 8px 20px rgba(0,0,0,0.3); /* Sombra más pronunciada */
+      z-index: 999; /* Z-index muy alto para asegurar que esté por encima de todo */
+      border-radius: 6px;
+      padding: 10px 0;
+      right: 0; /* Alineado a la derecha del botón */
+      top: 100%; /* Justo debajo del botón */
+      margin-top: 5px; /* Pequeño espacio debajo del botón */
+      border: 1px solid #e0e0e0; /* Borde suave para mejor contraste */
+    }
+    
+    .columns-dropdown-content.show {
+      display: block;
+      animation: fadeIn 0.2s ease-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .column-option {
+      color: #333;
+      padding: 10px 16px;
+      text-decoration: none;
+      display: block;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      font-size: 14px;
+    }
+    
+    .column-option:hover {
+      background-color: #f1f1f1;
+    }
+    
+    .column-option:last-child {
+      border-bottom: none;
+    }
+    
+    /* Estilos para columna siendo arrastrada */
+    .resumen-table th.dragging {
+      opacity: 0.8;
+      background-color: #1a5694; /* Más oscuro mientras se arrastra */
+      cursor: grabbing; /* Indicador de que se está arrastrando */
+      z-index: 20; /* Asegurar que esté por encima de otros elementos */
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Estilos para columna destino durante el arrastre */
+    .resumen-table th.drag-over {
+      border-left: 3px solid #ffcc00; /* Indicador visual de donde se soltará */
+    }
+
+    .resumen-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 0;
+    }
+
+    .resumen-table tr:nth-child(even) {
+      background: var(--card-secondary);
+    }
+
+    .resumen-table tr:hover {
+      background: var(--chip);
+    }
+
+    /* Número de pedido - Ancho específico como en PuestoCAB */
+    .pedido-numero {
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      font-size: 1rem;
+      width: 120px; /* Ancho fijo para número de pedido */
+    }
+
+    /* Columnas específicas como en PuestoCAB */
+    .col-numero {
+      width: 120px;
+      min-width: 120px;
+      max-width: 120px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* Columnas de DatosPedidos */
+    .col-dp {
+      background: #e8f0fe;
+      color: #1a56b8;
+      font-weight: 600;
+      font-size: 0.85rem;
+      min-width: 90px;
+    }
+
+    .col-dp-val {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #333;
+      background: #fafcff;
+    }
+
+    /* Columna Notas editable */
+    .col-notas {
+      min-width: 160px;
+      padding: 4px !important;
+    }
+
+    .notas-editable {
+      width: 100%;
+      min-height: 28px;
+      border: 1px solid #b3d6ee;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      resize: vertical;
+      background: #fff;
+      color: #333;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .notas-editable:focus {
+      outline: none;
+      border-color: #3880c7;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.2);
+    }
+
+    .notas-editable::placeholder {
+      color: #aaa;
+      font-style: italic;
+    }
+
+    /* Columna Operario editable */
+    .col-operario {
+      min-width: 80px;
+      padding: 4px !important;
+    }
+
+    .operario-editable {
+      width: 100%;
+      max-width: 60px;
+      border: 1px solid #b3d6ee;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 0.85rem;
+      font-family: 'Consolas', monospace;
+      text-align: center;
+      background: #fff;
+      color: #333;
+      transition: border-color 0.3s;
+      box-sizing: border-box;
+    }
+
+    .operario-editable:focus {
+      outline: none;
+      border-color: #3880c7;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.2);
+    }
+
+    .operario-editable::placeholder {
+      color: #ccc;
+    }
+
+    /* Tarjetas de estado dentro de las celdas */
+    .estado-tarjeta {
+      display: inline-block;
+      margin: 2px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid;
+      max-width: 100%;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.2;
+      white-space: normal;
+      box-sizing: border-box;
+    }
+
+    /* Estados - Hecho (Verde) */
+    .estado-hecho {
+      background: var(--ok, #1fa971) !important;
+      border-color: var(--ok, #1fa971) !important;
+      color: white !important;
+    }
+
+    /* Estados - En Proceso (Azul) */
+    .estado-enproceso {
+      background: var(--accent, #3880c7) !important;
+      border-color: var(--accent, #3880c7) !important;
+      color: white !important;
+    }
+
+    /* Estados - Faltante (Rojo) */
+    .estado-faltante {
+      background: var(--bad, #e05252) !important;
+      border-color: var(--bad, #e05252) !important;
+      color: white !important;
+    }
+
+    /* Estados - Sin estado (Gris) */
+    .estado-sin-estado {
+      background: var(--muted, #666666) !important;
+      border-color: var(--muted, #666666) !important;
+      color: white !important;
+    }
+
+    /* Panel de filtros - Estilo similar a PuestoCAB */
+    .filtros-panel {
+      background: var(--card-secondary);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      margin: 12px auto;
+      max-width: 1200px;
+      padding: 16px;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .filtros-panel.colapsado {
+      max-height: 0;
+      padding: 0 16px;
+      margin: 0 auto;
+      opacity: 0;
+    }
+
+    .filtros-panel.expandido {
+      max-height: 300px;
+      opacity: 1;
+    }
+
+    .filtros-container {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .filtro-grupo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 140px;
+    }
+
+    .filtro-grupo:last-child {
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .filtro-grupo label {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .filtro-grupo select {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.9rem;
+      background: var(--card);
+      color: var(--text);
+      min-height: 100px;
+    }
+
+    .btn-filtro {
+      background: var(--accent); /* Azul para botones */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-filtro:hover {
+      background: #2a5a8a;
+      transform: translateY(-1px);
+    }
+
+    .btn-filtro.secondary {
+      background: var(--muted);
+    }
+
+    .btn-filtro.secondary:hover {
+      background: #5a6268;
+    }
+
+    /* Toggle de expandir/colapsar - Estilo PuestoCAB */
+    .filtros-toggle {
+      text-align: center;
+      margin: 6px auto 6px auto;
+      max-width: 1200px;
+      padding: 0 10px;
+    }
+
+    .toggle-filtros {
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 6px 10px;
+      background: var(--chip);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: inline-block;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .toggle-filtros:hover {
+      background: #c7d9ff;
+      transform: translateY(-1px);
+      filter: brightness(0.98);
+    }
+
+    /* Contenedor principal - Sin márgenes laterales como PuestoCAB */
+    .table-container {
+      margin: 16px 0;
+      overflow-x: auto;
+      overflow-y: visible;
+      max-width: 100%;
+      background: var(--card);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    /* Línea de filtros aplicados - Dentro del contenedor de tabla */
+    .filtros-aplicados {
+      background: var(--card-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin: 16px 16px 0 16px; /* Margen dentro del contenedor */
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap; /* Permitir que los elementos se ajusten en pantallas pequeñas */
+      flex-wrap: wrap;
+    }
+
+    .filtros-texto {
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .filtros-valores {
+      color: var(--text);
+      font-size: 0.9rem;
+      flex: 1;
+    }
+
+    .btn-modificar-filtros {
+      background: var(--accent); /* Azul para consistencia */
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-modificar-filtros:hover {
+      background: #2a5a8a;
+      transform: translateY(-1px);
+    }
+
+    /* Mensajes de estado */
+    .loading-message {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* Responsividad */
+    @media (max-width: 768px) {
+      .resumen-table {
+        font-size: 0.8rem;
+      }
+      
+      .resumen-table th,
+      .resumen-table td {
+        padding: 6px 4px;
+      }
+      
+      .estado-tarjeta {
+        font-size: 0.7rem;
+        padding: 2px 4px;
+      }
+      
+      .filtros-container {
+        flex-direction: column;
+        gap: 12px;
+      }
+      
+      .filtro-grupo {
+        min-width: 100%;
+      }
+      
+      .pedido-numero {
+        width: 80px;
+      }
+    }
+
+    /* Estilos para filtros de texto en cabeceras */
+    .filtros-row th {
+      padding: 8px;
+      background: var(--card-secondary);
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 42px; /* Altura de la primera fila de cabecera */
+      z-index: 9;
+    }
+
+    .filtro-texto {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background: var(--background);
+      color: var(--text);
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    .filtro-texto:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+    }
+
+    .filtro-texto::placeholder {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Ajustes para el input del número de pedido */
+    #filtro-numero {
+      max-width: 110px;
+    }
+
+    /* Contador de filtros */
+    .contador-filtros {
+      margin: 10px 0;
+      padding: 8px 12px;
+      background: var(--chip);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HEADER -->
+  <header class="header control-header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">RESUMEN DE PEDIDOS CAB</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de sesión de usuario -->
+  <div id="userSessionWidget" class="user-session-widget"></div>
+
+  <!-- MAIN CONTENT -->
+  <main>
+    <!-- Toggle de expandir/colapsar filtros -->
+    <div class="filtros-toggle">
+      <span class="toggle-filtros" id="toggleFiltros">▼ Expandir filtros</span>
+    </div>
+    
+    <!-- Panel de filtros (colapsable) -->
+    <div class="filtros-panel expandido" id="filtrosPanel">
+      <div class="filtros-container">
+        <div class="filtro-grupo">
+          <label>Año:</label>
+          <select id="filtroAno" multiple size="4">
+            <option value="">Cargando años...</option>
+          </select>
+        </div>
+        
+        <div class="filtro-grupo">
+          <label>Nº Sem.:</label>
+          <select id="filtroSemana" multiple size="4">
+            <option value="">Cargando semanas...</option>
+          </select>
+        </div>
+        
+        <div class="filtro-grupo">
+          <button id="btnAplicarFiltros" class="btn-filtro">
+            🔍 Aplicar Filtros
+          </button>
+          <button id="btnLimpiarFiltros" class="btn-filtro secondary">
+            🗑️ Limpiar
+          </button>
+          <button id="btnLimpiarFiltrosTexto" class="btn-filtro secondary" 
+                  onclick="limpiarFiltrosTexto()" 
+                  style="display: none;">
+            🧹 Limpiar Filtros de Tabla
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de resumen -->
+    <div id="tableContainer" class="table-container">
+      <!-- Línea de filtros aplicados dentro del contenedor -->
+      <div id="filtrosAplicados" class="filtros-aplicados" style="display: none;">
+        <span class="filtros-texto">Filtros aplicados:</span>
+        <span id="filtrosTexto" class="filtros-valores"></span>
+        <button id="btnModificarFiltros" class="btn-modificar-filtros">
+          ⚙️ Modificar filtros
+        </button>
+        <div class="show-columns-dropdown">
+          <button id="showColumnsBtn" class="show-columns-btn" style="display: none;">
+            🔍 Columnas ocultas
+          </button>
+          <div id="columnsDropdown" class="columns-dropdown-content">
+            <!-- Las opciones se generan dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <table id="resumenTable" class="resumen-table" style="display: none;">
+        <thead id="tableHeader">
+          <!-- El header se genera dinámicamente -->
+        </thead>
+        <tbody id="tableBody">
+          <!-- Las filas se generan dinámicamente -->
+        </tbody>
+      </table>
+      <div id="loadingTable" class="loading-message" style="display: none;">
+        Cargando resumen de pedidos...
+      </div>
+      <div id="noDataTable" class="no-data" style="display: block;">
+        No hay datos disponibles. Aplique filtros para cargar el resumen de pedidos.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        console.log('🔒 VERIFICANDO ACCESO A resumenpedidos.html...');
+        const response = await fetch('/api/validar-acceso-pantalla', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pantalla: 'resumenpedidos.html' })
+        });
+
+        console.log('📡 Response status (validar acceso):', response.status);
+        console.log('📡 Response ok (validar acceso):', response.ok);
+
+        if (response.ok) {
+          const accesoData = await response.json();
+          console.log('📊 DATOS COMPLETOS DE VALIDACIÓN:', JSON.stringify(accesoData, null, 2));
+          console.log('🔐 Acceso permitido:', accesoData.acceso_permitido);
+          console.log('🔑 Nivel_Permisos:', accesoData.nivel_permisos);
+          
+          if (!accesoData.success || !accesoData.acceso_permitido) {
+            console.log('❌ ACCESO DENEGADO - Redirigiendo...');
+            alert('No tiene permisos suficientes para acceder a esta pantalla.');
+            window.location.href = '/templates/generales/PuestosCAB.html';
+            return;
+          } else {
+            console.log('✅ ACCESO PERMITIDO - Cargando página...');
+          }
+        } else {
+          const errorText = await response.text();
+          console.warn('⚠️ No se pudo validar el acceso - Permitiendo por defecto');
+          console.warn('⚠️ Error response:', errorText);
+        }
+      } catch (error) {
+        console.error('💥 Error al validar acceso:', error);
+        // En caso de error, permitir acceso por defecto para no bloquear la funcionalidad
+      }
+    });
+
+    // Variables globales
+    let RESUMEN_DATA = null; // Datos del resumen obtenidos de la API
+    let FILTROS_ACTUALES = { anos: [], semanas: [] }; // Filtros aplicados actualmente
+    
+    console.log('🟢 Página de resumen de pedidos cargada');
+
+    // Referencias DOM
+    const $filtrosPanel = document.getElementById('filtrosPanel');
+    const $toggleFiltros = document.getElementById('toggleFiltros');
+    const $filtroAno = document.getElementById('filtroAno');
+    const $filtroSemana = document.getElementById('filtroSemana');
+    const $btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
+    const $btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
+    const $tableContainer = document.getElementById('tableContainer');
+    const $resumenTable = document.getElementById('resumenTable');
+    const $tableHeader = document.getElementById('tableHeader');
+    const $tableBody = document.getElementById('tableBody');
+    const $loadingTable = document.getElementById('loadingTable');
+    const $noDataTable = document.getElementById('noDataTable');
+    const $filtrosAplicados = document.getElementById('filtrosAplicados');
+    const $filtrosTexto = document.getElementById('filtrosTexto');
+    const $btnModificarFiltros = document.getElementById('btnModificarFiltros');
+
+    // Función para mostrar/ocultar el panel de filtros
+    function toggleFiltrosPanel() {
+      const isExpanded = $filtrosPanel.classList.contains('expandido');
+      
+      if (isExpanded) {
+        $filtrosPanel.classList.remove('expandido');
+        $filtrosPanel.classList.add('colapsado');
+        $toggleFiltros.textContent = '▶ Expandir filtros';
+      } else {
+        $filtrosPanel.classList.remove('colapsado');
+        $filtrosPanel.classList.add('expandido');
+        $toggleFiltros.textContent = '▼ Contraer filtros';
+      }
+    }
+
+    // Cargar años disponibles desde la API
+    async function cargarAños() {
+      try {
+        console.log('Cargando años desde la API...');
+        
+        const response = await fetch('/api/anos', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de la API años:', data);
+
+        if (data.success && data.anos) {
+          $filtroAno.innerHTML = '';
+          
+          data.anos.forEach(ano => {
+            const option = document.createElement('option');
+            option.value = ano;
+            option.textContent = ano;
+            $filtroAno.appendChild(option);
+          });
+          
+          console.log(`${data.total} años cargados correctamente`);
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando años:', error);
+        
+        // Cargar opciones de respaldo estáticas
+        $filtroAno.innerHTML = `
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+        `;
+      }
+    }
+
+    // Cargar semanas disponibles desde la API
+    async function cargarSemanas() {
+      try {
+        console.log('Cargando semanas desde la API...');
+        
+        const response = await fetch('/api/semanas', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de la API semanas:', data);
+
+        if (data.success && data.semanas) {
+          $filtroSemana.innerHTML = '';
+          
+          data.semanas.forEach(semana => {
+            const option = document.createElement('option');
+            option.value = semana;
+            option.textContent = `Semana ${semana}`;
+            $filtroSemana.appendChild(option);
+          });
+          
+          console.log(`${data.total} semanas cargadas correctamente`);
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando semanas:', error);
+        
+        // Cargar opciones de respaldo estáticas
+        $filtroSemana.innerHTML = '';
+        for (let i = 1; i <= 52; i++) {
+          $filtroSemana.innerHTML += `<option value="${i}">Semana ${i}</option>`;
+        }
+      }
+    }
+
+    // Aplicar filtros y cargar resumen
+    async function aplicarFiltros() {
+      try {
+        // Obtener filtros seleccionados
+        const anosSeleccionados = Array.from($filtroAno.selectedOptions).map(opt => opt.value);
+        const semanasSeleccionadas = Array.from($filtroSemana.selectedOptions).map(opt => opt.value);
+        
+        console.log('Filtros seleccionados:', { anos: anosSeleccionados, semanas: semanasSeleccionadas });
+        
+        // Validar que hay al menos un filtro
+        if (anosSeleccionados.length === 0 && semanasSeleccionadas.length === 0) {
+          alert('Debe seleccionar al menos un año o semana');
+          return;
+        }
+
+        // Mostrar loading
+        mostrarEstado('loading');
+        
+        // Construir URL con parámetros
+        const params = new URLSearchParams();
+        anosSeleccionados.forEach(ano => params.append('anos[]', ano));
+        semanasSeleccionadas.forEach(semana => params.append('semanas[]', semana));
+        
+        const url = `/api/resumen-pedidos?${params.toString()}`;
+        console.log('URL de petición:', url);
+        
+        // Hacer petición a la API
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de la API resumen-pedidos:', data);
+
+        if (data.success) {
+          RESUMEN_DATA = data;
+          FILTROS_ACTUALES = { anos: anosSeleccionados, semanas: semanasSeleccionadas };
+          renderizarTablaResumen(data);
+          mostrarFiltrosAplicados(anosSeleccionados, semanasSeleccionadas);
+          ocultarPanelFiltros(); // Ocultar panel después de aplicar
+          mostrarEstado('table');
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error aplicando filtros:', error);
+        alert(`Error cargando resumen: ${error.message}`);
+        mostrarEstado('nodata');
+      }
+    }
+
+    // Renderizar tabla de resumen
+    function renderizarTablaResumen(data) {
+      console.log('Renderizando tabla de resumen...');
+      
+      // Array para almacenar columnas ocultas (persistencia durante la sesión)
+      if (!window.columnasOcultas) {
+        window.columnasOcultas = [];
+      }
+      
+      // Definir columnas fijas de DatosPedidos a mostrar
+      const columnasDP = ['FechaEntrega', 'EMB', 'TipoDecoracion', 'Modelo', 'Notas', 'Operario'];
+      const columnasDPLabels = {
+        'FechaEntrega': 'Fecha Entrega',
+        'EMB': 'EMB',
+        'TipoDecoracion': 'Tipo Dec.',
+        'Modelo': 'Modelo',
+        'Notas': 'Notas',
+        'Operario': 'Operario'
+      };
+      
+      // 1. Generar cabecera de la tabla con filtros
+      const headerHtml = `
+        <tr class="cabeceras-row">
+          <th class="col-numero" title="Arrastre para reorganizar columnas" data-column-id="numero">
+            Número Pedido
+          </th>
+          ${columnasDP.map(col => {
+            const columnId = `dp-${col}`;
+            const isHidden = window.columnasOcultas.includes(columnId);
+            return `<th title="Datos del pedido" 
+                     data-column-id="${columnId}" 
+                     class="col-dp ${isHidden ? 'col-hidden' : ''}">
+              ${columnasDPLabels[col]}
+            </th>`;
+          }).join('')}
+          ${data.puestos.map((puesto, index) => {
+            const columnId = `puesto-${index}`;
+            const isHidden = window.columnasOcultas.includes(columnId);
+            return `<th title="Arrastre para reorganizar columnas" 
+                     data-column-id="${columnId}" 
+                     class="${isHidden ? 'col-hidden' : ''}">
+              ${puesto}
+              <button type="button" class="toggle-column-btn" title="Ocultar/mostrar columna" onclick="toggleColumn('${columnId}')">${isHidden ? '+' : '−'}</button>
+            </th>`;
+          }).join('')}
+        </tr>
+        <tr class="filtros-row">
+          <th class="col-numero" data-column-id="numero">
+            <input type="text" class="filtro-texto" id="filtro-numero" 
+                   placeholder="Filtrar por número..." 
+                   onkeyup="aplicarFiltrosTexto()">
+          </th>
+          ${columnasDP.map(col => {
+            const columnId = `dp-${col}`;
+            const isHidden = window.columnasOcultas.includes(columnId);
+            return `<th data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}">
+              <input type="text" class="filtro-texto" id="filtro-dp-${col}" 
+                     placeholder="Filtrar ${columnasDPLabels[col].toLowerCase()}..." 
+                     onkeyup="aplicarFiltrosTexto()">
+            </th>`;
+          }).join('')}
+          ${data.puestos.map((puesto, index) => {
+            const columnId = `puesto-${index}`;
+            const isHidden = window.columnasOcultas.includes(columnId);
+            return `<th data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}">
+              <input type="text" class="filtro-texto" id="filtro-puesto-${index}" 
+                     placeholder="Buscar ${puesto}..." 
+                     onkeyup="aplicarFiltrosTexto()">
+            </th>`;
+          }).join('')}
+        </tr>
+      `;
+      $tableHeader.innerHTML = headerHtml;
+      
+      // 2. Generar filas de la tabla
+      const filas = data.pedidos.map(pedido => {
+        const dp = pedido.datosPedido || {};
+        
+        // Celdas de DatosPedidos
+        const celdasDP = columnasDP.map(col => {
+          const columnId = `dp-${col}`;
+          const isHidden = window.columnasOcultas.includes(columnId);
+          const valor = dp[col];
+          let texto = valor !== null && valor !== undefined ? String(valor) : '';
+          
+          // Formatear FechaEntrega a DD/MM/YYYY
+          if (col === 'FechaEntrega' && texto) {
+            const m = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) texto = `${m[3]}/${m[2]}/${m[1]}`;
+          }
+          
+          // Columna Notas: editable inline
+          if (col === 'Notas') {
+            return `<td data-column-id="${columnId}" class="col-dp-val col-notas ${isHidden ? 'col-hidden' : ''}">
+              <textarea class="notas-editable" 
+                        data-pedido="${pedido.numeroPedido}"
+                        data-original="${texto.replace(/"/g, '&quot;')}"
+                        placeholder="Añadir nota..."
+                        onblur="guardarNota(this, '${pedido.numeroPedido}')">${texto}</textarea>
+            </td>`;
+          }
+          
+          // Columna Operario: editable inline (máx 3 dígitos)
+          if (col === 'Operario') {
+            return `<td data-column-id="${columnId}" class="col-dp-val col-operario ${isHidden ? 'col-hidden' : ''}">
+              <input type="text" class="operario-editable" 
+                     data-pedido="${pedido.numeroPedido}"
+                     data-original="${texto}"
+                     value="${texto}"
+                     maxlength="3"
+                     placeholder="000"
+                     onblur="guardarOperario(this, '${pedido.numeroPedido}')">
+            </td>`;
+          }
+          
+          return `<td data-column-id="${columnId}" class="col-dp-val ${isHidden ? 'col-hidden' : ''}">${texto}</td>`;
+        }).join('');
+        
+        // Celdas de puestos
+        const celdasPuestos = data.puestos.map((puesto, index) => {
+          const columnId = `puesto-${index}`;
+          const isHidden = window.columnasOcultas.includes(columnId);
+          const piezasPuesto = pedido.puestos_data[puesto] || [];
+          
+          if (piezasPuesto.length === 0) {
+            return `<td data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}"></td>`;
+          }
+          
+          const tarjetas = piezasPuesto.map(pieza => {
+            const claseEstado = obtenerClaseEstado(pieza.estado);
+            return `<div class="estado-tarjeta ${claseEstado}">${pieza.descripcion}</div>`;
+          }).join('');
+          
+          return `<td data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}">${tarjetas}</td>`;
+        }).join('');
+        
+        return `
+          <tr>
+            <td class="pedido-numero" data-column-id="numero">${pedido.numeroPedido}</td>
+            ${celdasDP}
+            ${celdasPuestos}
+          </tr>
+        `;
+      }).join('');
+      
+      $tableBody.innerHTML = filas;
+      
+      console.log(`Tabla renderizada con ${data.pedidos.length} pedidos y ${data.puestos.length} puestos`);
+    }
+
+    // Obtener clase CSS según el estado
+    function obtenerClaseEstado(estado) {
+      const estadoLimpio = estado ? estado.toString().trim() : '';
+      
+      switch (estadoLimpio) {
+        case 'Hecho':
+          return 'estado-hecho';
+        case 'EnProceso':
+          return 'estado-enproceso';
+        case 'Faltante':
+          return 'estado-faltante';
+        default:
+          return 'estado-sin-estado';
+      }
+    }
+
+    // Función para aplicar filtros de texto en la tabla
+    function aplicarFiltrosTexto() {
+      const filas = $tableBody.querySelectorAll('tr');
+      
+      // Obtener valores de todos los filtros
+      const filtros = [];
+      const inputs = $tableHeader.querySelectorAll('.filtro-texto');
+      
+      // Verificar que tenemos inputs de filtro
+      if (inputs.length === 0) {
+        console.warn('⚠️ No se encontraron campos de filtro');
+        return;
+      }
+      
+      // Crear un mapa de filtros por columna
+      let mapFiltros = {};
+      inputs.forEach((input, i) => {
+        // Verificar que el input no está en una columna oculta
+        const th = input.closest('th');
+        if (th && th.classList.contains('col-hidden')) {
+          console.log(`🔍 Ignorando filtro en columna oculta: ${input.id}`);
+          return; // Ignorar filtros de columnas ocultas
+        }
+        
+        const valor = input.value.toLowerCase().trim();
+        if (valor !== '') {
+          // Obtener el índice de columna (posición actual, no original)
+          const celda = Array.from(th.parentElement.children).indexOf(th);
+          mapFiltros[celda] = valor;
+          console.log(`🔍 Aplicando filtro en celda ${celda}: "${valor}"`);
+        }
+      });
+      
+      // Verificar si hay filtros activos
+      const hayFiltrosActivos = Object.keys(mapFiltros).length > 0;
+      console.log(`🔍 Filtros activos: ${hayFiltrosActivos ? Object.keys(mapFiltros).length : 'ninguno'}`);
+      
+      // Mostrar/ocultar botón de limpiar filtros de tabla
+      const btnLimpiarTexto = document.getElementById('btnLimpiarFiltrosTexto');
+      if (btnLimpiarTexto) {
+        btnLimpiarTexto.style.display = hayFiltrosActivos ? 'inline-block' : 'none';
+      }
+      
+      // Filtrar filas
+      filas.forEach(fila => {
+        let mostrarFila = true;
+        const celdas = fila.querySelectorAll('td');
+        
+        // Verificar cada filtro en el mapa contra su celda correspondiente
+        for (const [indiceCol, valorFiltro] of Object.entries(mapFiltros)) {
+          const idx = parseInt(indiceCol);
+          if (idx < celdas.length) {
+            const celda = celdas[idx];
+            // Leer valor de input/textarea si existe, sino textContent
+            const input = celda.querySelector('input, textarea');
+            const textoCelda = input ? input.value.toLowerCase() : celda.textContent.toLowerCase();
+            
+            if (!textoCelda.includes(valorFiltro)) {
+              mostrarFila = false;
+              break;
+            }
+          }
+        }
+        
+        // Mostrar/ocultar fila
+        fila.style.display = mostrarFila ? '' : 'none';
+      });
+      
+      // Actualizar contador de filas visibles
+      actualizarContadorFiltros();
+    }
+
+    // Función para actualizar el contador de registros filtrados
+    function actualizarContadorFiltros() {
+      const totalFilas = $tableBody.querySelectorAll('tr').length;
+      const filasVisibles = $tableBody.querySelectorAll('tr:not([style*="display: none"])').length;
+      
+      // Buscar si existe un contador previo y eliminarlo
+      let contador = document.getElementById('contador-filtros');
+      if (contador) {
+        contador.remove();
+      }
+      
+      // Crear nuevo contador si hay filtros activos
+      const hayFiltros = Array.from($tableHeader.querySelectorAll('.filtro-texto'))
+        .some(input => input.value.trim() !== '');
+      
+      if (hayFiltros) {
+        contador = document.createElement('div');
+        contador.id = 'contador-filtros';
+        contador.className = 'contador-filtros';
+        contador.innerHTML = `📊 Mostrando ${filasVisibles} de ${totalFilas} registros`;
+        
+        // Insertar antes de la tabla
+        $resumenTable.parentNode.insertBefore(contador, $resumenTable);
+      }
+    }
+
+    // Función para limpiar todos los filtros de texto
+    function limpiarFiltrosTexto() {
+      const inputs = $tableHeader.querySelectorAll('.filtro-texto');
+      inputs.forEach(input => {
+        input.value = '';
+      });
+      
+      // Mostrar todas las filas
+      const filas = $tableBody.querySelectorAll('tr');
+      filas.forEach(fila => {
+        fila.style.display = '';
+      });
+      
+      // Eliminar contador
+      const contador = document.getElementById('contador-filtros');
+      if (contador) {
+        contador.remove();
+      }
+      
+      // Ocultar botón de limpiar filtros de tabla
+      const btnLimpiarTexto = document.getElementById('btnLimpiarFiltrosTexto');
+      if (btnLimpiarTexto) {
+        btnLimpiarTexto.style.display = 'none';
+      }
+    }
+
+    // Mostrar diferentes estados de la tabla
+    function mostrarEstado(estado) {
+      $resumenTable.style.display = 'none';
+      $loadingTable.style.display = 'none';
+      $noDataTable.style.display = 'none';
+      
+      switch (estado) {
+        case 'table':
+          $resumenTable.style.display = 'table';
+          break;
+        case 'loading':
+          $loadingTable.style.display = 'block';
+          break;
+        case 'nodata':
+          $noDataTable.style.display = 'block';
+          $filtrosAplicados.style.display = 'none';
+          break;
+      }
+    }
+
+    // Mostrar filtros aplicados en una línea
+    function mostrarFiltrosAplicados(anos, semanas) {
+      const filtrosTexto = [];
+      
+      if (anos.length > 0) {
+        filtrosTexto.push(`Años: ${anos.join(', ')}`);
+      }
+      
+      if (semanas.length > 0) {
+        filtrosTexto.push(`Semanas: ${semanas.join(', ')}`);
+      }
+      
+      $filtrosTexto.textContent = filtrosTexto.join(' | ');
+      $filtrosAplicados.style.display = 'flex';
+    }
+
+    // Ocultar panel de filtros
+    function ocultarPanelFiltros() {
+      $filtrosPanel.classList.remove('expandido');
+      $filtrosPanel.classList.add('colapsado');
+      $toggleFiltros.textContent = '▶ Expandir filtros';
+    }
+
+    // Mostrar panel de filtros
+    function mostrarPanelFiltros() {
+      $filtrosPanel.classList.remove('colapsado');
+      $filtrosPanel.classList.add('expandido');
+      $toggleFiltros.textContent = '▼ Contraer filtros';
+    }
+
+    // Limpiar filtros
+    function limpiarFiltros() {
+      $filtroAno.selectedIndex = -1;
+      $filtroSemana.selectedIndex = -1;
+      RESUMEN_DATA = null;
+      FILTROS_ACTUALES = { anos: [], semanas: [] };
+      $filtrosAplicados.style.display = 'none';
+      
+      // También limpiar filtros de texto si existen
+      limpiarFiltrosTexto();
+      
+      mostrarEstado('nodata');
+      console.log('Filtros limpiados');
+    }
+
+    // Event listeners
+    $toggleFiltros.addEventListener('click', toggleFiltrosPanel);
+    $btnAplicarFiltros.addEventListener('click', aplicarFiltros);
+    $btnLimpiarFiltros.addEventListener('click', limpiarFiltros);
+    $btnModificarFiltros.addEventListener('click', function() {
+      mostrarPanelFiltros();
+      // Restaurar selecciones de filtros actuales
+      Array.from($filtroAno.options).forEach(option => {
+        option.selected = FILTROS_ACTUALES.anos.includes(option.value);
+      });
+      Array.from($filtroSemana.options).forEach(option => {
+        option.selected = FILTROS_ACTUALES.semanas.includes(option.value);
+      });
+    });
+
+      // Permitir aplicar filtros con Enter
+    [$filtroAno, $filtroSemana].forEach(elemento => {
+      elemento.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          aplicarFiltros();
+        }
+      });
+    });
+
+    // Definición de animaciones para posible uso futuro (sin mostrar notificaciones)
+    function agregarEstilosAnimacion() {
+      // Solo agregamos los estilos de animación una vez
+      if (!document.getElementById('animacion-estilos')) {
+        const style = document.createElement('style');
+        style.id = 'animacion-estilos';
+        style.textContent = `
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+          }
+          @keyframes fadeOut {
+            from { opacity: 1; transform: translate(-50%, 0); }
+            to { opacity: 0; transform: translate(-50%, 20px); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+    
+    // Inicialización al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🟢 DOM cargado, inicializando página de resumen...');
+      
+      // Cargar datos iniciales
+      cargarAños();
+      cargarSemanas();
+      
+      // Agregar estilos de animación (solo para referencia, sin mostrar notificaciones)
+      agregarEstilosAnimacion();
+      
+      console.log('🟢 Página de resumen inicializada correctamente');
+    });
+    
+    // Variables para el arrastre de columnas
+    let draggedColumn = null;
+    let draggedIndex = -1;
+    let originalColumnOrder = [];
+    let currentOrder = [];
+
+    // Función para inicializar el arrastre de columnas después de renderizar la tabla
+    function inicializarArrastreColumnas() {
+      console.log('🔄 Inicializando funcionalidad de arrastre de columnas...');
+      
+      // Obtener todas las cabeceras de columna (primera fila solamente)
+      const headerRow = $tableHeader.querySelector('tr:first-child');
+      if (!headerRow) {
+        console.warn('⚠️ No se encontró la fila de cabeceras');
+        return;
+      }
+      
+      const columnHeaders = headerRow.querySelectorAll('th');
+      
+      // Guardar el orden original de columnas
+      originalColumnOrder = Array.from(columnHeaders);
+      currentOrder = [...originalColumnOrder];
+      
+      // Añadir atributos draggable a cada columna
+      columnHeaders.forEach((th, index) => {
+        th.setAttribute('draggable', 'true');
+        th.dataset.columnIndex = index;
+        
+        // Eventos de arrastre
+        th.addEventListener('dragstart', handleDragStart);
+        th.addEventListener('dragenter', handleDragEnter);
+        th.addEventListener('dragover', handleDragOver);
+        th.addEventListener('dragleave', handleDragLeave);
+        th.addEventListener('drop', handleDrop);
+        th.addEventListener('dragend', handleDragEnd);
+      });
+      
+      console.log(`✅ Arrastre de columnas inicializado para ${columnHeaders.length} columnas`);
+    }
+    
+    // Funciones para manejar eventos de arrastre
+    
+    function handleDragStart(e) {
+      this.classList.add('dragging');
+      draggedColumn = this;
+      draggedIndex = parseInt(this.dataset.columnIndex);
+      
+      // Para mejor UX, establecer los datos de transferencia
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.innerHTML);
+      
+      console.log(`🔄 Inicio de arrastre: columna ${this.textContent.trim()} (índice ${draggedIndex})`);
+    }
+    
+    function handleDragOver(e) {
+      if (e.preventDefault) {
+        e.preventDefault(); // Necesario para permitir el drop
+      }
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+    
+    function handleDragEnter(e) {
+      this.classList.add('drag-over');
+    }
+    
+    function handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    }
+    
+    function handleDrop(e) {
+      if (e.stopPropagation) {
+        e.stopPropagation(); // Detener redirecciones de navegador
+      }
+      
+      // Quitar clase de arrastre
+      this.classList.remove('drag-over');
+      
+      // No hacer nada si se suelta la columna sobre sí misma
+      if (draggedColumn === this) return false;
+      
+      // Obtener índice de destino
+      const targetIndex = parseInt(this.dataset.columnIndex);
+      
+      // Reordenar columnas
+      moverColumna(draggedIndex, targetIndex);
+      
+      console.log(`🔄 Columna movida: desde ${draggedIndex} hasta ${targetIndex}`);
+      
+      return false;
+    }
+    
+    function handleDragEnd(e) {
+      // Quitar todas las clases de arrastre
+      document.querySelectorAll('.resumen-table th').forEach(th => {
+        th.classList.remove('dragging');
+        th.classList.remove('drag-over');
+      });
+    }
+    
+    // Función para mover una columna de un índice a otro
+    function moverColumna(fromIndex, toIndex) {
+      console.log(`🔄 Moviendo columna de índice ${fromIndex} a índice ${toIndex}...`);
+      
+      // No hacer nada si los índices son iguales
+      if (fromIndex === toIndex) return;
+      
+      try {
+        // Guardar referencias a los filtros antes de moverlos para restaurarlos después
+        const filtros = [];
+        
+        // Mover columnas en todas las filas de la tabla
+        const rows = $resumenTable.querySelectorAll('tr');
+        
+        rows.forEach((row, rowIndex) => {
+          const cells = row.querySelectorAll('th, td');
+          if (cells.length <= Math.max(fromIndex, toIndex)) return;
+          
+          const cellToMove = cells[fromIndex];
+          const targetCell = cells[toIndex];
+          
+          // Si es la fila de filtros, guarda el input antes de mover
+          if (row.classList.contains('filtros-row')) {
+            const inputToMove = cellToMove.querySelector('input');
+            if (inputToMove) {
+              // Guardar el valor y otros atributos importantes
+              filtros.push({
+                id: inputToMove.id,
+                value: inputToMove.value,
+                placeholder: inputToMove.placeholder
+              });
+            }
+          }
+          
+          // Insertar antes o después dependiendo de la dirección
+          if (fromIndex < toIndex) {
+            // Mover hacia la derecha (insertar después)
+            if (targetCell.nextSibling) {
+              row.insertBefore(cellToMove, targetCell.nextSibling);
+            } else {
+              row.appendChild(cellToMove);
+            }
+          } else {
+            // Mover hacia la izquierda (insertar antes)
+            row.insertBefore(cellToMove, targetCell);
+          }
+        });
+        
+        // Actualizar los índices de las columnas
+        actualizarIndicesColumnas();
+        
+        // Restaurar funcionalidad de los filtros si es necesario
+        if (filtros.length > 0) {
+          setTimeout(() => {
+            filtros.forEach(filtro => {
+              const input = document.getElementById(filtro.id);
+              if (input) {
+                input.value = filtro.value;
+                // Disparar un evento para que se apliquen los filtros
+                if (filtro.value) {
+                  const event = new Event('keyup');
+                  input.dispatchEvent(event);
+                }
+              }
+            });
+          }, 100);
+        }
+        
+        console.log('✅ Columna movida exitosamente');
+      } catch (error) {
+        console.error('Error al mover columna:', error);
+        // En caso de error, recargar la tabla para evitar estados inconsistentes
+        if (RESUMEN_DATA) {
+          renderizarTablaResumen(RESUMEN_DATA);
+        }
+      }
+    }
+    
+    // Función para actualizar los índices de las columnas después de moverlas
+    function actualizarIndicesColumnas() {
+      const headerRow = $tableHeader.querySelectorAll('tr')[0];
+      if (!headerRow) return;
+      
+      const columnHeaders = headerRow.querySelectorAll('th');
+      
+      // Actualizar los índices
+      columnHeaders.forEach((th, index) => {
+        th.dataset.columnIndex = index;
+      });
+      
+      console.log('🔄 Índices de columnas actualizados');
+    }
+    
+    // Modificamos la función renderizarTablaResumen para inicializar el arrastre después de renderizar
+    const renderizarTablaResumenOriginal = renderizarTablaResumen;
+    renderizarTablaResumen = function(data) {
+      // Llamar a la función original primero
+      renderizarTablaResumenOriginal(data);
+      
+      // Después de renderizar, inicializar el arrastre de columnas
+      inicializarArrastreColumnas();
+      
+      // Actualizar el menú desplegable de columnas ocultas
+      actualizarMenuColumnasOcultas();
+      
+      console.log('✅ Tabla renderizada con funcionalidad de arrastre de columnas');
+    };
+    
+    // Función para mostrar/ocultar una columna específica
+    function toggleColumn(columnId, closeMenu = true) {
+      console.log(`🔍 Toggling columna: ${columnId}`);
+      
+      // Inicializar el array si no existe
+      if (!window.columnasOcultas) {
+        window.columnasOcultas = [];
+      }
+      
+      const isHidden = window.columnasOcultas.includes(columnId);
+      
+      if (isHidden) {
+        // MOSTRAR COLUMNA
+        // 1. Quitar del array de columnas ocultas
+        window.columnasOcultas = window.columnasOcultas.filter(id => id !== columnId);
+        
+        // 2. Mostrar todas las celdas con el data-column-id (cabeceras, filtros y datos)
+        const allElements = document.querySelectorAll(`[data-column-id="${columnId}"]`);
+        console.log(`👁️ Mostrando ${allElements.length} elementos de la columna ${columnId}`);
+        
+        allElements.forEach(el => {
+          el.classList.remove('col-hidden');
+        });
+        
+        // 3. Cambiar el botón a "-"
+        const toggleButton = document.querySelector(`th[data-column-id="${columnId}"] .toggle-column-btn`);
+        if (toggleButton) {
+          toggleButton.textContent = "−";
+          toggleButton.title = "Ocultar columna";
+        }
+        
+        console.log(`👁️ Columna ${columnId} mostrada`);
+      } else {
+        // OCULTAR COLUMNA
+        // 1. Añadir al array de columnas ocultas
+        window.columnasOcultas.push(columnId);
+        
+        // 2. Obtener todas las celdas con el data-column-id (cabeceras, filtros y datos)
+        const allElements = document.querySelectorAll(`[data-column-id="${columnId}"]`);
+        console.log(`🙈 Ocultando ${allElements.length} elementos de la columna ${columnId}`);
+        
+        allElements.forEach(el => {
+          // Añadir clase para ocultar
+          el.classList.add('col-hidden');
+          
+          // Si es un filtro, limpiarlo
+          const filterInput = el.querySelector('.filtro-texto');
+          if (filterInput && filterInput.value.trim() !== '') {
+            // Guardar valor anterior por si se restaura
+            filterInput.setAttribute('data-previous-value', filterInput.value);
+            
+            // Limpiar y aplicar el cambio
+            filterInput.value = '';
+            const event = new Event('keyup');
+            filterInput.dispatchEvent(event);
+            console.log(`🧹 Filtro limpiado en columna ${columnId}`);
+          }
+        });
+        
+        // 3. Cambiar el botón a "+"
+        const toggleButton = document.querySelector(`th[data-column-id="${columnId}"] .toggle-column-btn`);
+        if (toggleButton) {
+          toggleButton.textContent = "+";
+          toggleButton.title = "Mostrar columna";
+        }
+        
+        console.log(`🙈 Columna ${columnId} ocultada`);
+      }
+      
+      // Actualizar el menú desplegable de columnas ocultas
+      actualizarMenuColumnasOcultas();
+      
+      // Actualizar el contador de filtros si es necesario
+      actualizarContadorFiltros();
+      
+      // Cerrar el menú desplegable si se solicita
+      if (closeMenu) {
+        const dropdown = document.getElementById('columnsDropdown');
+        if (dropdown && dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      }
+    }
+    
+    // Función para actualizar el menú desplegable de columnas ocultas
+    function actualizarMenuColumnasOcultas() {
+      const dropdown = document.getElementById('columnsDropdown');
+      const showColumnsBtn = document.getElementById('showColumnsBtn');
+      
+      if (!window.columnasOcultas || window.columnasOcultas.length === 0) {
+        // No hay columnas ocultas, ocultar el botón
+        showColumnsBtn.style.display = 'none';
+        dropdown.innerHTML = '';
+        return;
+      }
+      
+      // Modificar el botón principal para reflejar la cantidad de columnas ocultas
+      showColumnsBtn.style.display = 'inline-block';
+      const columnasCount = window.columnasOcultas.length;
+      const plural = columnasCount > 1 ? 's' : '';
+      showColumnsBtn.textContent = `🔍 ${columnasCount} columna${plural} oculta${plural}`;
+      
+      // Generar las opciones del menú
+      let optionsHtml = '';
+      
+      if (columnasCount > 1) {
+        // Añadir opción para mostrar todas las columnas si hay más de una oculta
+        optionsHtml += `<div class="column-option" style="font-weight: bold; background: #f0f8ff; color: #0066cc; padding: 12px 16px;" 
+          onclick="mostrarTodasLasColumnas()">
+          ✓ Mostrar todas las columnas (${columnasCount})
+        </div>`;
+      }
+      
+      window.columnasOcultas.forEach(columnId => {
+        // Extraer el nombre de la columna del atributo data-column-id
+        const headerCell = document.querySelector(`thead th[data-column-id="${columnId}"]`);
+        let columnName = columnId;
+        if (headerCell) {
+          // Obtener solo el texto sin incluir el botón
+          columnName = headerCell.childNodes[0].textContent.trim();
+        }
+        
+        optionsHtml += `<div class="column-option" onclick="toggleColumn('${columnId}', true)">
+            Mostrar "${columnName}"
+          </div>`;
+      });
+      
+      dropdown.innerHTML = optionsHtml;
+    }
+    
+    // Controlar el menú desplegable
+    document.getElementById('showColumnsBtn').addEventListener('click', function(event) {
+      const dropdown = document.getElementById('columnsDropdown');
+      
+      // Alternar visibilidad del menú
+      dropdown.classList.toggle('show');
+      
+      // Posicionar correctamente el menú para evitar que salga del viewport
+      if (dropdown.classList.contains('show')) {
+        // Asegurarse de que el menú no se salga por la derecha
+        const btnRect = this.getBoundingClientRect();
+        const dropdownWidth = dropdown.offsetWidth;
+        
+        // Si el menú se sale por la derecha, alinearlo al borde derecho del botón
+        if (btnRect.right - dropdownWidth < 0) {
+          dropdown.style.right = '0';
+        } else {
+          dropdown.style.right = '0';
+        }
+        
+        // Evitar que el evento se propague para evitar que el menú se cierre inmediatamente
+        event.stopPropagation();
+      }
+    });
+    
+    // Cerrar el desplegable cuando se hace clic fuera de él
+    window.addEventListener('click', function(event) {
+      if (!event.target.matches('#showColumnsBtn') && 
+          !event.target.closest('.columns-dropdown-content')) {
+        const dropdown = document.getElementById('columnsDropdown');
+        if (dropdown.classList.contains('show')) {
+          dropdown.classList.remove('show');
+        }
+      }
+    });
+    
+    // Función para mostrar todas las columnas ocultas
+    function mostrarTodasLasColumnas() {
+      console.log('🔍 Mostrando todas las columnas ocultas');
+      
+      if (!window.columnasOcultas || window.columnasOcultas.length === 0) {
+        return; // No hay nada que hacer
+      }
+      
+      // Hacer una copia del array porque toggleColumn modificará el original
+      const columnasParaMostrar = [...window.columnasOcultas];
+      const totalColumnas = columnasParaMostrar.length;
+      
+      // Mostrar cada columna
+      columnasParaMostrar.forEach(columnId => {
+        toggleColumn(columnId, false); // Pasar false para no cerrar el menú entre cada toggle
+      });
+      
+      // Cerrar el menú desplegable
+      document.getElementById('columnsDropdown').classList.remove('show');
+    }
+
+    // ============================================================
+    // Guardar nota editable de DatosPedidos
+    // ============================================================
+    async function guardarNota(textarea, numeroPedido) {
+      const nuevaNota = textarea.value.trim();
+      const notaAnterior = textarea.getAttribute('data-original') || '';
+      
+      // No guardar si no ha cambiado
+      if (nuevaNota === notaAnterior) return;
+      
+      try {
+        const response = await fetch('/api/guardar-nota-pedido', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pedido: numeroPedido,
+            notas: nuevaNota
+          })
+        });
+        
+        if (response.ok) {
+          textarea.setAttribute('data-original', nuevaNota);
+          textarea.style.borderColor = '#1fa971';
+          setTimeout(() => { textarea.style.borderColor = '#b3d6ee'; }, 1500);
+          console.log(`✅ Nota guardada para pedido ${numeroPedido}`);
+        } else {
+          const err = await response.json();
+          console.error(`❌ Error guardando nota: ${err.message}`);
+          textarea.style.borderColor = '#e05252';
+          setTimeout(() => { textarea.style.borderColor = '#b3d6ee'; }, 1500);
+        }
+      } catch (error) {
+        console.error('❌ Error guardando nota:', error);
+        textarea.style.borderColor = '#e05252';
+        setTimeout(() => { textarea.style.borderColor = '#b3d6ee'; }, 1500);
+      }
+    }
+
+    // Exponer como global para el onclick desde HTML dinámico
+    window.guardarNota = guardarNota;
+
+    // ============================================================
+    // Guardar operario editable de DatosPedidos
+    // ============================================================
+    async function guardarOperario(input, numeroPedido) {
+      const nuevoOperario = input.value.trim();
+      const operarioAnterior = input.getAttribute('data-original') || '';
+      
+      // No guardar si no ha cambiado
+      if (nuevoOperario === operarioAnterior) return;
+      
+      // Validar máximo 3 dígitos numéricos
+      if (nuevoOperario && !/^\d{1,3}$/.test(nuevoOperario)) {
+        input.style.borderColor = '#e05252';
+        input.value = operarioAnterior;
+        setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/guardar-nota-pedido', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pedido: numeroPedido,
+            operario: nuevoOperario
+          })
+        });
+        
+        if (response.ok) {
+          input.setAttribute('data-original', nuevoOperario);
+          input.style.borderColor = '#1fa971';
+          setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+          console.log(`✅ Operario guardado para pedido ${numeroPedido}: ${nuevoOperario}`);
+        } else {
+          const err = await response.json();
+          console.error(`❌ Error guardando operario: ${err.message}`);
+          input.style.borderColor = '#e05252';
+          input.value = operarioAnterior;
+          setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+        }
+      } catch (error) {
+        console.error('❌ Error guardando operario:', error);
+        input.style.borderColor = '#e05252';
+        setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+      }
+    }
+
+    window.guardarOperario = guardarOperario;
+  </script>
+  
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  <script>
+    // Script para asegurar que el widget se posicione correctamente
+    document.addEventListener('DOMContentLoaded', function() {
+      const widget = document.getElementById('userSessionWidget');
+      if (widget) {
+        widget.style.position = 'fixed';
+        widget.style.bottom = '15px';
+        widget.style.right = '15px';
+        widget.style.top = 'auto';
+        widget.style.left = 'auto';
+        widget.style.zIndex = '10001';
+        widget.style.borderRadius = '25px';
+        widget.style.maxWidth = '250px';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "fvName": "ES5",
+  "project": "ES5",
+  "timeCapture": [
+    {
+      "group": "51 Picking",
+      "center": "Indirect_ES5",
+      "activity": "Picking line"
+    },
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Assembly_17",
+      "activity": "--"
+    },
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Assembly_18",
+      "activity": "--"
+    },
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Assembly_19",
+      "activity": "--"
+    },
+    {
+      "group": "50 Assembly",
+      "center": "CTM_Pouching_04",
+      "activity": "--"
+    }
+  ]
+}

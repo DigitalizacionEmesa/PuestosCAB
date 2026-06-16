@@ -1,0 +1,29 @@
+{
+  "fvName": "Laser",
+  "productionCapture": [
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 3030 8kW",
+      "activity": "--"
+    },
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 5030",
+      "activity": "--"
+    },
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 5030 12kW",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "FG002"
+    },
+    {
+      "cod_tipoproducto": "SF002"
+    }
+  ],
+  "editMode": true
+}

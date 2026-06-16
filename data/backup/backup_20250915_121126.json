@@ -1,0 +1,17 @@
+{
+  "fvName": "MOD3",
+  "project": "NSTD",
+  "timeCapture": [
+    {
+      "group": "15 Folding",
+      "center": "Bending 2",
+      "activity": "brackety Indie"
+    }
+  ],
+  "targetSettings": {
+    "salesOrderWeek": 99,
+    "shiftsWeek": 99,
+    "workersShift": 99,
+    "targetEfficiency": 99
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "fvName": "Laser ES1",
+  "productionCapture": [
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 3030 6kW",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "FG001"
+    },
+    {
+      "cod_tipoproducto": "SF001"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 50
+  },
+  "editMode": true
+}

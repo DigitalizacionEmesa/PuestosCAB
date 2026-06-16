@@ -1,0 +1,27 @@
+{
+  "fvName": "AAA",
+  "productionCapture": [
+    {
+      "group": "18 PEM Serter",
+      "center": "Bending 4",
+      "activity": "Kompletace nekompletních beden"
+    },
+    {
+      "group": "24 Cutting",
+      "center": "Bending 3",
+      "activity": "Jiné - Other"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "CON"
+    },
+    {
+      "cod_tipoproducto": "FG001"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 30
+  },
+  "editMode": true
+}

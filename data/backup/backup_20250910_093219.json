@@ -1,0 +1,18 @@
+{
+  "fvName": "mod3",
+  "project": "NSTD",
+  "productionCapture": [],
+  "timeCapture": [
+    {
+      "group": "16 Bending cell",
+      "center": "Bending 3",
+      "activity": "Jiné - Other"
+    }
+  ],
+  "targetSettings": {
+    "salesOrderWeek": 1,
+    "shiftsWeek": 1,
+    "workersShift": 1,
+    "targetEfficiency": 1
+  }
+}

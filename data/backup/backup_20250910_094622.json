@@ -1,0 +1,29 @@
+{
+  "fvName": "Bending ES5",
+  "productionCapture": [
+    {
+      "group": "15 Bending",
+      "center": "Bending 1",
+      "activity": "--"
+    },
+    {
+      "group": "15 Bending",
+      "center": "Bending 2",
+      "activity": "--"
+    },
+    {
+      "group": "15 Bending",
+      "center": "Bending 3",
+      "activity": "--"
+    },
+    {
+      "group": "15 Bending",
+      "center": "Bending 4",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [],
+  "targetSettings": {
+    "targetEfficiency": 0
+  }
+}

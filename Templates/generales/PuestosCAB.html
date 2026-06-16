@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Puestos Cabinas</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS de respaldo en caso de problemas de ruta -->
+  <style>
+    body { 
+      background: #e6f2fb !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    .header { 
+      background: #3880c7 !important; 
+      color: #fff !important; 
+      height: 80px !important; 
+      display: flex !important; 
+      align-items: center !important; 
+    }
+    .card { 
+      background: #cbe7fa !important; 
+      border: 2px solid #b3d6ee !important; 
+      border-radius: 12px !important; 
+      min-height: 120px !important; 
+    }
+  </style>
+
+  <style>
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    /* Personalizaciones específicas para PuestosCAB */
+    .card-icon-emoji {
+      font-size: 120px;
+      margin-bottom: 15px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+    
+    /* Ajustes para las tarjetas principales */
+    .main-grid .card {
+      min-height: 320px;
+      justify-content: center;
+      text-align: center; /* Centrar todo el contenido de las tarjetas */
+    }
+    
+    .main-grid .card-title {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-align: center; /* Centrar específicamente los títulos */
+      width: 100%; /* Asegurar que ocupe todo el ancho */
+    }
+
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important; /* Quitar el margen izquierdo fijo */
+      margin-right: 0 !important; /* Quitar cualquier margen derecho */
+      text-align: center !important; /* Asegurar que esté centrado */
+    }
+
+    /* Ajustar el grid para que se vea mejor */
+    .main-grid {
+      max-width: 900px;
+      margin: 20px auto 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="help-icon" onclick="goToManual()" aria-label="Manual de Usuario">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+    </button>
+    <div class="header-title">PUESTOS CAB</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de usuario -->
+  <div id="userSessionWidget" class="user-session-widget">
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
+  </div>
+
+  <!-- Container principal usando estilos globales -->
+  <div class="container">
+    <!-- Grid principal usando estilos de global-styles.css -->
+    <div class="main-grid">
+      <div class="card" onclick="goToKPI()">
+        <div class="card-title">Puestos</div>
+        <div class="card-icon-emoji">📊</div>
+      </div>
+      
+      <div class="card" onclick="goToConfiguration()">
+        <div class="card-title">Configuración</div>
+        <div class="card-icon-emoji">⚙️</div>
+      </div>
+    </div>
+
+    <!-- Fila inferior usando estilos globales (para futuras funcionalidades) -->
+    <div class="bottom-row">
+      <!-- Espacio para futuras funcionalidades como Reportes, etc. -->
+    </div>
+  </div>
+
+  <script>
+    // Forzar recarga de CSS
+    if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
+      window.location.reload(true);
+    }
+    
+    // Verificar permisos del usuario al cargar la página
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        console.log('🔍 INICIANDO VERIFICACIÓN DE PERMISOS EN PuestosCAB.html...');
+        const response = await fetch('/api/obtener-permisos-usuario', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log('📡 Response status:', response.status);
+        console.log('📡 Response ok:', response.ok);
+
+        if (response.ok) {
+          const permisosData = await response.json();
+          console.log('📊 DATOS COMPLETOS DE PERMISOS:', JSON.stringify(permisosData, null, 2));
+          console.log('🔑 Nivel_Permisos recuperado:', permisosData.nivel_permisos);
+          console.log('🔑 Tipo de dato:', typeof permisosData.nivel_permisos);
+          console.log('🔑 Success flag:', permisosData.success);
+          
+          // Si el usuario no tiene permisos suficientes (Nivel_Permisos <= 1), ocultar Configuración
+          if (permisosData.success && permisosData.nivel_permisos <= 1) {
+            const configCard = document.querySelector('.card[onclick="goToConfiguration()"]');
+            console.log('🎯 Card de configuración encontrada:', configCard);
+            if (configCard) {
+              configCard.style.display = 'none';
+              console.log('❌ Card de Configuración OCULTA - Nivel_Permisos:', permisosData.nivel_permisos);
+            }
+          } else {
+            console.log('✅ Usuario con permisos de administración - Nivel_Permisos:', permisosData.nivel_permisos);
+            console.log('✅ Configuración VISIBLE');
+          }
+        } else {
+          const errorText = await response.text();
+          console.warn('⚠️ No se pudieron obtener los permisos del usuario');
+          console.warn('⚠️ Error response:', errorText);
+        }
+      } catch (error) {
+        console.error('💥 Error al verificar permisos:', error);
+      }
+    });
+    
+    // Función para ir a la página de KPI (Lista de Puestos CAB)
+    function goToKPI() {
+      console.log('📊 Navegando a Lista de Puestos CAB...');
+      window.location.href = '/templates/generales/ListaPuestosCAB.html';
+    }
+
+    // Función para ir a la página de Configuración
+    function goToConfiguration() {
+      console.log('⚙️ Navegando a Configuración CAB...');
+      window.location.href = '/templates/generales/ConfiguracionCAB.html';
+    }
+
+    // Función para ir al Manual de Usuario
+    function goToManual() {
+      console.log('📚 Navegando al Manual de Usuario...');
+      window.location.href = '/templates/generales/Manual.html';
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🏭 Página de Puestos CAB cargada');
+    });
+  </script>
+  
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+</body>
+</html>

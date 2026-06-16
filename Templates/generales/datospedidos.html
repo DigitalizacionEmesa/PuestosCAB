@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Importación Datos Pedidos - CAB</title>
+
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+
+  <!-- SheetJS para leer archivos Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #e6f2fb;
+      --card: #ffffff;
+      --card-secondary: #f8fbff;
+      --accent: #3880c7;
+      --text: #2c6aa6;
+      --border: #b3d6ee;
+      --ok: #1fa971;
+      --bad: #e05252;
+      --warn: #e6a700;
+      --chip: #d6e8f5;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: 'Open Sans', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #ff8c33, #ffb366) !important;
+      color: #fff !important;
+      height: 80px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    .header-title {
+      text-align: center !important;
+      flex: 1;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .back-icon, .home-icon {
+      background: none;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      padding: 8px;
+      margin: 0 10px;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .back-icon:hover, .home-icon:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Logo EMESA */
+    .emesa-logo {
+      height: 50px;
+      margin-left: auto;
+      margin-right: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .section {
+      background: var(--card);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .section h2 {
+      color: var(--text);
+      margin: 0 0 16px 0;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 3px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f8fbff;
+    }
+
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: #e8f0fe;
+      transform: scale(1.01);
+    }
+
+    .drop-zone .icon {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+
+    .drop-zone .text {
+      color: #666;
+      font-size: 1rem;
+      margin: 5px 0;
+    }
+
+    .drop-zone .subtext {
+      color: #999;
+      font-size: 0.85rem;
+    }
+
+    /* Paste area */
+    .paste-area {
+      width: 100%;
+      min-height: 100px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 0.85rem;
+      resize: vertical;
+      box-sizing: border-box;
+      color: #333;
+    }
+
+    .paste-area:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56,128,199,0.2);
+    }
+
+    .paste-area::placeholder {
+      color: #aaa;
+    }
+
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+      color: #999;
+      font-weight: 600;
+    }
+
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Toggle tabs */
+    .toggle-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 20px;
+      background: #d6e8f5;
+      border-radius: 10px;
+      padding: 4px;
+    }
+
+    .toggle-tab {
+      flex: 1;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #5a7fa0;
+      transition: all 0.2s;
+    }
+
+    .toggle-tab.active {
+      background: #fff;
+      color: var(--accent);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .toggle-tab:hover:not(.active) {
+      color: var(--accent);
+      background: rgba(255,255,255,0.5);
+    }
+
+    /* Preview table */
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 12px;
+    }
+
+    .preview-table th {
+      background: var(--accent);
+      color: #fff;
+      padding: 10px 8px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .preview-table td {
+      padding: 8px;
+      border-bottom: 1px solid #e0e0e0;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .preview-table tr:nth-child(even) {
+      background: #f8fbff;
+    }
+
+    .preview-table tr:hover {
+      background: var(--chip, #d6e8f5);
+    }
+
+    .table-wrapper {
+      max-height: none;
+      overflow: visible;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    /* Estilo tabla resumen (mismo que resumenpedidos.html) */
+    .resumen-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 14px;
+      table-layout: auto;
+    }
+
+    .resumen-table th {
+      background: var(--accent);
+      color: white;
+      padding: 10px 8px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #2a5a8a;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .resumen-table td {
+      padding: 8px;
+      border-bottom: 1px solid #e0e0e0;
+      vertical-align: middle;
+    }
+
+    .resumen-table tr:nth-child(even) {
+      background: var(--card-secondary, #f8fbff);
+    }
+
+    .resumen-table tr:hover {
+      background: var(--chip, #d6e8f5);
+    }
+
+    .filtros-row th {
+      padding: 6px 8px;
+      background: #f0f4f8;
+      border-bottom: 2px solid var(--border);
+      position: sticky;
+      top: 36px;
+      z-index: 9;
+    }
+
+    .filtro-texto {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #333;
+      transition: border-color 0.2s;
+    }
+
+    .filtro-texto:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(56,128,199,0.15);
+    }
+
+    .pedido-numero {
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      font-size: 1rem;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #2b6db5; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+
+    .btn-danger {
+      background: var(--bad);
+      color: #fff;
+    }
+
+    .btn-danger:hover { background: #c0392b; }
+
+    .btn-outline {
+      background: #fff;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+    }
+
+    .btn-outline:hover { background: #e8f0fe; }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    /* Status messages */
+    .status {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-top: 12px;
+      font-weight: 600;
+      display: none;
+    }
+
+    .status-success { background: #d4edda; color: #155724; display: block; }
+    .status-error { background: #f8d7da; color: #721c24; display: block; }
+    .status-info { background: #d1ecf1; color: #0c5460; display: block; }
+
+    .row-count {
+      color: var(--accent);
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    /* Error list */
+    .error-list {
+      max-height: 150px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+      margin-top: 8px;
+    }
+
+    .error-list li {
+      color: var(--bad);
+      margin: 2px 0;
+    }
+
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important;
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important;
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+      width: auto !important;
+      transform: none !important;
+    }
+
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header control-header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">IMPORTACIÓN DATOS PEDIDOS</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <div id="userSessionWidget" class="user-session-widget"></div>
+
+  <div class="container">
+    <!-- Toggle Importar / Importado -->
+    <div class="toggle-tabs">
+      <button class="toggle-tab active" id="tabImportar" onclick="switchTab('importar')">📥 Importar</button>
+      <button class="toggle-tab" id="tabImportado" onclick="switchTab('importado')">📋 Importado</button>
+    </div>
+
+    <!-- Panel IMPORTAR -->
+    <div id="panelImportar">
+    <div class="section">
+      <h2>📎 Arrastrar archivo Excel</h2>
+      <div class="drop-zone" id="dropZone">
+        <div class="icon">📁</div>
+        <div class="text">Arrastra aquí un archivo .xlsx o .xls</div>
+        <div class="subtext">o haz clic para seleccionar</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+      </div>
+    </div>
+
+    <!-- Divisor -->
+    <div class="or-divider">O</div>
+
+    <!-- Zona Pegar desde Excel -->
+    <div class="section">
+      <h2>📋 Pegar desde Excel (Ctrl+V)</h2>
+      <textarea class="paste-area" id="pasteArea" 
+                placeholder="Copia celdas desde Excel y pégalas aquí con Ctrl+V.&#10;La primera fila debe contener las cabeceras:&#10;Pedido | FechaEntrega | EMB | TipoDecoracion | Notas | Operario"></textarea>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="procesarPegado()">🔍 Procesar datos pegados</button>
+        <button class="btn btn-outline" onclick="limpiarTodo()">🗑️ Limpiar</button>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="section" id="previewSection" style="display:none">
+      <h2>📊 Vista previa <span class="row-count" id="rowCount"></span></h2>
+      <div class="table-wrapper">
+        <table class="preview-table" id="previewTable">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnImportar" onclick="importarDatos()">💾 Importar a base de datos</button>
+        <button class="btn btn-danger" onclick="limpiarTodo()">🗑️ Cancelar</button>
+      </div>
+      <div id="statusMsg" class="status"></div>
+      <ul class="error-list" id="errorList"></ul>
+    </div>
+    </div>
+    <!-- Fin panel IMPORTAR -->
+
+    <!-- Panel IMPORTADO -->
+    <div id="panelImportado" style="display:none">
+      <div class="section" style="max-height:none;overflow:visible;">
+        <h2>📋 Datos importados <span class="row-count" id="importadoCount"></span></h2>
+        <div style="overflow-x:auto;">
+          <table class="resumen-table" id="importadoTable" style="display:table;">
+            <thead>
+              <tr class="cabeceras-row">
+                <th>Pedido</th>
+                <th>Fecha Entrega</th>
+                <th>EMB</th>
+                <th>Tipo Dec.</th>
+                <th>Modelo</th>
+                <th>Fecha Import.</th>
+              </tr>
+              <tr class="filtros-row">
+                <th><input type="text" class="filtro-texto" placeholder="Filtrar..." onkeyup="filtrarImportado()"></th>
+                <th><input type="text" class="filtro-texto" placeholder="Filtrar..." onkeyup="filtrarImportado()"></th>
+                <th><input type="text" class="filtro-texto" placeholder="Filtrar..." onkeyup="filtrarImportado()"></th>
+                <th><input type="text" class="filtro-texto" placeholder="Filtrar..." onkeyup="filtrarImportado()"></th>
+                <th><input type="text" class="filtro-texto" placeholder="Filtrar..." onkeyup="filtrarImportado()"></th>
+                <th><input type="text" class="filtro-texto" placeholder="Filtrar..." onkeyup="filtrarImportado()"></th>
+              </tr>
+            </thead>
+            <tbody id="importadoBody">
+              <tr><td colspan="6" style="text-align:center;color:#999;">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- Fin panel IMPORTADO -->
+  </div>
+
+  <script>
+    // ===== VARIABLES GLOBALES =====
+    let datosPreview = [];        // Array de objetos con los datos parseados
+    let cabeceras = [];           // Nombres de columna detectados
+
+    const COLUMNAS_ESPERADAS = ['Pedido', 'FechaEntrega', 'EMB', 'TipoDecoracion', 'Notas', 'Operario', 'Modelo'];
+    const COLUMNAS_ALTERNATIVAS = {
+      'pedido': 'Pedido',
+      'nº pedido': 'Pedido',
+      'nºpedido': 'Pedido',
+      'n pedido': 'Pedido',
+      'fechaentrega': 'FechaEntrega',
+      'fecha entrega': 'FechaEntrega',
+      'fecha_entrega': 'FechaEntrega',
+      'emb': 'EMB',
+      'tipodecoracion': 'TipoDecoracion',
+      'tipo decoracion': 'TipoDecoracion',
+      'tipo de decoración': 'TipoDecoracion',
+      'tipo de decoracion': 'TipoDecoracion',
+      'tipo_decoracion': 'TipoDecoracion',
+      'tipodecoración': 'TipoDecoracion',
+      'tipo': 'TipoDecoracion',
+      'notas': 'Notas',
+      'nota': 'Notas',
+      'operario': 'Operario',
+      'modelo': 'Modelo',
+      'modelo deco': 'Modelo',
+      'modelo_deco': 'Modelo',
+      'modelodeco': 'Modelo'
+    };
+
+    // ===== ACCESO =====
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        const response = await fetch('/api/validar-acceso-pantalla', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pantalla: 'datospedidos.html' })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.success || !data.acceso_permitido) {
+            alert('No tiene permisos suficientes.');
+            window.location.href = '/templates/generales/PuestosCAB.html';
+          }
+        }
+      } catch(e) { console.warn('Validación acceso:', e); }
+    });
+
+    // ===== DRAG & DROP =====
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) procesarArchivo(file);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) procesarArchivo(file);
+    });
+
+    // ===== PROCESAR ARCHIVO EXCEL =====
+    function procesarArchivo(file) {
+      if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        mostrarStatus('Formato no soportado. Usa .xlsx o .xls', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: false });
+
+          if (jsonData.length < 2) {
+            mostrarStatus('El archivo no tiene suficientes filas', 'error');
+            return;
+          }
+
+          procesarDatos(jsonData);
+        } catch(err) {
+          console.error('Error leyendo Excel:', err);
+          mostrarStatus('Error al leer el archivo Excel: ' + err.message, 'error');
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    // ===== PROCESAR PEGADO =====
+    function procesarPegado() {
+      const texto = document.getElementById('pasteArea').value.trim();
+      if (!texto) {
+        mostrarStatus('Pega primero los datos desde Excel', 'error');
+        return;
+      }
+
+      // Dividir en líneas
+      const lineas = texto.split('\n').filter(l => l.trim());
+      if (lineas.length < 2) {
+        mostrarStatus('Se necesitan al menos 2 filas (cabeceras + datos)', 'error');
+        return;
+      }
+
+      // Detectar separador: probar tab primero, luego espacios múltiples
+      let datos;
+      const primeraLinea = lineas[0];
+      const tieneTabs = primeraLinea.includes('\t');
+      
+      if (tieneTabs) {
+        // Separado por tabulaciones (pegado directo Excel)
+        datos = lineas.map(linea => linea.split('\t'));
+      } else {
+        // Separado por espacios múltiples (pegado como texto plano)
+        // Dividir por 2 o más espacios consecutivos
+        datos = lineas.map(linea => linea.split(/\s{2,}/).map(c => c.trim()));
+        
+        // Si el split por espacios múltiples no funciona bien (solo 1 columna),
+        // intentar split por espacio simple (datos sin cabeceras multi-palabra)
+        if (datos[0].length <= 1) {
+          datos = lineas.map(linea => linea.split(/\s+/));
+        }
+      }
+
+      console.log('Separador detectado:', tieneTabs ? 'TAB' : 'ESPACIOS');
+      console.log('Columnas detectadas en cabecera:', datos[0].length);
+      console.log('Cabeceras:', datos[0]);
+
+      procesarDatos(datos);
+    }
+
+    // ===== PROCESAR DATOS (compartido por archivo y pegado) =====
+    function procesarDatos(rawData) {
+      // rawData[0] = cabeceras, rawData[1..] = filas de datos
+      const rawHeaders = rawData[0].map(h => String(h).trim());
+      
+      // Mapear cabeceras a nombres canónicos
+      cabeceras = rawHeaders.map(h => {
+        const hLower = h.toLowerCase();
+        return COLUMNAS_ALTERNATIVAS[hLower] || h;
+      });
+
+      console.log('Cabeceras detectadas:', cabeceras);
+
+      // Verificar que tengamos Pedido y FechaEntrega
+      if (!cabeceras.includes('Pedido') || !cabeceras.includes('FechaEntrega')) {
+        mostrarStatus('Las cabeceras deben incluir "Pedido" y "FechaEntrega". Detectadas: ' + cabeceras.join(', '), 'error');
+        return;
+      }
+
+      // Convertir filas a objetos
+      datosPreview = [];
+      for (let i = 1; i < rawData.length; i++) {
+        const row = rawData[i];
+        if (!row || row.every(cell => String(cell).trim() === '')) continue;
+
+        const obj = {};
+        cabeceras.forEach((col, idx) => {
+          let val = row[idx] !== undefined ? String(row[idx]).trim() : '';
+          
+          // Convertir fechas: DD/MM/YYYY o D/M/YYYY → YYYY-MM-DD
+          if (col === 'FechaEntrega' && val) {
+            val = convertirFecha(val);
+          }
+          
+          obj[col] = val;
+        });
+
+        // Validar campos mínimos
+        if (!obj['Pedido'] || !obj['FechaEntrega']) continue;
+
+        datosPreview.push(obj);
+      }
+
+      console.log('Datos parseados:', datosPreview.length, 'filas');
+
+      if (datosPreview.length === 0) {
+        mostrarStatus('No se encontraron filas válidas con Pedido y FechaEntrega', 'error');
+        return;
+      }
+
+      mostrarPreview();
+    }
+
+    // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD
+    function convertirFecha(val) {
+      // Si ya está en formato YYYY-MM-DD, devolver tal cual
+      if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+      
+      // Intentar parsear DD/MM/YYYY o D/M/YYYY (formato español)
+      const partes = val.split(/[\/\-]/);
+      if (partes.length === 3) {
+        // Siempre asumir DD/MM/YYYY (formato español)
+        let d = partes[0].padStart(2, '0');
+        let m = partes[1].padStart(2, '0');
+        let a = partes[2];
+        if (a.length === 2) a = '20' + a;
+        if (a && a.length === 4) {
+          return `${a}-${m}-${d}`;
+        }
+      }
+      return val;
+    }
+
+    // ===== MOSTRAR PREVIEW =====
+    function mostrarPreview() {
+      const section = document.getElementById('previewSection');
+      const tbody = document.querySelector('#previewTable tbody');
+      const thead = document.querySelector('#previewTable thead');
+      const rowCount = document.getElementById('rowCount');
+      const btnImportar = document.getElementById('btnImportar');
+
+      // Usar solo columnas esperadas
+      const columnas = COLUMNAS_ESPERADAS.filter(c => cabeceras.includes(c));
+
+      // Cabeceras
+      thead.innerHTML = `<tr>${columnas.map(c => `<th>${c}</th>`).join('')}</tr>`;
+
+      // Filas (máximo 50 en preview)
+      const previewFilas = datosPreview.slice(0, 50);
+      tbody.innerHTML = previewFilas.map(row => 
+        `<tr>${columnas.map(c => `<td>${row[c] || ''}</td>`).join('')}</tr>`
+      ).join('');
+
+      rowCount.textContent = `(${datosPreview.length} filas)`;
+      section.style.display = 'block';
+      btnImportar.disabled = false;
+      
+      document.getElementById('statusMsg').className = 'status';
+      document.getElementById('statusMsg').textContent = '';
+      document.getElementById('errorList').innerHTML = '';
+
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // ===== IMPORTAR A BD =====
+    async function importarDatos() {
+      const btnImportar = document.getElementById('btnImportar');
+      btnImportar.disabled = true;
+      btnImportar.textContent = '⏳ Importando...';
+
+      mostrarStatus('Importando datos...', 'info');
+      document.getElementById('errorList').innerHTML = '';
+
+      try {
+        // Preparar datos para enviar (solo columnas esperadas, normalizadas)
+        const filas = datosPreview.map(row => {
+          const obj = {};
+          COLUMNAS_ESPERADAS.forEach(col => {
+            obj[col] = row[col] || null;
+          });
+          return obj;
+        });
+
+        const response = await fetch('/api/importar-datospedidos', {
+          method: 'POST',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filas: filas })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          let msg = `✅ ${result.insertadas} insertados, ${result.actualizadas} actualizados`;
+          if (result.errores > 0) msg += `, ${result.errores} errores`;
+          mostrarStatus(msg, result.errores > 0 ? 'info' : 'success');
+
+          if (result.detalle_errores && result.detalle_errores.length > 0) {
+            const errorList = document.getElementById('errorList');
+            errorList.innerHTML = result.detalle_errores.map(e => `<li>${e}</li>`).join('');
+          }
+
+          if (result.errores === 0) {
+            // Éxito total - limpiar tras 2s
+            setTimeout(() => limpiarTodo(), 2000);
+          }
+        } else {
+          mostrarStatus('Error: ' + result.message, 'error');
+        }
+      } catch(err) {
+        console.error('Error importando:', err);
+        mostrarStatus('Error de conexión: ' + err.message, 'error');
+      } finally {
+        btnImportar.disabled = false;
+        btnImportar.textContent = '💾 Importar a base de datos';
+      }
+    }
+
+    // ===== UTILIDADES =====
+    function mostrarStatus(msg, tipo) {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg;
+      el.className = 'status status-' + tipo;
+    }
+
+    function limpiarTodo() {
+      datosPreview = [];
+      cabeceras = [];
+      document.getElementById('pasteArea').value = '';
+      document.getElementById('fileInput').value = '';
+      document.getElementById('previewSection').style.display = 'none';
+      document.getElementById('statusMsg').className = 'status';
+      document.getElementById('statusMsg').textContent = '';
+      document.getElementById('errorList').innerHTML = '';
+    }
+
+    // ===== TOGGLE IMPORTAR / IMPORTADO =====
+    function switchTab(tab) {
+      const panelImportar = document.getElementById('panelImportar');
+      const panelImportado = document.getElementById('panelImportado');
+      const tabImportar = document.getElementById('tabImportar');
+      const tabImportado = document.getElementById('tabImportado');
+
+      if (tab === 'importar') {
+        panelImportar.style.display = 'block';
+        panelImportado.style.display = 'none';
+        tabImportar.classList.add('active');
+        tabImportado.classList.remove('active');
+      } else {
+        panelImportar.style.display = 'none';
+        panelImportado.style.display = 'block';
+        tabImportar.classList.remove('active');
+        tabImportado.classList.add('active');
+        cargarImportado();
+      }
+    }
+
+    async function cargarImportado() {
+      const tbody = document.getElementById('importadoBody');
+      const count = document.getElementById('importadoCount');
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Cargando...</td></tr>';
+
+      try {
+        const response = await fetch('/api/datospedidos-listado');
+        const data = await response.json();
+
+        if (data.success && data.pedidos) {
+          count.textContent = `(${data.total} registros)`;
+          if (data.pedidos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No hay datos importados</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.pedidos.map(p => `
+            <tr>
+              <td class="pedido-numero">${p.Pedido || ''}</td>
+              <td>${formatearFecha(p.FechaEntrega)}</td>
+              <td>${p.EMB || ''}</td>
+              <td>${p.TipoDecoracion !== null ? p.TipoDecoracion : ''}</td>
+              <td>${p.Modelo || ''}</td>
+              <td>${formatearFechaHora(p.FechaImport)}</td>
+            </tr>
+          `).join('');
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#e05252;">Error al cargar</td></tr>';
+        }
+      } catch(err) {
+        console.error('Error cargando importado:', err);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#e05252;">Error de conexión</td></tr>';
+      }
+    }
+
+    // Exponer switchTab globalmente
+    window.switchTab = switchTab;
+
+    // Formatear fecha YYYY-MM-DD → DD/MM/YYYY
+    function formatearFecha(fechaStr) {
+      if (!fechaStr) return '';
+      const match = fechaStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+      return fechaStr.substring(0, 10);
+    }
+
+    function formatearFechaHora(fechaStr) {
+      if (!fechaStr) return '';
+      const match = fechaStr.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+      if (match) return `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}`;
+      return formatearFecha(fechaStr);
+    }
+
+    // ===== FILTROS TABLA IMPORTADO =====
+    function filtrarImportado() {
+      const tbody = document.getElementById('importadoBody');
+      const filas = tbody.querySelectorAll('tr');
+      const inputs = document.querySelectorAll('#importadoTable .filtro-texto');
+
+      const filtros = Array.from(inputs).map(inp => inp.value.toLowerCase().trim());
+
+      filas.forEach(fila => {
+        const celdas = fila.querySelectorAll('td');
+        if (celdas.length === 1 && celdas[0].colSpan > 1) return; // Saltar fila de "Cargando..."
+        
+        let mostrar = true;
+        filtros.forEach((filtro, idx) => {
+          if (filtro && celdas[idx] && !celdas[idx].textContent.toLowerCase().includes(filtro)) {
+            mostrar = false;
+          }
+        });
+        fila.style.display = mostrar ? '' : 'none';
+      });
+    }
+  </script>
+
+  <script src="/assets/css/loginModal.js"></script>
+  <script>
+    // Script para asegurar que el widget se posicione correctamente
+    document.addEventListener('DOMContentLoaded', function() {
+      const widget = document.getElementById('userSessionWidget');
+      if (widget) {
+        widget.style.position = 'fixed';
+        widget.style.bottom = '15px';
+        widget.style.right = '15px';
+        widget.style.top = 'auto';
+        widget.style.left = 'auto';
+        widget.style.zIndex = '10001';
+        widget.style.borderRadius = '25px';
+        widget.style.maxWidth = '250px';
+      }
+    });
+  </script>
+</body>
+</html>

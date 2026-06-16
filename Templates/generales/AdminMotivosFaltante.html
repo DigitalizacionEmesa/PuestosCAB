@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Administrar Motivos de Faltante</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+
+  <style>
+    /* Estilos para el widget de usuario */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important;
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important;
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+      width: auto !important;
+      transform: none !important;
+    }
+    
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+
+    body {
+      background: #e6f2fb;
+      font-family: 'Open Sans', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .header {
+      background: #3880c7 !important;
+      color: #fff !important;
+      height: 80px !important;
+      display: flex !important;
+      align-items: center !important;
+    }
+
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      text-align: center !important;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .main-container {
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 0 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #f8fbff;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e0e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #2c6aa6;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Formulario agregar motivo */
+    .add-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .add-form input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e0e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .add-form input:focus {
+      border-color: #3880c7;
+      outline: none;
+    }
+
+    .btn-add {
+      background: #28a745;
+      color: white;
+      padding: 12px 24px;
+    }
+
+    .btn-add:hover {
+      background: #218838;
+    }
+
+    /* Buscador */
+    .search-container {
+      margin-bottom: 16px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .search-input:focus {
+      border-color: #3880c7;
+      outline: none;
+    }
+
+    /* Lista de motivos */
+    .motivos-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .motivo-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: #f8fbff;
+      border: 1px solid #e0e8f0;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .motivo-row:hover {
+      background: #e6f2fb;
+      border-color: #3880c7;
+    }
+
+    .motivo-row.protected {
+      background: #fff9e6;
+      border-color: #ffd966;
+    }
+
+    .motivo-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .motivo-orden {
+      background: #3880c7;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .motivo-descripcion {
+      font-size: 1rem;
+      color: #333;
+    }
+
+    .motivo-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-edit {
+      background: #ff9800;
+      color: white;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .btn-edit:hover {
+      background: #f57c00;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .btn-delete:hover {
+      background: #c82333;
+    }
+
+    .btn-delete:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Estadísticas */
+    .stats {
+      display: flex;
+      gap: 20px;
+      padding: 16px 20px;
+      background: #f0f8ff;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #3880c7;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    /* Modal de edición */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      max-width: 450px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      background: #3880c7;
+      color: white;
+      padding: 16px 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+
+    .modal-close:hover {
+      opacity: 1;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .btn-cancel {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .btn-cancel:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-save {
+      background: #3880c7;
+      color: white;
+    }
+
+    .btn-save:hover {
+      background: #2c6aa6;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+    }
+
+    /* Mensaje de error/éxito */
+    .message {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    /* Hidden */
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabecera -->
+  <header class="header">
+    <button class="back-icon" onclick="volverAtras()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">Administrar Motivos de Faltante</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de usuario -->
+  <div id="userSessionWidget" class="user-session-widget">
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
+  </div>
+
+  <main class="main-container">
+    <!-- Mensaje de estado -->
+    <div id="messageContainer" class="message"></div>
+
+    <!-- Card principal -->
+    <div class="card">
+      <div class="card-header">
+        <h2>Catálogo de Motivos de Faltante</h2>
+      </div>
+      <div class="card-body">
+        <!-- Estadísticas -->
+        <div class="stats">
+          <div class="stat-item">
+            <span id="totalMotivos" class="stat-number">0</span>
+            <span class="stat-label">Motivos Activos</span>
+          </div>
+        </div>
+
+        <!-- Formulario agregar -->
+        <div class="add-form">
+          <input type="text" id="nuevoMotivoInput" placeholder="Escribir nuevo motivo de faltante..." maxlength="200">
+          <button class="btn btn-add" onclick="agregarMotivo()">
+            + Agregar
+          </button>
+        </div>
+
+        <!-- Buscador -->
+        <div class="search-container">
+          <input type="text" id="searchInput" class="search-input" 
+                 placeholder="Buscar motivo..." oninput="filtrarMotivos()">
+        </div>
+
+        <!-- Lista de motivos -->
+        <div id="motivosList" class="motivos-list">
+          <div class="loading">Cargando motivos...</div>
+        </div>
+
+        <div id="emptyState" class="empty-state hidden">
+          <div class="empty-state-icon">-</div>
+          <p>No hay motivos de faltante configurados.</p>
+          <p>Agregue uno usando el formulario de arriba.</p>
+        </div>
+
+        <div id="noResults" class="empty-state hidden">
+          <div class="empty-state-icon">-</div>
+          <p>No se encontraron motivos que coincidan con la búsqueda.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de edición -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Editar Motivo</h3>
+        <button class="modal-close" onclick="cerrarModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editMotivoId">
+        <div class="form-group">
+          <label for="editDescripcion">Descripción:</label>
+          <input type="text" id="editDescripcion" maxlength="200" placeholder="Descripción del motivo">
+        </div>
+        <div class="form-group">
+          <label for="editOrden">Orden (menor = aparece primero):</label>
+          <input type="number" id="editOrden" min="0" max="999" placeholder="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-cancel" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn btn-save" onclick="guardarEdicion()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/assets/css/loginModal.js"></script>
+
+  <script>
+    // Variables globales
+    let motivosCache = [];
+
+    // Función para volver atrás
+    function volverAtras() {
+      // Si hay historial, volver atrás; si no, ir a la lista de puestos
+      if (window.history.length > 1 && document.referrer) {
+        window.history.back();
+      } else {
+        window.location.href = '/templates/generales/ListaPuestosCAB.html';
+      }
+    }
+
+    // Cargar motivos al iniciar
+    document.addEventListener('DOMContentLoaded', cargarMotivos);
+
+    // También permitir agregar con Enter
+    document.getElementById('nuevoMotivoInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') agregarMotivo();
+    });
+
+    // Cargar motivos desde la API
+    async function cargarMotivos() {
+      try {
+        const response = await fetch('/api/motivos-faltante');
+        const data = await response.json();
+
+        if (data.success) {
+          motivosCache = data.motivos;
+          renderizarMotivos();
+          actualizarEstadisticas();
+        } else {
+          mostrarMensaje('Error cargando motivos: ' + data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('Error de conexión al cargar motivos', 'error');
+      }
+    }
+
+    // Renderizar lista de motivos
+    function renderizarMotivos() {
+      const container = document.getElementById('motivosList');
+      const emptyState = document.getElementById('emptyState');
+      const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
+
+      if (motivosCache.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+
+      // Filtrar motivos
+      const motivosFiltrados = motivosCache.filter(m => 
+        m.descripcion.toLowerCase().includes(searchText)
+      );
+
+      if (motivosFiltrados.length === 0) {
+        container.innerHTML = '';
+        document.getElementById('noResults').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('noResults').classList.add('hidden');
+
+      container.innerHTML = motivosFiltrados.map(motivo => {
+        const isProtected = motivo.descripcion.toLowerCase() === 'otro';
+        return `
+          <div class="motivo-row ${isProtected ? 'protected' : ''}" data-id="${motivo.id}">
+            <div class="motivo-info">
+              <span class="motivo-orden">${motivo.orden}</span>
+              <span class="motivo-descripcion">${escapeHtml(motivo.descripcion)}</span>
+              ${isProtected ? '<span style="color: #ff9800; font-size: 0.8rem;">(protegido)</span>' : ''}
+            </div>
+            <div class="motivo-actions">
+              <button class="btn btn-edit" onclick="abrirEdicion(${motivo.id})">
+                Editar
+              </button>
+              <button class="btn btn-delete" onclick="eliminarMotivo(${motivo.id})" 
+                      ${isProtected ? 'disabled title="No se puede eliminar el motivo Otro"' : ''}>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Filtrar motivos
+    function filtrarMotivos() {
+      renderizarMotivos();
+    }
+
+    // Actualizar estadísticas
+    function actualizarEstadisticas() {
+      document.getElementById('totalMotivos').textContent = motivosCache.length;
+    }
+
+    // Agregar nuevo motivo
+    async function agregarMotivo() {
+      const input = document.getElementById('nuevoMotivoInput');
+      const descripcion = input.value.trim();
+
+      if (!descripcion) {
+        mostrarMensaje('Por favor, escriba una descripción para el motivo', 'error');
+        input.focus();
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/motivos-faltante', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            descripcion: descripcion,
+            orden: motivosCache.length + 1
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          input.value = '';
+          mostrarMensaje('Motivo agregado exitosamente', 'success');
+          cargarMotivos(); // Recargar lista
+        } else {
+          mostrarMensaje('Error: ' + data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('Error de conexión al agregar motivo', 'error');
+      }
+    }
+
+    // Abrir modal de edición
+    function abrirEdicion(id) {
+      const motivo = motivosCache.find(m => m.id === id);
+      if (!motivo) return;
+
+      document.getElementById('editMotivoId').value = id;
+      document.getElementById('editDescripcion').value = motivo.descripcion;
+      document.getElementById('editOrden').value = motivo.orden;
+
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    // Cerrar modal
+    function cerrarModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
+
+    // Guardar edición
+    async function guardarEdicion() {
+      const id = document.getElementById('editMotivoId').value;
+      const descripcion = document.getElementById('editDescripcion').value.trim();
+      const orden = parseInt(document.getElementById('editOrden').value) || 0;
+
+      if (!descripcion) {
+        alert('La descripción es requerida');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/motivos-faltante/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descripcion, orden })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          cerrarModal();
+          mostrarMensaje('✅ Motivo actualizado exitosamente', 'success');
+          cargarMotivos();
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión al guardar');
+      }
+    }
+
+    // Eliminar motivo
+    async function eliminarMotivo(id) {
+      const motivo = motivosCache.find(m => m.id === id);
+      if (!motivo) return;
+
+      if (!confirm(`¿Está seguro de eliminar el motivo "${motivo.descripcion}"?\n\nEsta acción no se puede deshacer.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/motivos-faltante/${id}`, {
+          method: 'DELETE'
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          mostrarMensaje('Motivo eliminado exitosamente', 'success');
+          cargarMotivos();
+        } else {
+          mostrarMensaje('Error: ' + data.message, 'error');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        mostrarMensaje('Error de conexión al eliminar', 'error');
+      }
+    }
+
+    // Mostrar mensaje
+    function mostrarMensaje(texto, tipo) {
+      const container = document.getElementById('messageContainer');
+      container.textContent = texto;
+      container.className = 'message ' + tipo;
+
+      // Auto-ocultar después de 4 segundos
+      setTimeout(() => {
+        container.className = 'message';
+      }, 4000);
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Cerrar modal con Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') cerrarModal();
+    });
+  </script>
+
+</body>
+</html>

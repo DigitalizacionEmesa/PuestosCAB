@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual de Usuario - Sistema CAB</title>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/loginModal.css">
+    <style>
+        /* Estilos específicos para el manual */
+        .manual-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .manual-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .manual-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        
+
+        .manual-nav {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .manual-nav h2 {
+            margin-top: 0;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .nav-item {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .nav-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .nav-item.restricted {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f1f3f4;
+            color: #999;
+        }
+
+        .nav-item.restricted:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: #e9ecef;
+        }
+
+        .nav-item h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        .nav-item.restricted h4 {
+            color: #999;
+        }
+
+        .manual-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .manual-section.active {
+            display: block;
+        }
+
+        .manual-section h2 {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .manual-section h3 {
+            color: #495057;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+            color: #495057;
+        }
+
+        .step-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .step-list ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .step-list li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .permission-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .permission-badge.admin {
+            background: #dc3545;
+        }
+
+        .permission-badge.supervisor {
+            background: #fd7e14;
+        }
+
+        .back-button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: #5a6268;
+        }
+
+        .screenshot-placeholder {
+            background: #e9ecef;
+            border: 2px dashed #adb5bd;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            color: #6c757d;
+        }
+    </style>
+
+  <style>
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .manual-container {
+                padding: 10px;
+            }
+            
+            .manual-header h1 {
+                font-size: 2em;
+            }
+            
+            .nav-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Widget de usuario -->
+    <div id="userSessionWidget" class="user-session-widget">
+        <!-- El widget se rellenará dinámicamente por loginModal.js -->
+    </div>
+    
+    <div class="manual-container">
+        <!-- Cabecera del manual -->
+        <div class="manual-header">
+            <h1>📚 Manual de Usuario</h1>
+            <h2>Puestos CAB</h2>
+            <div class="user-info" id="userInfo">
+                <!-- Se llenará dinámicamente -->
+            </div>
+        </div>
+
+        <!-- Navegación principal -->
+        <div class="manual-nav" id="mainNav">
+            <h2>📋 Índice de Contenidos</h2>
+            <div class="nav-grid">
+                <!-- Sección disponible para todos los usuarios autenticados -->
+                <div class="nav-item" onclick="showSection('intro')">
+                    <h4>🏠 Introducción</h4>
+                    <p>Bienvenida y conceptos básicos del sistema</p>
+                </div>
+
+                <!-- Sección disponible para todos los usuarios autenticados -->
+                <div class="nav-item" onclick="showSection('puestocab')">
+                    <h4>🔧 Puesto CAB</h4>
+                    <p>Gestión de órdenes de trabajo y estados</p>
+                </div>
+
+                <!-- Sección para jefes de equipo (nivel >= 2) -->
+                <div class="nav-item supervisor-only" onclick="showSection('capacidades')">
+                    <h4>📊 Capacidades</h4>
+                    <p>Configuración de capacidades por turno</p>
+                    <span class="permission-badge supervisor">Jefe Equipo+</span>
+                </div>
+
+                <!-- Sección para jefes de equipo (nivel >= 2) -->
+                <div class="nav-item supervisor-only" onclick="showSection('indicadores')">
+                    <h4>📈 Indicadores</h4>
+                    <p>Panel de indicadores y métricas</p>
+                    <span class="permission-badge supervisor">Jefe Equipo+</span>
+                </div>
+
+                <!-- Sección para jefes de equipo (nivel >= 2) -->
+                <div class="nav-item supervisor-only" onclick="showSection('configuracion')">
+                    <h4>⚙️ Configuración</h4>
+                    <p>Gestión de puestos y configuración avanzada</p>
+                    <span class="permission-badge supervisor">Jefe Equipo+</span>
+                </div>
+
+                <!-- Sección para jefes de equipo (nivel >= 2) -->
+                <div class="nav-item supervisor-only" onclick="showSection('resumenpedidos')">
+                    <h4>📦 Resumen de Pedidos</h4>
+                    <p>Vista consolidada de pedidos y eficiencias</p>
+                    <span class="permission-badge supervisor">Jefe Equipo+</span>
+                </div>
+
+            
+
+                <!-- Sección disponible para todos -->
+                <div class="nav-item" onclick="showSection('faq')">
+                    <h4>❓ Preguntas Frecuentes</h4>
+                    <p>Soluciones a problemas comunes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Introducción -->
+        <div class="manual-section" id="intro">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>🏠 Introducción a la App Puestos CAB</h2>
+            
+            <h3>¿Qué es Puestos CAB?</h3>
+            <p>El Sistema Puestos CAB es una aplicación web diseñada para gestionar y controlar los procesos de producción en las cabinas de trabajo de EMESA. Permite el seguimiento en tiempo real de las órdenes de trabajo, visualización del estado de las órdenes y análisis de eficiencia.</p>
+
+            <h3>Características principales:</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🔄 Tiempo Real</h4>
+                    <p>Seguimiento instantáneo del estado de las órdenes de trabajo y actualización automática de datos.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Control</h4>
+                    <p>Registro de piezas hechas, faltantes y en proceso>
+                </div>
+                <div class="feature-card">
+                    <h4>📈 Análisis de Eficiencia</h4>
+                    <p>Métricas de rendimiento, comparación con objetivos y reportes de productividad.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>👥 Multi-Usuario</h4>
+                    <p>Sistema de permisos por roles con acceso diferenciado según el nivel del usuario.</p>
+                </div>
+            </div>
+
+            <h3>Niveles de Usuario</h3>
+            <div class="alert alert-info">
+                <strong>Tu nivel actual:</strong> <span id="currentLevel"></span>
+            </div>
+
+            <div class="step-list">
+                <h4>Descripción de niveles:</h4>
+                <ul>
+                    <li><strong>Nivel 1 (Operario):</strong> Acceso básico a gestión de órdenes de trabajo</li>
+                    <li><strong>Nivel 2+ (Jefe de Equipo y Superior):</strong> Acceso completo incluyendo configuración de capacidades, creación de puestos, indicadores y supervisión</li>
+                </ul>
+            </div>
+
+            <h3>Navegación General</h3>
+            <div class="step-list">
+                <ol>
+                    <li>Utiliza las <strong>tarjetas del menú principal</strong> para acceder a las diferentes secciones</li>
+                    <li>El <strong>widget de usuario</strong> (esquina inferior derecha) muestra tu información y permite cerrar sesión</li>
+                    <li>Cada pantalla incluye <strong>filtros y búsquedas</strong> para encontrar información específica</li>
+                    <li>Los datos se <strong>actualizan automáticamente</strong> - no es necesario recargar la página</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Sección: Puesto CAB -->
+        <div class="manual-section" id="puestocab">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>🔧 Puesto CAB - Gestión de Órdenes</h2>
+            
+            <h3>Propósito</h3>
+            <p>La pantalla Puesto CAB es donde los operarios gestionan las órdenes de trabajo, registran el progreso y registran faltantes.</p>
+
+            <h3>Cómo usar Puesto CAB:</h3>
+            <div class="step-list">
+                <ol>
+                    <li><strong>Seleccionar Puesto:</strong> Haz clic en la tarjeta del puesto donde vas a trabajar</li>
+                    <li><strong>Configurar Filtros:</strong> Selecciona años y semanas para filtrar las órdenes relevantes</li>
+                    <li><strong>Cargar Órdenes:</strong> Presiona "Aplicar Filtros" para ver las órdenes disponibles</li>
+                    <li><strong>Gestionar Estados:</strong> Utiliza los botones de Estado para marcar el progreso</li>
+                </ol>
+            </div>
+
+            <h3>Estados de las Órdenes</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>✅ Hecho</h4>
+                    <p>Marca una pieza como completada correctamente. Se suma a la producción total.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>❌ Faltante</h4>
+                    <p>Registra una pieza faltante para hacer la OF. Requiere descripción del faltante.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔄 En Proceso</h4>
+                    <p>Indica que has trabajado parcialmente en esta orden pero no está cerrada y por tanto, no puedes marcar Hecho.</p>
+                </div>
+            </div>
+
+        
+
+           
+        </div>
+
+        <!-- Sección: Capacidades (Solo Jefes de Equipo+) -->
+        <div class="manual-section supervisor-only" id="capacidades">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>📊 Gestión de Capacidades</h2>
+            
+            <div class="alert alert-info">
+                <strong>🔐 Acceso Restringido:</strong> Esta función está disponible para usuarios de nivel Jefe de Equipo (2+) o superior.
+            </div>
+
+            <h3>Propósito</h3>
+            <p>La gestión de capacidades permite configurar los objetivos de producción por puesto, turno y fecha. Estos valores se utilizan para calcular las eficiencias y generar los indicadores de rendimiento.</p>
+
+            <h3>Tipos de Configuración</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>📅 Por Fecha Específica</h4>
+                    <p>Configura capacidades para una fecha y turno concretos. Su función es ajustar capacidad en días que el operario trabaja en la sección pero no con su capacidad habitual.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔄 Jornada Fija</h4>
+                    <p>Establece una capacidad estándar que se aplicará como base para el puesto.</p>
+                </div>
+            </div>
+
+            <h3>Cómo configurar capacidades:</h3>
+            <div class="step-list">
+                <ol>
+                    <li><strong>Fijar Jornada</strong> Elige el tipo de configuración</li>
+                    <li><strong>Fecha y Turno:</strong> Selecciona la fecha y turno específicos</li>
+                    <li><strong>Operario:</strong> Selecciona Operario del desplegable. En caso de Fecha específica solo aparecen los operarios que tienen algún fichaje en el turno concreto.</li>
+                    <li><strong>Capacidad:</strong> Ingresa la capacidad objetivo en minutos</li>
+                    <li><strong>Guardar:</strong> Confirma la configuración</li>
+                </ol>
+            </div>
+
+            
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Nota:</strong> Las capacidades se expresan en minutos.
+            </div>
+
+            <h3>Validación y Control</h3>
+            <div class="step-list">
+                <ul>
+                    <li>Se puede consultar la capacidad existente antes de modificarla</li>
+                    <li>Las capacidades se utilizan automáticamente en el cálculo de eficiencias</li>
+                    <li>Los cambios se reflejan inmediatamente en los indicadores</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección: Indicadores (Solo Jefes de Equipo+) -->
+        <div class="manual-section supervisor-only" id="indicadores">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>📈 Panel de Indicadores</h2>
+            
+            <div class="alert alert-info">
+                <strong>🔐 Acceso Restringido:</strong> Esta función está disponible para usuarios de nivel Jefe de Equipo (2+) o superior.
+            </div>
+
+            <h3>Propósito</h3>
+            <p>El panel de indicadores proporciona una vista del rendimiento de todos los operarios, mostrando eficiencias de turno</p>
+
+            <h3>Cómo usar los Indicadores:</h3>
+            <div class="step-list">
+                <ol>
+                    <li><strong>Seleccionar Fecha y Turno:</strong> Configura el período de análisis</li>
+                    <li><strong>Visualizar Tarjetas:</strong> Cada puesto se muestra con su eficiencia calculada</li>
+                    <li><strong>Interpretar Colores:</strong> Verde (>85%), Amarillo (70-85%), Rojo (<70%)</li>
+                    <li><strong>Analizar Datos:</strong> Identifica puestos con bajo rendimiento</li>
+                </ol>
+            </div>
+
+            <h3>Métricas Disponibles</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>⏱️ Minutos Teóricos</h4>
+                    <p>Tiempo real de trabajo registrado en el sistema para el turno seleccionado.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 Capacidad Configurada</h4>
+                    <p>Objetivo de minutos establecido para el puesto en ese turno específico.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Eficiencia (%)</h4>
+                    <p>Porcentaje calculado: (Minutos Teóricos / Capacidad) × 100</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🚦 Estado Visual</h4>
+                    <p>Código de colores para identificación rápida del rendimiento.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>💡 Análisis Recomendado:</strong>
+                <ul>
+                    <li>Revisa diariamente los indicadores de cada turno</li>
+                    <li>Identifica patrones de bajo rendimiento</li>
+                    <li>Pregunta a los operarios por posibles tiempos teoricos incorrectos en piezas concretas</li>
+                    <li>Compara eficiencias entre operarios en el mismo puesto</li>
+                    <li>Usa los datos para tomar decisiones de mejora</li>
+                </ul>
+            </div>
+
+            <h3>Interpretación de Resultados</h3>
+            <div class="step-list">
+                <ul>
+                    <li><strong>Verde (>85%):</strong> Rendimiento óptimo, puesto cumpliendo objetivos</li>
+                    <li><strong>Amarillo (70-85%):</strong> Rendimiento aceptable, revisar posibles mejoras</li>
+                    <li><strong>Rojo (<70%):</strong> Rendimiento bajo, requiere atención inmediata</li>
+                    <li><strong>Gris (Sin datos):</strong> No hay información disponible para el período</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección: Configuración (Solo Jefes de Equipo+) -->
+        <div class="manual-section supervisor-only" id="configuracion">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>⚙️ Configuración del Sistema</h2>
+            
+            <div class="alert alert-info">
+                <strong>🔐 Acceso Restringido:</strong> Esta función está disponible para usuarios de nivel Jefe de Equipo (2+) o superior.
+            </div>
+
+            <h3>Propósito</h3>
+            <p>La sección de configuración permite la gestión completa de puestos de trabajo, incluyendo la creación, modificación y eliminación de puestos, así como la configuración de las columnas que se mostrarán en cada uno.</p>
+
+            <h3>Gestión de Puestos</h3>
+            <div class="step-list">
+                <h4>Crear Nuevo Puesto:</h4>
+                <ol>
+                    <li>Introduce nombre de puesto</li>
+                    <li>Elige un color identificativo para la pantalla</li>
+                    <li>Selecciona el Código de puesto</li>
+                    <li>Selecciona las columnas que se mostrarán y ordénalas con las flechas</li>
+                    <li>Guarda la configuración</li>
+                </ol>
+            </div>
+
+            <div class="step-list">
+                <h4>Modificar Puesto Existente:</h4>
+                <ol>
+                    <li>Busca el puesto en la lista</li>
+                    <li>Actualiza los campos necesarios, añade o reorganiza las columnas</li>
+                    <li>Confirma los cambios</li>
+                </ol>
+            </div>
+
+            <h3>Configuración de Columnas</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>📋 Columnas Disponibles</h4>
+                    <p>El sistema obtiene automáticamente todas las columnas disponibles de la base de datos.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 Selección Personalizada</h4>
+                    <p>Cada puesto puede mostrar diferentes columnas según sus necesidades operativas.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Orden Configurable</h4>
+                    <p>Las columnas se pueden reordenar para optimizar el flujo de trabajo.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎨 Colores Personalizados</h4>
+                    <p>Asigna colores específicos para identificar visualmente cada puesto.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Precauciones:</strong>
+                <ul>
+                    <li>Eliminar un puesto puede afectar datos históricos</li>
+                    <li>Consulta con Digitalización antes de realizar cambios importantes</li>
+                </ul>
+            </div>
+
+            <h3>Buenas Prácticas</h3>
+            <div class="step-list">
+                <ul>
+                    <li><strong>Nomenclatura:</strong> Usa nombres descriptivos y códigos consistentes</li>
+                    <li><strong>Columnas:</strong> Incluye solo las columnas necesarias para evitar sobrecarga visual</li>
+                    <li><strong>Colores:</strong> Elige colores contrastantes y fáciles de distinguir</li>
+                    <li><strong>Respaldos:</strong> Informa a las personas afectadas por los cambios realizados (Usuarios App)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sección: Resumen de Pedidos (Solo Jefes de Equipo+) -->
+        <div class="manual-section supervisor-only" id="resumenpedidos">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>📦 Resumen de Pedidos</h2>
+            
+            <div class="alert alert-info">
+                <strong>🔐 Acceso Restringido:</strong> Esta función está disponible para usuarios de nivel Jefe de Equipo (2+) o superior.
+            </div>
+
+            <h3>Propósito</h3>
+            <p>El Resumen de Pedidos proporciona una vista consolidada de todos los pedidos en el sistema, permitiendo seguimiento de progreso.</p>
+
+            <h3>Características Principales</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>📊 Vista Consolidada</h4>
+                    <p>Visualiza todos los pedidos con información detallada de estado.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔍 Filtros Avanzados</h4>
+                    <p>Filtra por fechas, puestos, estados y múltiples criterios simultáneamente.</p>
+                </div>
+            </div>
+
+            <h3>Cómo usar Resumen de Pedidos</h3>
+            <div class="step-list">
+                <ol>
+                    <li><strong>Aplicar Filtros:</strong> Selecciona el rango temporal y criterios de búsqueda</li>
+                    <li><strong>Cargar Datos:</strong> El sistema carga automáticamente la información filtrada</li>
+                    <li><strong>Analizar Resultados:</strong> Revisa los estados de las órdenes de fabricación para cada pedido</li>
+                </ol>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>💡 Casos de Uso Recomendados:</strong>
+                <ul>
+                    <li>Reuniones de revisión semanal de producción</li>
+                    <li>Secuenciación del trabajo de cada puesto</li>
+                    <li>Evitar pedidos abiertos por piezas de puestos de la sección</li>
+                </ul>
+            </div>
+        </div>
+
+
+        <!-- Sección: FAQ -->
+        <div class="manual-section" id="faq">
+            <button class="back-button" onclick="showMainNav()">← Volver al Índice</button>
+            <h2>❓ Preguntas Frecuentes</h2>
+            
+            <h3>🔧 Problemas Técnicos</h3>
+            
+            
+
+            <div class="feature-card">
+                <h4>❓ Los datos no se cargan o aparecen desactualizados</h4>
+                <p><strong>Solución:</strong> 
+                <ul>
+                    <li>Refresca la página (F5)</li>
+                    <li>Verifica los filtros aplicados (años, semanas, puestos)</li>
+                    <li>Comprueba tu conexión a internet</li>
+                    <li>Si persiste, contacta con digitalización</li>
+                </ul>
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <h4>❓ Error al guardar cambios</h4>
+                <p><strong>Solución:</strong> Asegúrate de que todos los campos obligatorios estén completados correctamente. Si el error persiste, anota el mensaje de error exacto y repórtalo a digitalización.</p>
+            </div>
+
+            <h3>📋 Uso del Sistema</h3>
+            
+            <div class="feature-card">
+                <h4>❓ ¿Puedo trabajar en múltiples órdenes simultáneamente?</h4>
+                <p><strong>Respuesta:</strong> Sí.</p>
+            </div>
+
+            <div class="feature-card">
+                <h4>❓ ¿Cómo se calculan las eficiencias?</h4>
+                <p><strong>Respuesta:</strong> La eficiencia se calcula como: (Minutos Teóricos Registrados / Capacidad Configurada) × 100. Los minutos teóricos provienen del trabajo real registrado en el sistema.</p>
+            </div>
+
+            <div class="feature-card">
+                <h4>❓ ¿Qué pasa si marco algo como "Faltante" por error?</h4>
+                <p><strong>Respuesta:</strong> Puedes desmarcar el checkbox "Faltante" para revertir la acción. El sistema mantiene un historial de cambios para trazabilidad.</p>
+            </div>
+
+            <h3>📞 Contacto y Soporte</h3>
+            
+            <div class="alert alert-info">
+                <strong>🛠️ Soporte Técnico:</strong><br>
+                Para problemas técnicos o errores del sistema, contacta con:<br>
+                📧 Email: digitalizacion.emesa@saveragroup.com<br>
+                📞 Teléfono: Ext. 4272 / 4271 <br>
+            </div>
+
+            <div class="alert alert-success">
+                <strong>📈 Mejoras y Sugerencias:</strong><br>
+                ¿Tienes ideas para mejorar el sistema? ¡Nos encantaría escucharlas!<br>
+                Envía tus sugerencias al equipo.
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/assets/css/loginModal.js"></script>
+    <script>
+        // Variables globales
+        let currentUser = null;
+
+        // Función para mostrar secciones
+        function showSection(sectionId) {
+            // Ocultar navegación principal
+            document.getElementById('mainNav').style.display = 'none';
+            
+            // Ocultar todas las secciones
+            const sections = document.querySelectorAll('.manual-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Mostrar la sección seleccionada
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                
+                // Scroll al top
+                window.scrollTo(0, 0);
+            }
+        }
+
+        // Función para mostrar la navegación principal
+        function showMainNav() {
+            // Mostrar navegación principal
+            document.getElementById('mainNav').style.display = 'block';
+            
+            // Ocultar todas las secciones
+            const sections = document.querySelectorAll('.manual-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Scroll al top
+            window.scrollTo(0, 0);
+        }
+
+        // Función para configurar permisos de UI
+        function setupPermissions(user) {
+            currentUser = user;
+            
+            // Actualizar información del usuario
+            const userInfo = document.getElementById('userInfo');
+            const currentLevel = document.getElementById('currentLevel');
+            
+            if (userInfo && user) {
+                userInfo.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <strong>👤 Usuario:</strong> ${user.nombre || user.num_operario} 
+                            <span class="permission-badge ${user.nivel >= 2 ? 'supervisor' : ''}"}>
+                                Nivel ${user.nivel}
+                            </span>
+                        </div>
+                        <div>
+                            <strong>🏢 Empresa:</strong> EMESA
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (currentLevel) {
+                let levelDescription = 'Operario';
+                if (user.nivel >= 2) levelDescription = 'Jefe de Equipo o Superior';
+                
+                currentLevel.textContent = `${user.nivel} (${levelDescription})`;
+            }
+
+            // Configurar visibilidad según permisos
+            const supervisorElements = document.querySelectorAll('.supervisor-only');
+            
+            supervisorElements.forEach(element => {
+                if (user.nivel >= 2) {
+                    element.style.display = '';
+                    element.classList.remove('restricted');
+                } else {
+                    element.classList.add('restricted');
+                    element.onclick = function(e) {
+                        e.preventDefault();
+                        alert('⚠️ Acceso restringido: Esta función requiere nivel de Jefe de Equipo (2+) o superior.');
+                    };
+                }
+            });
+
+            console.log('✅ Permisos de manual configurados para usuario nivel:', user.nivel);
+        }
+
+        // Función de inicialización
+        async function initManual() {
+            console.log('🚀 Iniciando Manual de Usuario...');
+            
+            try {
+                // Verificar autenticación usando el endpoint de permisos
+                console.log('🔍 Verificando permisos del usuario para Manual...');
+                const response = await fetch('/api/obtener-permisos-usuario', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const permisosData = await response.json();
+                    console.log('✅ Permisos obtenidos para Manual:', permisosData);
+                    
+                    if (permisosData.success && permisosData.usuario) {
+                        // Crear objeto usuario compatible con el formato esperado
+                        const user = {
+                            id: permisosData.usuario.Id_Usuario,
+                            num_operario: permisosData.usuario.Num_Operario,
+                            nombre: permisosData.usuario.Nombre,
+                            nivel: permisosData.nivel_permisos,
+                            rol: permisosData.usuario.Roles
+                        };
+                        
+                        setupPermissions(user);
+                        console.log('✅ Usuario autenticado en Manual:', user);
+                    } else {
+                        console.log('⚠️ No se obtuvieron datos válidos del usuario, cargando manual básico');
+                        setupBasicManual();
+                    }
+                } else {
+                    console.log('⚠️ Error en respuesta del servidor, cargando manual básico:', response.status);
+                    setupBasicManual();
+                }
+                
+                // Configurar navegación inicial siempre
+                showMainNav();
+                
+            } catch (error) {
+                console.error('💥 Error verificando permisos, cargando manual básico:', error);
+                setupBasicManual();
+                showMainNav();
+            }
+        }
+
+        // Función para configurar manual básico sin permisos específicos
+        function setupBasicManual() {
+            console.log('📚 Configurando manual básico...');
+            
+            // Actualizar información del usuario como genérica
+            const userInfo = document.getElementById('userInfo');
+            const currentLevel = document.getElementById('currentLevel');
+            
+            if (userInfo) {
+                userInfo.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div>
+                            <strong>👤 Usuario:</strong> Invitado
+                            <span class="permission-badge">
+                                Manual General
+                            </span>
+                        </div>
+                        <div>
+                            <strong>🏢 Empresa:</strong> EMESA
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (currentLevel) {
+                currentLevel.textContent = 'General (Manual básico)';
+            }
+
+            // Ocultar secciones restringidas
+            const supervisorElements = document.querySelectorAll('.supervisor-only');
+            supervisorElements.forEach(element => {
+                element.classList.add('restricted');
+                element.onclick = function(e) {
+                    e.preventDefault();
+                    alert('⚠️ Acceso restringido: Esta función requiere estar autenticado con nivel de Jefe de Equipo (2+) o superior.');
+                };
+            });
+
+            console.log('✅ Manual básico configurado');
+        }
+
+        // Esperar a que se cargue el DOM - IDÉNTICO a PuestosCAB
+        document.addEventListener('DOMContentLoaded', function() {
+            // Esperar un momento para asegurar que todo esté cargado
+            setTimeout(initManual, 100);
+            
+            // Esperar a que el widget esté creado (puede tardar un momento) - IDÉNTICO a PuestosCAB
+            setTimeout(function() {
+                const widget = document.getElementById('userSessionWidget');
+                if (widget) {
+                    // Forzar posición mediante JavaScript - IDÉNTICO a PuestosCAB
+                    widget.style.position = 'fixed';
+                    widget.style.top = 'auto';
+                    widget.style.bottom = '15px';
+                    widget.style.right = '15px';
+                    widget.style.left = 'auto';
+                }
+            }, 500); // Esperar 500ms para asegurar que el widget ya se creó - IDÉNTICO a PuestosCAB
+        });
+
+        // Comentado: ya no usamos loginModule
+        // Listener para cambios de autenticación
+        // document.addEventListener('userAuthenticated', function(event) {
+        //     if (event.detail && event.detail.user) {
+        //         setupPermissions(event.detail.user);
+        //     }
+        // });
+
+        // Listener para logout
+        // document.addEventListener('userLoggedOut', function() {
+        //     console.log('👋 Usuario cerró sesión, redirigiendo...');
+        //     window.location.href = '/';
+        // });
+    </script>
+</body>
+</html>

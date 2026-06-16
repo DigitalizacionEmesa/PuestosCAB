@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Configuración Puesto</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+
+  <!-- Ajustes menores para esta pantalla (opcional) -->
+  <style>
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important; /* Quitar el margen izquierdo fijo */
+      margin-right: 0 !important; /* Quitar cualquier margen derecho */
+      text-align: center !important; /* Asegurar que esté centrado */
+    }
+    
+    /* Botón EDIT PUESTO con el mismo estilo que EDIT PICKING VF */
+    .edit-puesto-btn {
+      background: #ff9800;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+      margin-right: 12px;
+    }
+    
+    .edit-puesto-btn:hover {
+      background: #f57c00;
+    }
+    
+    .edit-puesto-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+    
+    /* Botón eliminar puesto */
+    .btn.eliminar {
+      background: #f44336;
+      color: white;
+    }
+    
+    .btn.eliminar:hover {
+      background: #d32f2f;
+    }
+    
+    .form-card{
+      max-width: 900px;
+      margin: 24px auto;
+      background: #ffffffcc;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 5px 15px rgba(0,0,0,.08);
+      border: 2px solid #b3d6ee;
+    }
+    .actions{
+      display:flex; gap:12px; justify-content:flex-end; margin-top:8px;
+    }
+    .btn.cancelar{
+      background:#e85c5c; 
+    }
+    .btn.cancelar:hover{ background:#c94646; }
+    .field-row{
+      display:grid; grid-template-columns: 220px 1fr; gap:14px; align-items:center;
+    }
+    @media (max-width:700px){
+      .field-row{ grid-template-columns: 1fr; }
+    }
+    
+    /* Estilos para los tags de columnas seleccionadas */
+    .columna-tag {
+      display: inline-flex;
+      align-items: center;
+      background: #2196F3;
+      color: white;
+      border-radius: 20px;
+      padding: 6px 12px;
+      margin: 4px;
+      font-size: 14px;
+      gap: 8px;
+      min-width: 200px;
+    }
+    
+    .orden-controles {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      margin-right: 8px;
+    }
+    
+    .orden-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      cursor: pointer;
+      width: 20px;
+      height: 16px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      line-height: 1;
+      transition: background-color 0.2s;
+    }
+    
+    .orden-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .orden-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .numero-orden {
+      font-size: 10px;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.8);
+      min-width: 12px;
+      text-align: center;
+    }
+    
+    .nombre-columna {
+      flex: 1;
+      text-align: center;
+      transition: background-color 0.2s ease;
+    }
+    
+    .nombre-columna:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+    
+    .columna-tag .remove-btn {
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      padding: 0;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    
+    .columna-tag .remove-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Updated the button color for 'Crear Puesto' to match 'Edit Puesto' */
+    .crear-puesto-button {
+        background-color: orange; /* Matches the color of 'Edit Puesto' */
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+    .crear-puesto-button:hover {
+        background-color: darkorange;
+    }
+
+    /* Estilos para el selector de color mejorado */
+    .color-selector {
+      display: flex;
+      align-items: center; /* Centrar verticalmente */
+      justify-content: center; /* Centrar horizontalmente */
+    }
+    
+    .color-picker-container {
+      position: relative;
+    }
+    
+    .color-preview {
+      width: 46.19px;
+      height: 46.19px; /* Misma altura que el campo de texto */
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .color-preview:hover {
+      border-color: #3880c7;
+      box-shadow: 0 2px 8px rgba(56, 128, 199, 0.2);
+    }
+    
+    .color-preview-box {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      background-color: #87CEEB; /* Color por defecto */
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .color-dropdown {
+      position: absolute;
+      top: 45px;
+      left: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      min-width: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .color-option-dropdown {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .color-option-dropdown:last-child {
+      border-bottom: none;
+    }
+    
+    .color-option-dropdown:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .color-option-dropdown.selected {
+      background-color: #e3f2fd;
+      border-left: 3px solid #3880c7;
+    }
+    
+    .color-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      margin-right: 10px;
+      border: 1px solid rgba(0,0,0,0.1);
+      flex-shrink: 0;
+    }
+    
+    .color-option-dropdown span {
+      color: #333;
+      font-size: 14px;
+    }
+  </style>
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">Crear Puesto</div>
+    <!-- Botón EDIT PUESTO con el mismo estilo que EDIT PICKING VF -->
+    <button class="edit-puesto-btn" onclick="toggleEditMode()" id="btnEditPuesto">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+        <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+      </svg>
+      EDIT PUESTO
+    </button>
+    <!-- USER INFO COMENTADO - NO FUNCIONA -->
+    <!-- <div class="user-info"></div> -->
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de usuario -->
+  <div id="userSessionWidget" class="user-session-widget">
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
+  </div>
+
+  <main class="container">
+    <div class="form-card">
+
+      <form id="formPuesto" novalidate>
+        <!-- Selector de puesto existente para modificar (oculto por defecto) -->
+        <div class="field-row" id="selectorPuestoExistente" style="display: none;">
+          <label for="puestoExistente">Seleccionar puesto a modificar</label>
+          <select id="puestoExistente" name="puestoExistente">
+            <option value="" selected disabled>Selecciona un puesto existente...</option>
+          </select>
+          <div id="loadingPuestosExistentes" style="font-size: 0.9rem; color: #666; margin-top: 5px; display: none;">
+            Cargando puestos existentes...
+          </div>
+        </div>
+
+        <!-- Nombre de puesto -->
+        <div class="field-row">
+          <label for="nombrePuesto">Nombre de puesto</label>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <input 
+              id="nombrePuesto" 
+              name="nombrePuesto" 
+              type="text" 
+              maxlength="40" 
+              placeholder="Ej.: Operario Línea 1"
+              required
+              aria-required="true"
+              style="flex: 1;"
+              />
+            <div class="color-selector">
+              <div class="color-picker-container" id="colorPickerContainer">
+                <div class="color-preview" id="colorPreview" title="Haz clic para seleccionar color">
+                  <div class="color-preview-box" id="colorPreviewBox"></div>
+                </div>
+                <div class="color-dropdown" id="colorDropdown" style="display: none;">
+                  <div class="color-option-dropdown" data-color="#87CEEB" data-name="Azul" title="Azul claro">
+                    <div class="color-circle" style="background-color: #87CEEB;"></div>
+                    <span>Azul</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#FFB347" data-name="Naranja" title="Naranja claro">
+                    <div class="color-circle" style="background-color: #FFB347;"></div>
+                    <span>Naranja</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#FFFF99" data-name="Amarillo" title="Amarillo claro">
+                    <div class="color-circle" style="background-color: #FFFF99;"></div>
+                    <span>Amarillo</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#90EE90" data-name="Verde" title="Verde claro">
+                    <div class="color-circle" style="background-color: #90EE90;"></div>
+                    <span>Verde</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#FFB6C1" data-name="Rosa" title="Rosa claro">
+                    <div class="color-circle" style="background-color: #FFB6C1;"></div>
+                    <span>Rosa</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#DDA0DD" data-name="Morado" title="Morado claro">
+                    <div class="color-circle" style="background-color: #DDA0DD;"></div>
+                    <span>Morado</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#CD5C5C" data-name="Granate" title="Granate claro">
+                    <div class="color-circle" style="background-color: #CD5C5C;"></div>
+                    <span>Granate</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#D3D3D3" data-name="Gris" title="Gris claro">
+                    <div class="color-circle" style="background-color: #D3D3D3;"></div>
+                    <span>Gris</span>
+                  </div>
+                  <div class="color-option-dropdown" data-color="#D2B48C" data-name="Marrón" title="Marrón claro">
+                    <div class="color-circle" style="background-color: #D2B48C;"></div>
+                    <span>Marrón</span>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" id="colorPuesto" name="colorPuesto" value="#87CEEB">
+            </div>
+          </div>
+        </div>
+
+        <!-- Código de PUESTO -->
+        <div class="field-row">
+          <label for="codigoPuesto">Código de puesto</label>
+          <select id="codigoPuesto" name="codigoPuesto" required aria-required="true">
+            <option value="" selected disabled>Cargando puestos...</option>
+          </select>
+          <div id="loadingMessage" style="font-size: 0.9rem; color: #666; margin-top: 5px;">
+            Cargando lista de puestos desde la base de datos...
+          </div>
+          <div id="errorMessage" style="font-size: 0.9rem; color: #d32f2f; margin-top: 5px; display: none;">
+            Error al cargar los puestos. Por favor, inténtelo de nuevo.
+          </div>
+        </div>
+
+        <!-- Configuración de Columnas -->
+        <div class="field-row">
+          <label>Columnas a visualizar</label>
+          <div>
+            <select id="columnasSelector" multiple style="width: 100%; margin-bottom: 10px; height: 100px;">
+              <option value="" disabled>Cargando columnas disponibles...</option>
+            </select>
+            <button type="button" id="btnAgregarColumna" class="btn" style="background: #2196F3; color: white; margin-bottom: 10px;">Añadir</button>
+            <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+              💡 Use las flechas ↑↓ para cambiar el orden de las columnas. El número indica la posición en la tabla.
+            </div>
+            <div id="columnasSeleccionadas" style="min-height: 50px; margin-top: 10px;">
+              <!-- Aquí aparecerán los tags de columnas seleccionadas -->
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn cancelar" onclick="history.back()">Cancelar</button>
+          <button type="button" class="btn eliminar" id="btnEliminar" style="display: none;" onclick="confirmarEliminarPuesto()">Eliminar</button>
+          <button type="submit" class="btn btn-guardar" id="btnGuardar">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById('formPuesto');
+    const nombre = document.getElementById('nombrePuesto');
+    const codigo = document.getElementById('codigoPuesto');
+    const loadingMessage = document.getElementById('loadingMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const columnasSelector = document.getElementById('columnasSelector');
+    const btnAgregarColumna = document.getElementById('btnAgregarColumna');
+    const columnasSeleccionadas = document.getElementById('columnasSeleccionadas');
+    
+    // Elementos para modo edición
+    const selectorPuestoExistente = document.getElementById('selectorPuestoExistente');
+    const puestoExistente = document.getElementById('puestoExistente');
+    const loadingPuestosExistentes = document.getElementById('loadingPuestosExistentes');
+    const btnEditPuesto = document.getElementById('btnEditPuesto');
+    const btnGuardar = document.getElementById('btnGuardar');
+    const btnEliminar = document.getElementById('btnEliminar');
+
+    let columnasDisponibles = [];
+    let columnasElegidas = [];
+    let modoEdicion = false;
+    let puestoActualId = null;
+    
+    // Variables y funciones para el selector de color
+    let colorSeleccionado = '#87CEEB'; // Azul claro por defecto
+    
+    function inicializarSelectorColor() {
+      const colorPreview = document.getElementById('colorPreview');
+      const colorPreviewBox = document.getElementById('colorPreviewBox');
+      const colorDropdown = document.getElementById('colorDropdown');
+      const colorOptions = document.querySelectorAll('.color-option-dropdown');
+      const colorInput = document.getElementById('colorPuesto');
+      
+      // Establecer color por defecto
+      colorSeleccionado = '#87CEEB';
+      colorInput.value = colorSeleccionado;
+      colorPreviewBox.style.backgroundColor = colorSeleccionado;
+      
+      // Marcar la primera opción como seleccionada
+      if (colorOptions.length > 0) {
+        colorOptions[0].classList.add('selected');
+      }
+      
+      // Event listener para mostrar/ocultar dropdown
+      colorPreview.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isVisible = colorDropdown.style.display === 'block';
+        colorDropdown.style.display = isVisible ? 'none' : 'block';
+      });
+      
+      // Event listeners para las opciones de color
+      colorOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+          e.stopPropagation();
+          
+          // Remover selección anterior
+          colorOptions.forEach(opt => opt.classList.remove('selected'));
+          
+          // Seleccionar nuevo color
+          this.classList.add('selected');
+          colorSeleccionado = this.dataset.color;
+          colorInput.value = colorSeleccionado;
+          
+          // Actualizar vista previa
+          colorPreviewBox.style.backgroundColor = colorSeleccionado;
+          
+          // Cerrar dropdown
+          colorDropdown.style.display = 'none';
+          
+          console.log('Color seleccionado:', colorSeleccionado, this.dataset.name);
+        });
+      });
+      
+      // Cerrar dropdown al hacer clic fuera
+      document.addEventListener('click', function(e) {
+        if (!colorPreview.contains(e.target) && !colorDropdown.contains(e.target)) {
+          colorDropdown.style.display = 'none';
+        }
+      });
+    }
+    
+    function cargarColorPuesto(colorHex) {
+      const colorOptions = document.querySelectorAll('.color-option-dropdown');
+      const colorInput = document.getElementById('colorPuesto');
+      const colorPreviewBox = document.getElementById('colorPreviewBox');
+      
+      // Remover selección anterior
+      colorOptions.forEach(opt => opt.classList.remove('selected'));
+      
+      // Buscar y seleccionar el color correspondiente
+      let colorEncontrado = false;
+      colorOptions.forEach(option => {
+        if (option.dataset.color === colorHex) {
+          option.classList.add('selected');
+          colorSeleccionado = colorHex;
+          colorInput.value = colorHex;
+          colorPreviewBox.style.backgroundColor = colorHex;
+          colorEncontrado = true;
+        }
+      });
+      
+      // Si no se encuentra el color exacto, usar el azul claro por defecto
+      if (!colorEncontrado) {
+        const defaultColor = colorOptions[0]; // Azul claro
+        if (defaultColor) {
+          defaultColor.classList.add('selected');
+          colorSeleccionado = '#87CEEB';
+          colorInput.value = colorSeleccionado;
+          colorPreviewBox.style.backgroundColor = colorSeleccionado;
+        }
+      }
+      
+      console.log('Color cargado para puesto:', colorHex, 'Final:', colorSeleccionado);
+    }
+
+    // Cargar códigos de puesto disponibles desde la API al iniciar la página
+    async function cargarPuestos() {
+      try {
+        loadingMessage.style.display = 'block';
+        errorMessage.style.display = 'none';
+        codigo.disabled = true;
+
+        console.log('Cargando códigos de puesto disponibles desde la API...');
+        
+        // Hacer petición al nuevo endpoint de códigos disponibles
+        const response = await fetch('/api/codigos-puesto-disponibles', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de códigos disponibles:', data);
+
+        if (data.success && data.codigos) {
+          // Limpiar opciones existentes
+          codigo.innerHTML = '<option value="" selected disabled>Selecciona un código…</option>';
+          
+          // Agregar opciones desde la API - los códigos vienen como array de strings
+          data.codigos.forEach(codigoPuesto => {
+            const option = document.createElement('option');
+            option.value = codigoPuesto;
+            option.textContent = codigoPuesto;
+            codigo.appendChild(option);
+          });
+
+          loadingMessage.style.display = 'none';
+          codigo.disabled = false;
+          
+          console.log(`${data.total} códigos de puesto disponibles cargados correctamente`);
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando códigos de puesto:', error);
+        
+        // Mostrar error y cargar opciones de respaldo
+        loadingMessage.style.display = 'none';
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = 'Error al cargar códigos de puesto. Usando lista de respaldo.';
+        
+        // Cargar opciones de respaldo estáticas
+        codigo.innerHTML = `
+          <option value="" selected disabled>Selecciona un código…</option>
+          <option value="ESPECIALES">ESPECIALES</option>
+          <option value="MONTCAB1">MONTCAB1</option>
+          <option value="MONTCAB2">MONTCAB2</option>
+          <option value="MONTCAB3">MONTCAB3</option>
+          <option value="MONTCAB4">MONTCAB4</option>
+        `;
+        codigo.disabled = false;
+      }
+    }
+
+    // Cargar columnas disponibles desde la API
+    async function cargarColumnasDisponibles() {
+      try {
+        console.log('Cargando columnas disponibles...');
+        
+        const response = await fetch('/api/columnas-disponibles', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Columnas disponibles:', data);
+
+        if (data.success && data.columnas) {
+          columnasDisponibles = data.columnas;
+          
+          // Limpiar y llenar el selector múltiple
+          columnasSelector.innerHTML = '';
+          
+          // Agrupar columnas por tabla de origen para mejor visualización
+          const tablas = data.tablas || ['Fact_Procesos_Tiempos_Cabinas'];
+          
+          data.columnas.forEach(columna => {
+            const option = document.createElement('option');
+            option.value = columna.codigo;
+            // Mostrar nombre de columna con indicador de tabla de origen
+            const tablaOrigen = columna.tabla || columna.origen || '';
+            const tablaTag = tablaOrigen === 'DatosPedidos' ? ' [Pedidos]' : 
+                             tablaOrigen === 'Fact_Procesos_Tiempos_Cabinas' ? ' [Cabinas]' : '';
+            option.textContent = columna.nombre + tablaTag;
+            // Guardar metadata como data attributes
+            option.setAttribute('data-tabla', tablaOrigen);
+            columnasSelector.appendChild(option);
+          });
+
+          console.log(`${data.total} columnas disponibles cargadas de ${tablas.join(' + ')}`);
+        } else {
+          throw new Error(data.message || 'Error cargando columnas');
+        }
+
+      } catch (error) {
+        console.error('Error cargando columnas disponibles:', error);
+        columnasSelector.innerHTML = '<option value="" disabled>Error cargando columnas</option>';
+      }
+    }
+
+    // Agregar columnas seleccionadas
+    function agregarColumnas() {
+      const selectedOptions = Array.from(columnasSelector.selectedOptions);
+      
+      if (selectedOptions.length === 0) {
+        showMsg('Selecciona al menos una columna', 'error');
+        return;
+      }
+
+      selectedOptions.forEach(option => {
+        const codigoColumna = option.value;
+        const nombreColumna = option.textContent;
+        const tablaOrigen = option.getAttribute('data-tabla') || 'Fact_Procesos_Tiempos_Cabinas';
+
+        // Verificar si ya está seleccionada (buscar por código)
+        const yaExiste = columnasElegidas.find(col => 
+          (typeof col === 'string' ? col : col.codigo) === codigoColumna
+        );
+        
+        if (!yaExiste) {
+          // Guardar como objeto con código, nombre y tabla de origen
+          columnasElegidas.push({
+            codigo: codigoColumna,
+            nombre: nombreColumna, // Inicialmente el nombre es igual al código/nombre original
+            tabla: tablaOrigen
+          });
+        }
+      });
+      
+      // Actualizar la visualización
+      actualizarColumnasSeleccionadas();
+      
+      // Limpiar selección
+      columnasSelector.selectedIndex = -1;
+      
+      console.log('Columnas seleccionadas:', columnasElegidas);
+    }
+
+    // Actualizar la visualización de columnas seleccionadas con tags azules y controles de orden
+    function actualizarColumnasSeleccionadas() {
+      columnasSeleccionadas.innerHTML = '';
+
+      columnasElegidas.forEach((columnaItem, index) => {
+        // Manejar compatibilidad con formato anterior (string) y nuevo (objeto)
+        let codigoColumna, nombreColumna, tablaOrigen;
+        
+        if (typeof columnaItem === 'string') {
+          // Formato anterior - convertir a nuevo formato
+          codigoColumna = columnaItem;
+          let columnaInfo = columnasDisponibles.find(c => c.codigo === columnaItem);
+          if (!columnaInfo) {
+            columnaInfo = columnasDisponibles.find(c => c.nombre === columnaItem);
+          }
+          nombreColumna = columnaInfo ? columnaInfo.nombre : columnaItem;
+          tablaOrigen = columnaInfo ? (columnaInfo.tabla || columnaInfo.origen || 'Fact_Procesos_Tiempos_Cabinas') : 'Fact_Procesos_Tiempos_Cabinas';
+          
+          // Actualizar el array al nuevo formato
+          columnasElegidas[index] = {
+            codigo: codigoColumna,
+            nombre: nombreColumna,
+            tabla: tablaOrigen
+          };
+        } else {
+          // Nuevo formato (objeto)
+          codigoColumna = columnaItem.codigo;
+          nombreColumna = columnaItem.nombre;
+          tablaOrigen = columnaItem.tabla || 'Fact_Procesos_Tiempos_Cabinas';
+        }
+
+        const tablaLabel = tablaOrigen === 'DatosPedidos' ? ' 📦' : '';
+        const tag = document.createElement('div');
+        tag.className = 'columna-tag';
+        tag.innerHTML = `
+          <div class="orden-controles">
+            <button type="button" class="orden-btn" onclick="moverColumna(${index}, -1)" title="Mover arriba" ${index === 0 ? 'disabled' : ''}>↑</button>
+            <span class="numero-orden">${index + 1}</span>
+            <button type="button" class="orden-btn" onclick="moverColumna(${index}, 1)" title="Mover abajo" ${index === columnasElegidas.length - 1 ? 'disabled' : ''}>↓</button>
+          </div>
+          <span class="nombre-columna" onclick="editarNombreColumna(${index})" title="Clic para editar nombre" style="cursor: pointer;">${nombreColumna}${tablaLabel}</span>
+          <button type="button" class="remove-btn" onclick="removerColumna('${codigoColumna}')" title="Eliminar">×</button>
+        `;
+        
+        columnasSeleccionadas.appendChild(tag);
+      });
+    }
+
+    // Mover columna hacia arriba o abajo
+    window.moverColumna = function(index, direccion) {
+      const nuevoIndex = index + direccion;
+      
+      // Validar que el nuevo índice esté dentro de los límites
+      if (nuevoIndex < 0 || nuevoIndex >= columnasElegidas.length) {
+        return;
+      }
+      
+      // Intercambiar posiciones
+      const temp = columnasElegidas[index];
+      columnasElegidas[index] = columnasElegidas[nuevoIndex];
+      columnasElegidas[nuevoIndex] = temp;
+      
+      // Actualizar la visualización
+      actualizarColumnasSeleccionadas();
+      console.log('Columnas reordenadas:', columnasElegidas);
+    }
+
+    // Remover columna seleccionada
+    window.removerColumna = function(codigoColumna) {
+      columnasElegidas = columnasElegidas.filter(c => {
+        const codigo = typeof c === 'string' ? c : c.codigo;
+        return codigo !== codigoColumna;
+      });
+      actualizarColumnasSeleccionadas();
+      console.log('Columnas seleccionadas:', columnasElegidas);
+    }
+
+    // Función para editar el nombre de una columna
+    window.editarNombreColumna = function(index) {
+      const columnaItem = columnasElegidas[index];
+      if (!columnaItem) return;
+      
+      const nombreActual = typeof columnaItem === 'string' ? columnaItem : columnaItem.nombre;
+      const nuevoNombre = prompt('Ingrese el nuevo nombre para la columna:', nombreActual);
+      
+      if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
+        // Actualizar el nombre en el array
+        if (typeof columnasElegidas[index] === 'string') {
+          // Convertir formato string a objeto
+          const codigo = columnasElegidas[index];
+          columnasElegidas[index] = {
+            codigo: codigo,
+            nombre: nuevoNombre.trim()
+          };
+        } else {
+          // Actualizar objeto existente
+          columnasElegidas[index].nombre = nuevoNombre.trim();
+        }
+        
+        // Actualizar la visualización
+        actualizarColumnasSeleccionadas();
+        console.log('Nombre de columna actualizado:', columnasElegidas[index]);
+      }
+    }
+
+    // Event listener para el botón agregar
+    btnAgregarColumna.addEventListener('click', agregarColumnas);
+
+    // ============ FUNCIONES PARA MODO EDICIÓN ============
+    
+    // Alternar entre modo crear y modo editar
+    function toggleEditMode() {
+      modoEdicion = !modoEdicion;
+      
+      if (modoEdicion) {
+        // Cambiar a modo edición
+        btnEditPuesto.textContent = ' CREAR PUESTO';
+        btnEditPuesto.style.background = '#ff9800';
+        document.querySelector('.header-title').textContent = 'Modificar Puesto';
+        btnGuardar.textContent = 'Guardar';
+        btnEliminar.style.display = 'inline-block'; // Mostrar botón eliminar
+        selectorPuestoExistente.style.display = 'grid';
+        cargarPuestosExistentes();
+        limpiarFormulario();
+        // Deshabilitar campos hasta que se seleccione un puesto
+        deshabilitarCamposEdicion();
+      } else {
+        // Cambiar a modo crear
+        btnEditPuesto.innerHTML = `
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="m18.5 2.5 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          EDIT PUESTO
+        `;
+        btnEditPuesto.style.background = '#ff9800';
+        document.querySelector('.header-title').textContent = 'Crear Puesto';
+        btnGuardar.textContent = 'Guardar';
+        btnEliminar.style.display = 'none'; // Ocultar botón eliminar
+        selectorPuestoExistente.style.display = 'none';
+        limpiarFormulario();
+        puestoActualId = null;
+        // Habilitar campos en modo crear
+        habilitarCamposEdicion();
+      }
+    }
+
+    // Deshabilitar campos en modo edición hasta seleccionar puesto
+    function deshabilitarCamposEdicion() {
+      nombre.disabled = true;
+      codigo.disabled = true;
+      columnasSelector.disabled = true;
+      btnAgregarColumna.disabled = true;
+      
+      // Agregar estilos visuales para indicar que están deshabilitados
+      nombre.style.backgroundColor = '#f5f5f5';
+      codigo.style.backgroundColor = '#f5f5f5';
+      columnasSelector.style.backgroundColor = '#f5f5f5';
+      btnAgregarColumna.style.opacity = '0.5';
+      btnAgregarColumna.style.cursor = 'not-allowed';
+    }
+
+    // Habilitar campos 
+    function habilitarCamposEdicion() {
+      nombre.disabled = false;
+      codigo.disabled = false;
+      columnasSelector.disabled = false;
+      btnAgregarColumna.disabled = false;
+      
+      // Restaurar estilos normales
+      nombre.style.backgroundColor = '';
+      codigo.style.backgroundColor = '';
+      columnasSelector.style.backgroundColor = '';
+      btnAgregarColumna.style.opacity = '';
+      btnAgregarColumna.style.cursor = '';
+    }
+
+    // Cargar puestos existentes para modificar
+    async function cargarPuestosExistentes() {
+      try {
+        loadingPuestosExistentes.style.display = 'block';
+        puestoExistente.disabled = true;
+        
+        const response = await fetch('/api/puestos-creados', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Puestos existentes:', data);
+
+        if (data.success && data.puestos) {
+          puestoExistente.innerHTML = '<option value="" selected disabled>Selecciona un puesto existente...</option>';
+          
+          data.puestos.forEach(puesto => {
+            const option = document.createElement('option');
+            option.value = puesto.id;
+            option.textContent = puesto.nombre;
+            option.setAttribute('data-codigo', puesto.codigo);
+            puestoExistente.appendChild(option);
+          });
+
+          loadingPuestosExistentes.style.display = 'none';
+          puestoExistente.disabled = false;
+          
+          console.log(`${data.total} puestos existentes cargados`);
+        } else {
+          throw new Error(data.message || 'Error cargando puestos');
+        }
+
+      } catch (error) {
+        console.error('Error cargando puestos existentes:', error);
+        loadingPuestosExistentes.style.display = 'none';
+        puestoExistente.innerHTML = '<option value="" disabled>Error cargando puestos</option>';
+      }
+    }
+
+    // Cargar datos del puesto seleccionado
+    async function cargarDatosPuesto(nombrePuesto) {
+      try {
+        if (!nombrePuesto) return;
+        
+        showMsg('Cargando datos del puesto...', 'info');
+        
+        console.log(`Cargando datos para puesto: ${nombrePuesto}`);
+        
+        // Usar el nuevo endpoint para obtener datos completos del puesto
+        const response = await fetch(`/api/puesto-datos/${encodeURIComponent(nombrePuesto)}`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Datos del puesto cargados:', data);
+
+        if (data.success && data.puesto) {
+          const puesto = data.puesto;
+          
+          // Cargar datos básicos del puesto
+          nombre.value = puesto.nombre;
+          puestoActualId = puesto.id;
+          
+          // Cargar códigos disponibles en el desplegable
+          await cargarCodigosParaEdicion(puesto.codigo);
+          
+          // Cargar columnas configuradas para este puesto
+          columnasElegidas = puesto.columnas || [];
+          actualizarColumnasSeleccionadas();
+          
+          // Cargar color del puesto
+          const colorPuesto = puesto.color_pantalla || '#87CEEB'; // Azul claro por defecto
+          cargarColorPuesto(colorPuesto);
+          
+          // Habilitar campos después de cargar datos
+          habilitarCamposEdicion();
+          
+          showMsg(`Puesto "${data.puesto.nombre}" cargado correctamente`, 'success');
+        }
+
+      } catch (error) {
+        console.error('Error cargando datos del puesto:', error);
+        showMsg('Error al cargar los datos del puesto', 'error');
+      }
+    }
+
+    // Cargar códigos disponibles para edición y preseleccionar el código actual
+    async function cargarCodigosParaEdicion(codigoActual) {
+      try {
+        console.log(`Cargando códigos para edición, código actual: ${codigoActual}`);
+        
+        // Cargar códigos disponibles
+        const response = await fetch('/api/codigos-puesto-disponibles', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Códigos disponibles para edición:', data);
+
+        if (data.success && data.codigos) {
+          // Limpiar opciones existentes
+          codigo.innerHTML = '';
+          
+          // Agregar opciones disponibles
+          data.codigos.forEach(codigoPuesto => {
+            const option = document.createElement('option');
+            option.value = codigoPuesto;
+            option.textContent = codigoPuesto;
+            
+            // Preseleccionar el código actual
+            if (codigoPuesto === codigoActual) {
+              option.selected = true;
+            }
+            
+            codigo.appendChild(option);
+          });
+          
+          // Si el código actual no está en la lista, añadirlo y seleccionarlo
+          if (codigoActual && !data.codigos.includes(codigoActual)) {
+            const option = document.createElement('option');
+            option.value = codigoActual;
+            option.textContent = `${codigoActual} (actual)`;
+            option.selected = true;
+            codigo.appendChild(option);
+          }
+          
+          codigo.disabled = false;
+          console.log(`Códigos cargados para edición, preseleccionado: ${codigoActual}`);
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando códigos para edición:', error);
+        
+        // En caso de error, al menos establecer el código actual
+        codigo.innerHTML = `<option value="${codigoActual}" selected>${codigoActual}</option>`;
+        codigo.disabled = false;
+      }
+    }
+
+    // Limpiar formulario
+    function limpiarFormulario() {
+      nombre.value = '';
+      codigo.value = '';
+      columnasElegidas = [];
+      actualizarColumnasSeleccionadas();
+      puestoExistente.value = '';
+      
+      // Resetear color a azul claro por defecto
+      const colorOptions = document.querySelectorAll('.color-option-dropdown');
+      const colorPreviewBox = document.getElementById('colorPreviewBox');
+      
+      colorOptions.forEach(opt => opt.classList.remove('selected'));
+      const defaultColor = colorOptions[0]; // Azul claro
+      if (defaultColor) {
+        defaultColor.classList.add('selected');
+        colorSeleccionado = '#87CEEB';
+        document.getElementById('colorPuesto').value = colorSeleccionado;
+        if (colorPreviewBox) {
+          colorPreviewBox.style.backgroundColor = colorSeleccionado;
+        }
+      }
+    }
+
+    // Event listener para selección de puesto existente
+    puestoExistente.addEventListener('change', function() {
+      const nombrePuesto = this.options[this.selectedIndex].textContent;
+      if (nombrePuesto && nombrePuesto !== "Selecciona un puesto existente") {
+        cargarDatosPuesto(nombrePuesto);
+      }
+    });
+
+    // ============ FUNCIONES PARA ELIMINAR PUESTO ============
+    
+    // Confirmar eliminación con contraseña
+    function confirmarEliminarPuesto() {
+      if (!puestoActualId) {
+        showMsg('Selecciona un puesto para eliminar', 'error');
+        return;
+      }
+
+      const nombrePuesto = nombre.value.trim();
+      
+      // Solicitar contraseña
+      const password = prompt(`⚠️ ELIMINAR PUESTO "${nombrePuesto}"\n\nEsta acción NO se puede deshacer.\nIntroduce la contraseña de administrador:`);
+      
+      if (password === null) {
+        // Usuario canceló
+        return;
+      }
+      
+      if (password !== 'adminCAB') {
+        showMsg('Contraseña incorrecta. Eliminación cancelada.', 'error');
+        return;
+      }
+      
+      // Confirmar una vez más
+      const confirmar = confirm(`¿Estás ABSOLUTAMENTE SEGURO de que quieres eliminar el puesto "${nombrePuesto}"?\n\nEsta acción eliminará:\n- El puesto\n- Su configuración de columnas\n- NO se puede recuperar`);
+      
+      if (confirmar) {
+        eliminarPuesto(puestoActualId, nombrePuesto);
+      }
+    }
+
+    // Eliminar puesto de la base de datos
+    async function eliminarPuesto(idPuesto, nombrePuesto) {
+      try {
+        showMsg('Eliminando puesto...', 'info');
+
+        const response = await fetch(`/api/eliminar-puesto/${idPuesto}`, {
+          method: 'DELETE',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMsg(`Puesto "${nombrePuesto}" eliminado correctamente`, 'success');
+          // Recargar lista de puestos y limpiar formulario
+          cargarPuestosExistentes();
+          limpiarFormulario();
+          puestoActualId = null;
+        } else {
+          showMsg(data.message || 'Error al eliminar el puesto', 'error');
+        }
+
+      } catch (error) {
+        console.error('Error eliminando puesto:', error);
+        showMsg('Error de conexión al eliminar el puesto', 'error');
+      }
+    }
+
+    // Cargar datos al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+      cargarPuestos();
+      cargarColumnasDisponibles();
+      inicializarSelectorColor();
+    });
+
+    function showMsg(texto, tipo='success'){
+      // Usa tus estilos de notificación definidos en global-styles.css
+      const n = document.createElement('div');
+      n.className = `notification ${tipo} show`;
+      n.textContent = texto;
+      document.body.appendChild(n);
+      setTimeout(()=>{ n.classList.remove('show'); n.remove(); }, 2200);
+    }
+
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      // Validaciones básicas
+      const nombreOk = nombre.value.trim().length > 0 && nombre.value.trim().length <= 40;
+      const codigoOk = !!codigo.value;
+
+      [nombre, codigo].forEach(el => el.classList.remove('input-error'));
+      if(!nombreOk){ nombre.classList.add('input-error'); }
+      if(!codigoOk){ codigo.classList.add('input-error'); }
+
+      if(!(nombreOk && codigoOk)){
+        showMsg('Revisa los datos del formulario', 'error');
+        return;
+      }
+
+      try {
+        if (modoEdicion && puestoActualId) {
+          // Modo modificar puesto existente
+          const payload = {
+            id_puesto: puestoActualId,
+            nombre_puesto: nombre.value.trim(),
+            codigo_puesto: codigo.value,
+            columnas: columnasElegidas,
+            color_pantalla: colorSeleccionado
+          };
+          console.log('Modificando puesto:', payload);
+
+          const response = await fetch('/api/modificar-puesto', {
+            method: 'PUT',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showMsg(`Puesto "${nombre.value.trim()}" modificado correctamente con ${columnasElegidas.length} columnas configuradas`, 'success');
+            // Recargar la lista de puestos existentes y resetear campos
+            cargarPuestosExistentes();
+            limpiarFormulario();
+          } else {
+            showMsg(data.message || 'Error al modificar el puesto', 'error');
+          }
+
+        } else {
+          // Modo crear puesto nuevo
+          const payload = {
+            nombre_puesto: nombre.value.trim(),
+            codigo_puesto: codigo.value,
+            columnas: columnasElegidas,
+            color_pantalla: colorSeleccionado
+          };
+          console.log('Creando nuevo puesto:', payload);
+
+          const response = await fetch('/api/crear-puesto', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showMsg(`Puesto guardado correctamente con ${columnasElegidas.length} columnas configuradas`,'success');
+            // Limpiar formulario después de guardar
+            limpiarFormulario();
+          } else {
+            showMsg(data.message || 'Error al guardar el puesto', 'error');
+          }
+        }
+
+      } catch (error) {
+        console.error('Error guardando/modificando puesto:', error);
+        showMsg('Error de conexión al procesar el puesto', 'error');
+      }
+
+      // Si quieres volver atrás tras guardar, descomenta:
+      // setTimeout(()=> history.back(), 800);
+    });
+  </script>
+
+  <!-- Scripts del sistema de login COMENTADOS - NO FUNCIONA -->
+  <!-- <script src="/assets/js/login-module.js"></script> -->
+  
+  <!-- CONFIGURACIÓN DE LOGIN COMENTADA - NO FUNCIONA -->
+  <!--
+  <script>
+    // Configuración específica de Crear Puesto
+    document.addEventListener('userLoggedIn', function(e) {
+      const user = e.detail;
+      console.log('Usuario autenticado en Crear Puesto:', user);
+      
+      // Verificar permisos para crear puestos (nivel 3 o superior)
+      if (user.nivel < 3) {
+        alert('No tiene permisos para crear puestos. Contacte con su administrador.');
+        loginModule.handleLogout();
+        return;
+      }
+      
+      // Actualizar el formulario con información del usuario
+      updateFormForUser(user);
+    });
+    
+    function updateFormForUser(user) {
+      // Ejemplo: agregar información del usuario que crea el puesto
+      const form = document.getElementById('formPuesto');
+      if (form) {
+        // Agregar campo oculto con el ID del usuario
+        const userInput = document.createElement('input');
+        userInput.type = 'hidden';
+        userInput.name = 'created_by';
+        userInput.value = user.id;
+        form.appendChild(userInput);
+      }
+    }
+  </script>
+  -->
+  
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+</body>
+</html>

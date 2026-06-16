@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Control - Jefe de Equipo</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS de respaldo en caso de problemas de ruta -->
+  <style>
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important; /* Quitar el margen izquierdo fijo */
+      margin-right: 0 !important; /* Quitar cualquier margen derecho */
+      text-align: center !important; /* Asegurar que esté centrado */
+    }
+    
+    body { 
+      background: #e6f2fb !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    .header { 
+      background: #3880c7 !important; 
+      color: #fff !important; 
+      height: 80px !important; 
+      display: flex !important; 
+      align-items: center !important; 
+    }
+    .card { 
+      background: #cbe7fa !important; 
+      border: 2px solid #b3d6ee !important; 
+      border-radius: 12px !important; 
+      min-height: 120px !important; 
+    }
+  </style>
+
+  <style>
+    /* Personalizaciones específicas para Control */
+    .card-icon-emoji {
+      font-size: 120px;
+      margin-bottom: 15px;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+    }
+    
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    /* Ajustes para las tarjetas principales */
+    .main-grid .card {
+      min-height: 320px;
+      justify-content: center;
+      text-align: center; /* Centrar todo el contenido de las tarjetas */
+      cursor: pointer;
+    }
+    
+    .main-grid .card-title {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-align: center; /* Centrar específicamente los títulos */
+      width: 100%; /* Asegurar que ocupe todo el ancho */
+    }
+
+    /* Ajustar el grid para que se vea mejor */
+    .main-grid {
+      max-width: 900px;
+      margin: 20px auto 0 auto;
+    }
+
+    /* Estilo especial para indicar que es control de jefe */
+    .control-header {
+      background: linear-gradient(135deg, #ff8c33, #ffb366) !important;
+      color: #fff !important;
+    }
+
+    .control-card {
+      background: #fff5e6 !important;
+      border: 2px solid #ff8c33 !important;
+      color: #cc4400 !important;
+    }
+
+    .control-card:hover {
+      background: #ffebcc !important;
+      transform: translateY(-2px);
+      transition: all 0.2s ease;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header control-header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">CONTROL - JEFE DE EQUIPO</div>
+    <!-- USER INFO COMENTADO - NO FUNCIONA -->
+    <!-- <div class="user-info"></div> -->
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de sesión de usuario -->
+  <div id="userSessionWidget" class="user-session-widget"></div>
+
+  <!-- Container principal usando estilos globales -->
+  <div class="container">
+    <!-- Grid principal usando estilos de global-styles.css -->
+    <div class="main-grid">
+      <div class="card control-card" onclick="goToReportes()">
+        <div class="card-title">Reportes</div>
+        <div class="card-icon-emoji">📊</div>
+      </div>
+
+      <div class="card control-card" onclick="goToCapacidad()">
+        <div class="card-title">Capacidad</div>
+        <div class="card-icon-emoji">⚙️</div>
+      </div>
+
+      <div class="card control-card" onclick="goToPedidos()">
+        <div class="card-title">Pedidos</div>
+        <div class="card-icon-emoji">🔍</div>
+      </div>
+
+      <div class="card control-card" onclick="goToDatosPedidos()">
+        <div class="card-title">Importación Datos Pedidos</div>
+        <div class="card-icon-emoji">📥</div>
+      </div>
+    </div>
+
+    <!-- Fila inferior para futuras funcionalidades -->
+    <div class="bottom-row">
+      <!-- Espacio para futuras funcionalidades -->
+    </div>
+  </div>
+
+  <script>
+    // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        console.log('🔒 Verificando permisos de acceso a control.html...');
+        const response = await fetch('/api/validar-acceso-pantalla', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pantalla: 'control.html' })
+        });
+
+        if (response.ok) {
+          const accesoData = await response.json();
+          console.log('Resultado validación acceso:', accesoData);
+          
+          if (!accesoData.success || !accesoData.acceso_permitido) {
+            console.log('❌ Acceso denegado - Redirigiendo...');
+            alert('No tiene permisos suficientes para acceder a esta pantalla.');
+            window.location.href = '/templates/generales/PuestosCAB.html';
+            return;
+          } else {
+            console.log('✅ Acceso permitido - Cargando página...');
+          }
+        } else {
+          console.warn('No se pudo validar el acceso - Permitiendo por defecto');
+        }
+      } catch (error) {
+        console.error('Error al validar acceso:', error);
+        // En caso de error, permitir acceso por defecto para no bloquear la funcionalidad
+      }
+    });
+
+    // Función para mostrar mensaje temporal
+    function showMsg(texto, tipo = 'info') {
+      const msg = document.createElement('div');
+      msg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${tipo === 'info' ? '#17a2b8' : '#dc3545'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 1000;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      `;
+      msg.textContent = texto;
+      document.body.appendChild(msg);
+      
+      setTimeout(() => {
+        msg.remove();
+      }, 3000);
+    }
+
+    // Función para ir a Reportes
+    function goToReportes() {
+      console.log('📊 Navegando a Indicadores/Reportes...');
+      window.location.href = '/templates/generales/indicadores.html';
+    }
+
+    // Función para ir a Capacidades
+    function goToCapacidad() {
+      console.log('⚙️ Navegando a Capacidades...');
+      window.location.href = '/templates/generales/CapacidadesCAB.html';
+    }
+
+    // Función para ir a Pedidos
+    function goToPedidos() {
+      console.log(' Navegando a Pedidos...');
+      window.location.href = '/templates/generales/resumenpedidos.html';
+    }
+
+    // Función para ir a Importación Datos Pedidos
+    function goToDatosPedidos() {
+      console.log('📥 Navegando a Importación Datos Pedidos...');
+      window.location.href = '/templates/generales/datospedidos.html';
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🏭 Panel de Control de Jefe de Equipo cargado');
+    });
+  </script>
+
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+</body>
+</html>

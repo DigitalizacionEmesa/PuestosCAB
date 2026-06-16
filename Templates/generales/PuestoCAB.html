@@ -1,0 +1,4440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Puesto Cabinas</title>
+
+  <!-- CSS principal del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <!-- CSS para el widget de usuario -->
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  
+  <!-- CSS de respaldo en caso de problemas de ruta -->
+  <style>
+    /* Variables de colores para toda la aplicación */
+    :root{
+      --bg:#e6f2fb;               /* Mismo fondo que las otras pantallas */
+      --card:#ffffff;             /* Tarjetas blancas */
+      --card-secondary:#f8fbff;   /* Tarjetas secundarias azul muy claro */
+      --muted:#666666;            /* Texto muted más suave */
+      --ok:#1fa971;               /* Verde para OK */
+      --warn:#e6a700;             /* Amarillo para warning */
+      --bad:#e05252;              /* Rojo para error */
+      --accent:#3880c7;           /* Azul principal de la app */
+      --text:#2c6aa6;             /* Texto principal azul */
+      --border:#b3d6ee;           /* Bordes azules claros */
+      --chip:#d6e8f5;             /* Chips azul claro */
+      --accent-rgb: 56, 128, 199; /* RGB del color accent para transparencias */
+    }
+    
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+    
+    /* Centrar correctamente el título del header */
+    .header-title {
+      margin-left: 0 !important; /* Quitar el margen izquierdo fijo */
+      margin-right: 0 !important; /* Quitar cualquier margen derecho */
+      text-align: center !important; /* Asegurar que esté centrado */
+    }
+    
+    body { 
+      background: #e6f2fb !important; 
+      font-family: 'Open Sans', Arial, sans-serif !important; 
+    }
+    .header { 
+      background: #3880c7 !important; 
+      color: #fff !important; 
+      height: 60px !important; 
+      display: flex !important; 
+      align-items: center !important; 
+      width: 100% !important;
+    }
+    .card { 
+      background: #cbe7fa !important; 
+      border: 2px solid #b3d6ee !important; 
+      border-radius: 12px !important; 
+      min-height: 80px !important; 
+    }
+  </style>
+
+  <style>
+    /* CSS de respaldo para evitar cache de CSS */
+    .card {
+      min-height: 80px !important;
+      padding: 8px 6px !important;
+    }
+    .card-title {
+      font-size: 1.2rem !important;
+      margin-bottom: 4px !important;
+    }
+    .of-item {
+      min-height: 60px !important;
+      padding: 6px 8px !important;
+    }
+    
+    /* FORZAR estilos de checkbox cuadrados */
+    input[type="checkbox"] {
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      width: 18px !important;
+      height: 18px !important;
+      min-width: 18px !important;
+      max-width: 18px !important;
+      min-height: 18px !important;
+      max-height: 18px !important;
+      border: 2px solid #7aa8cc !important;
+      border-radius: 0 !important;
+      background: #fff !important;
+      flex-shrink: 0 !important;
+      flex-grow: 0 !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Barra de filtros */
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center; /* Centra verticalmente */
+      max-width: 1200px;
+      margin: 12px auto 6px auto;
+      padding: 0 10px;
+    }
+    .filter-btn {
+      text-decoration: none;
+      border: 1px solid #c6d4e1;
+      background: #e6f0fa;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-weight: 700;
+      color: #2c6aa6;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: transform .1s ease, filter .15s ease;
+    }
+    .filter-btn:hover { transform: translateY(-1px); filter: brightness(0.98); }
+    .filter-btn.active {
+      background: #d6e6f5;
+      box-shadow: 0 0 0 2px rgba(44,106,166,0.15) inset;
+    }
+
+    /* Lista de órdenes de fabricación - CONVERTIDA A TABLA */
+    .table-container {
+      margin: 16px 0;
+      overflow-x: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .ordenes-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 800px;
+    }
+
+    .ordenes-table th {
+      background: #3880c7;
+      color: white;
+      padding: 12px 8px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #2c6aa6;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    .ordenes-table th:hover {
+      background-color: #3070b7;
+    }
+    
+    .header-content {
+      position: relative;
+    }
+    
+    .sort-icons {
+      display: inline-block;
+      margin-left: 6px;
+      transition: all 0.2s;
+    }
+
+    .ordenes-table td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      vertical-align: middle;
+    }
+
+    .ordenes-table tbody tr {
+      background: #ffffff;
+      transition: background-color 0.2s;
+    }
+
+    .ordenes-table tbody tr:nth-child(even) {
+      background: #f8fbff;
+    }
+
+    .ordenes-table tbody tr:hover {
+      background: #e6f2fb;
+    }
+
+    /* NUEVO: Animaciones para ocultar filas */
+    .orden-row {
+      transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    }
+    
+    .orden-row.fade-out {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    /* Columnas específicas */
+    .col-acciones {
+      width: 180px;
+      text-align: center;
+    }
+
+    /* NUEVO: Estilo para la columna Motivo Faltante */
+    .col-motivo-faltante {
+      width: 300px;
+      text-align: left;
+      vertical-align: top;
+      padding: 8px !important;
+    }
+    
+    .motivos-chips-container {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start;
+    }
+    
+    .motivo-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 16px;
+      font-size: 0.85rem;
+      color: #1976d2;
+      max-width: 100%;
+    }
+    
+    .motivo-chip-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .motivo-chip-remove {
+      background: none;
+      border: none;
+      color: #d32f2f;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+      line-height: 1;
+    }
+    
+    .motivo-chip-remove:hover {
+      background: rgba(211, 47, 47, 0.1);
+    }
+    
+    .btn-agregar-motivo {
+      background: #f0f8ff;
+      border: 1px dashed #3880c7;
+      border-radius: 8px;
+      color: #3880c7;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 2px;
+    }
+    
+    .btn-agregar-motivo:hover {
+      background: #e3f2fd;
+      border-color: #2c6aa6;
+    }
+    
+    /* Estilo específico para el contador de caracteres en el título */
+    .motivo-faltante-input[title*="200"] {
+      position: relative;
+    }
+    
+    /* Mejorar la apariencia cuando está cerca del límite */
+    .motivo-faltante-input:focus {
+      border-color: #3880c7 !important;
+      outline: none !important;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.1) !important;
+    }
+
+    /* =====================================================
+       MODAL MULTISELECT PARA MOTIVOS DE FALTANTE
+       ===================================================== */
+    .modal-faltante-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-faltante-overlay.active {
+      display: flex;
+    }
+    
+    .modal-faltante {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      animation: modalSlideIn 0.2s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .modal-faltante-header {
+      background: #3880c7;
+      color: white;
+      padding: 16px 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-faltante-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .modal-faltante-close {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    
+    .modal-faltante-close:hover {
+      opacity: 1;
+    }
+    
+    .modal-faltante-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .modal-faltante-body p {
+      margin: 0 0 16px 0;
+      color: #666;
+      font-size: 0.95rem;
+    }
+    
+    .motivos-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .motivo-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #f8fbff;
+      border: 1px solid #e0e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .motivo-item:hover {
+      background: #e6f2fb;
+      border-color: #3880c7;
+    }
+    
+    .motivo-item.selected {
+      background: #d6e8f5;
+      border-color: #3880c7;
+    }
+    
+    .motivo-item input[type="checkbox"] {
+      width: 20px !important;
+      height: 20px !important;
+      min-width: 20px !important;
+      cursor: pointer;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      border: 2px solid #7aa8cc !important;
+      border-radius: 4px !important;
+      background: #fff !important;
+      position: relative;
+      transition: all 0.2s;
+    }
+    
+    .motivo-item input[type="checkbox"]:checked {
+      background: #3880c7 !important;
+      border-color: #3880c7 !important;
+    }
+    
+    .motivo-item input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .motivo-item label {
+      flex: 1;
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    
+    /* Campo "Otro" personalizado */
+    .motivo-otro-container {
+      margin-top: 12px;
+      padding: 12px;
+      background: #fff9e6;
+      border: 1px solid #ffd966;
+      border-radius: 8px;
+      display: none;
+    }
+    
+    .motivo-otro-container.visible {
+      display: block;
+    }
+    
+    .motivo-otro-container label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .motivo-otro-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    
+    .motivo-otro-input:focus {
+      border-color: #3880c7;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.1);
+    }
+    
+    .modal-faltante-footer {
+      padding: 16px 20px;
+      border-top: 1px solid #e0e8f0;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    
+    .btn-modal {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-modal-cancel {
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+      color: #666;
+    }
+    
+    .btn-modal-cancel:hover {
+      background: #e0e0e0;
+    }
+    
+    .btn-modal-confirm {
+      background: #3880c7;
+      border: 1px solid #3880c7;
+      color: white;
+    }
+    
+    .btn-modal-confirm:hover {
+      background: #2c6aa6;
+    }
+    
+    .btn-modal-confirm:disabled {
+      background: #ccc;
+      border-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    /* Sección para agregar nuevos motivos */
+    .agregar-motivo-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px dashed #ddd;
+    }
+    
+    .agregar-motivo-toggle {
+      background: none;
+      border: none;
+      color: #3880c7;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+    }
+    
+    .agregar-motivo-toggle:hover {
+      text-decoration: underline;
+    }
+    
+    .agregar-motivo-form {
+      display: none;
+      margin-top: 12px;
+      padding: 12px;
+      background: #f0f8ff;
+      border-radius: 8px;
+    }
+    
+    .agregar-motivo-form.visible {
+      display: block;
+    }
+    
+    .agregar-motivo-form input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+    
+    .agregar-motivo-form button {
+      padding: 8px 16px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    
+    .agregar-motivo-form button:hover {
+      background: #218838;
+    }
+    
+    /* Segundo modal: detalles de motivos */
+    .modal-detalles {
+      max-width: 600px;
+    }
+    
+    .detalles-motivos-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    
+    .detalle-motivo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: #f8f9fa;
+      border: 1px solid #e0e8f0;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+    
+    .detalle-motivo-item.active {
+      border-color: #3880c7;
+      background: #f0f8ff;
+    }
+    
+    .detalle-motivo-label {
+      flex: 0 0 150px;
+      font-weight: 600;
+      color: #1976d2;
+      padding-top: 8px;
+      cursor: pointer;
+    }
+    
+    .detalle-motivo-input-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .detalle-motivo-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    
+    .detalle-motivo-input:focus {
+      border-color: #3880c7;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.1);
+    }
+    
+    .detalle-motivo-counter {
+      font-size: 0.75rem;
+      color: #666;
+      text-align: right;
+    }
+    
+    .detalle-motivo-counter.warning {
+      color: #f57c00;
+    }
+    
+    .detalle-motivo-counter.error {
+      color: #d32f2f;
+    }
+    
+    /* Buscador de motivos */
+    .motivos-search-container {
+      margin-bottom: 12px;
+    }
+    
+    .motivos-search-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    
+    .motivos-search-input:focus {
+      border-color: #3880c7;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(56, 128, 199, 0.15);
+    }
+    
+    .motivos-search-input::placeholder {
+      color: #999;
+    }
+    
+    .no-motivos-message {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-style: italic;
+      background: #f8f8f8;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    
+    /* Ocultar motivos filtrados */
+    .motivo-item.hidden {
+      display: none !important;
+    }
+
+    .col-numero {
+      width: 120px;
+      font-weight: 600;
+      color: #2c6aa6;
+    }
+
+    /* Botones de estado en tabla */
+    .acciones-cell {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Mensajes de estado */
+    .loading-message {
+      text-align: center;
+      padding: 40px;
+      color: #666;
+      font-style: italic;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      font-style: italic;
+    }
+    .of-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      column-gap: 8px;
+      padding: 8px 10px;            /* compacto */
+      text-decoration: none;
+      color: #2c6aa6;
+    }
+    .of-title { font-size: 0.98rem; font-weight: 700; line-height: 1.15; }
+    .of-sub { font-size: 0.84rem; opacity: .9; line-height: 1.1; }
+
+    /* Contenedor de toggles (lado derecho) */
+    .flags {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    /* Toggle pill reutilizable */
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid #c6d4e1;
+      background: #f0f6ff;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: .85rem;
+      font-weight: 700;
+      color: #2c6aa6;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    
+    /* Estilo específico para indicadores vs controles */
+    .toggle.processing {
+      position: relative;
+    }
+    .toggle.processing:before {
+      content: "Indicador";
+      position: absolute;
+      bottom: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px;
+      background-color: rgba(200, 200, 200, 0.8);
+      color: #333;
+      padding: 1px 4px;
+      border-radius: 3px;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .toggle.processing:hover:before {
+      opacity: 1;
+    }
+    .toggle input {
+      display: none !important; /* Ocultar completamente el checkbox */
+    }
+
+    /* Colores por tipo - Estados normales */
+    .toggle.done { 
+      background: #e9f7ef; 
+      border-color: #cfead7; 
+      color: #1f8b4c;
+    }
+    .toggle.missing { 
+      background: #fff4e6; 
+      border-color: #ffd7a8; 
+      color: #b36b00;
+    }
+
+    /* Estados cuando están marcados - Verde intenso y Rojo intenso */
+    .toggle.done input:checked + span {
+      color: white;
+    }
+    .toggle.done input:checked ~ span,
+    .toggle.done:has(input:checked) {
+      background: #28a745 !important; /* Verde intenso */
+      border-color: #28a745 !important;
+      color: white !important;
+    }
+    
+    .toggle.missing input:checked + span {
+      color: white;
+    }
+    .toggle.missing input:checked ~ span,
+    .toggle.missing:has(input:checked) {
+      background: #dc3545 !important; /* Rojo intenso */
+      border-color: #dc3545 !important;
+      color: white !important;
+    }
+
+    /* Control En proceso - Ahora es un indicador, no un control */
+    .toggle.processing {
+      background: #e8f1ff;
+      border-color: #c7d9ff;
+      color: #235aa6;
+      opacity: 0.7;
+      cursor: default !important;
+      position: relative;
+    }
+    /* Se ha quitado el icono del indicador "En Proceso" */
+    .toggle.processing:has(input:checked),
+    .toggle.processing input:checked ~ span {
+      background: #0d6efd !important;
+      border-color: #0d6efd !important;
+      color: #fff !important;
+      opacity: 1;
+    }
+    .toggle.processing:has(input:disabled) {
+      pointer-events: none;
+    }
+
+    /* NUEVO: Estilos para toggles deshabilitados */
+    .toggle:has(input:disabled) {
+      opacity: 0.5;
+      pointer-events: none;
+      background: #f8f9fa !important;
+      border-color: #dee2e6 !important;
+      color: #6c757d !important;
+      cursor: not-allowed !important;
+    }
+    
+    .toggle.missing:has(input:disabled) {
+      background: #f8f9fa !important;
+      border-color: #dee2e6 !important;
+      color: #6c757d !important;
+    }
+
+    /* Control de progreso */
+    .progress-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid #c6d4e1;
+      background: #f7fbff;
+      border-radius: 999px;
+      padding: 4px 8px;
+      margin-left: 4px;
+    }
+    .progress-input {
+      width: 60px;
+      text-align: center;
+      border: 1px solid #bcd0e5;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-weight: 700;
+      color: #2c6aa6;
+    }
+    .progress-input:disabled { 
+      background: #f0f4f8; 
+      color: #9bb3c9; 
+    }
+    .progress-input:read-only {
+      background: #f8f9fa;
+      color: #495057;
+      cursor: default;
+    }
+    .progress-arrow {
+      border: 1px solid #bcd0e5;
+      background: #eef6ff;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .progress-arrow:disabled { 
+      opacity: .4; 
+      cursor: not-allowed; 
+      background: #e9ecef;
+      color: #6c757d;
+    }
+    .progress-sufix { 
+      font-weight: 700; 
+      color: #2c6aa6; 
+    }
+
+    /* Panel de filtros principal */
+    .filtros-panel {
+      background: #f8fbff;
+      border: 2px solid #d6e8f5;
+      border-radius: 12px;
+      margin: 12px auto;
+      max-width: 1200px;
+      padding: 16px;
+    }
+
+    .filtros-container {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .filtro-grupo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 140px;
+    }
+
+    .filtro-grupo:last-child {
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px; /* Centrar verticalmente con los selects */
+    }
+
+    .filtro-grupo label {
+      font-weight: 700;
+      color: #2c6aa6;
+      font-size: 0.9rem;
+    }
+
+    .filtro-grupo select {
+      padding: 8px 12px;
+      border: 2px solid #c6d4e1;
+      border-radius: 6px;
+      background: #fff;
+      color: #2c6aa6;
+      font-size: 0.9rem;
+      min-height: 120px;
+      width: 160px;
+    }
+
+    .filtro-grupo select[multiple] {
+      min-height: 120px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .filtro-grupo select[multiple] option {
+      padding: 4px 8px;
+      margin: 1px 0;
+    }
+
+    .filtro-grupo select[multiple] option:checked {
+      background: #3880c7;
+      color: #fff;
+    }
+
+    .filtro-grupo select:focus {
+      outline: none;
+      border-color: #3880c7;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.1);
+    }
+
+    .btn-filtro {
+      padding: 10px 16px;
+      border: 2px solid #3880c7;
+      border-radius: 6px;
+      background: #3880c7;
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+      min-width: 140px;
+    }
+
+    .btn-filtro:hover:not(:disabled) {
+      background: #2970b5;
+      border-color: #2970b5;
+      transform: translateY(-1px);
+    }
+
+    .btn-filtro:disabled {
+      background: #ccc;
+      border-color: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-filtro.secondary {
+      background: #e85c5c;
+      border-color: #e85c5c;
+    }
+
+    .btn-filtro.secondary:hover {
+      background: #d64545;
+      border-color: #d64545;
+    }
+
+    .filtros-estado {
+      text-align: left;
+      font-size: 0.9rem;
+      color: #666;
+      font-style: italic;
+      padding: 8px 12px;
+      background: #f8fbff;
+      border-radius: 6px;
+      border: 1px solid #d6e8f5;
+      min-height: 20px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.2s ease;
+    }
+
+    .filtros-estado.activo {
+      color: #1f8b4c;
+      font-weight: 700;
+      font-style: normal;
+      background: #e9f7ef;
+      border-color: #1f8b4c;
+    }
+    
+    .filtros-estado.activo:hover {
+      background: #d4f4dd;
+    }
+    
+    /* Estilos para la carga de trabajo */
+    .carga-trabajo {
+      display: inline-block !important;
+      margin-left: auto !important; /* Empuja a la derecha */
+      margin-right: 10px !important;
+      font-weight: 700 !important;
+      color: #e6a700 !important;
+      background: linear-gradient(135deg, #fff3cd, #ffeaa7) !important;
+      padding: 6px 12px !important;
+      border-radius: 20px !important;
+      border: 2px solid #e6a700 !important;
+      font-size: 0.85rem !important;
+      box-shadow: 0 2px 4px rgba(230, 167, 0, 0.2) !important;
+      animation: pulse-carga 2s infinite !important;
+      white-space: nowrap !important; /* Evita que se rompa el texto */
+    }
+    
+    @keyframes pulse-carga {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .filtros-panel {
+      overflow: hidden;
+      transition: max-height 0.4s ease-out, opacity 0.3s ease-out;
+      margin-bottom: 15px;
+    }
+    
+    .filtros-panel.colapsado {
+      max-height: 0;
+      opacity: 0;
+      margin-bottom: 0;
+    }
+    
+    .filtros-panel.expandido {
+      max-height: 500px;
+      opacity: 1;
+    }
+    
+    .toggle-filtros {
+      display: inline-block;
+      margin-left: 10px;
+      font-size: 11px;
+      color: #888;
+      font-weight: normal;
+    }
+    
+    /* Estados de carga y mensajes */
+    .loading, .no-data, .error {
+      text-align: center;
+      padding: 40px 20px;
+      font-size: 16px;
+      color: #666;
+      background: #f9f9f9;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    
+    .loading-message {
+      text-align: center;
+      padding: 40px 20px;
+      font-size: 16px;
+      color: #666;
+      background: #f9f9f9;
+      border-radius: 8px;
+      margin: 20px 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+    }
+    
+    .loading {
+      color: #2c5aa0;
+      background: #e8f4f8;
+    }
+    
+    .error {
+      color: #d32f2f;
+      background: #ffebee;
+    }
+    
+    .no-data {
+      color: #666;
+      background: #f5f5f5;
+    }
+
+    /* Estilos para filtros de texto en cabeceras */
+    .filtros-row th {
+      padding: 8px;
+      background: #f8fbff;
+      border-bottom: 2px solid #b3d6ee;
+    }
+
+    .filtro-texto {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #b3d6ee;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background: white;
+      color: #2c6aa6;
+      box-sizing: border-box;
+      transition: border-color 0.2s ease;
+    }
+
+    .filtro-texto:focus {
+      outline: none;
+      border-color: #3880c7;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.2);
+    }
+
+    .filtro-texto::placeholder {
+      color: #90a9c1;
+      font-style: italic;
+    }
+
+    /* Contador de filtros */
+    .contador-filtros {
+      margin: 10px 0;
+      padding: 8px 12px;
+      background: #d6e8f5;
+      border: 1px solid #b3d6ee;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #2c6aa6;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      text-align: center;
+    }
+    
+    /* Estilos para scroll fijo - Mantener filtros y cabeceras visibles */
+    main {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 60px); /* Altura total menos header */
+    }
+    
+    /* Header auto-oculto - Solo aparece en hover */
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      transform: translateY(-100%); /* Oculto por defecto */
+      transition: transform 0.3s ease;
+    }
+    
+    /* Zona de activación invisible en la parte superior */
+    .header-trigger {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      z-index: 999;
+      background: transparent;
+    }
+    
+    .header-trigger:hover + .header,
+    .header:hover {
+      transform: translateY(0); /* Visible en hover */
+    }
+    
+    /* Ajustar el main para compensar el header oculto */
+    main {
+      padding-top: 0; /* Sin padding ya que el header está oculto */
+      height: 100vh; /* Altura completa */
+    }
+    
+    .fixed-header-section {
+      flex-shrink: 0; /* No se comprime */
+      background: inherit; /* Mantiene el color del puesto */
+      z-index: 100;
+      position: relative;
+    }
+    
+    .scrollable-content {
+      flex: 1; /* Toma el espacio restante */
+      overflow-y: auto; /* Scroll vertical */
+      overflow-x: auto; /* Scroll horizontal para tabla ancha */
+      position: relative;
+    }
+    
+    /* Fijar las cabeceras de la tabla */
+    .table-container {
+      margin: 0;
+      overflow: visible; /* Permitir que el sticky funcione */
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+      height: 100%;
+    }
+    
+    .ordenes-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 800px;
+    }
+    
+    /* Cabeceras de tabla siempre visibles con scroll */
+    .ordenes-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    
+    /* Asegurar que el header de la tabla permanezca visible durante scroll */
+    .ordenes-table th {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #3880c7 !important;
+      border-bottom: 2px solid #2c6aa6;
+    }
+    
+    /* La fila de filtros también debe ser sticky */
+    .ordenes-table .filtros-row th {
+      position: sticky;
+      top: 46px; /* Debajo de las cabeceras */
+      z-index: 49;
+      background: #f8f9fa !important;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    /* Estilos para las nuevas columnas separadas */
+    .col-en-proceso, .col-estado {
+      padding: 8px 4px !important;
+      vertical-align: middle !important;
+    }
+    
+    /* Asegurar ancho mínimo para columna En progreso */
+    .col-en-proceso {
+      min-width: 130px !important;
+      width: 130px !important;
+    }
+    
+    .en-proceso-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 50px;
+    }
+    
+    .estado-cell {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 50px;
+      flex-wrap: wrap;
+    }
+    
+    /* Ajustar tamaño de los toggles para las columnas separadas */
+    .col-en-proceso .toggle, .col-estado .toggle {
+      font-size: 11px;
+      padding: 3px 6px;
+      min-width: 60px;
+    }
+    
+    /* Hacer el progress wrap más compacto */
+    .col-en-proceso .progress-wrap {
+      margin: 0;
+      transform: scale(0.95);
+    }
+    
+    /* Optimizar espacio en columna Estado para 3 botones */
+    .col-estado .toggle {
+      flex: 1;
+      max-width: 65px;
+      margin: 1px;
+    }
+    
+    /* Estilos para filtros desplegables */
+    .filtro-select {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #b3d6ee;
+      border-radius: 4px;
+      font-size: 12px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+    }
+    
+    .filtro-select:focus {
+      outline: none;
+      border-color: #3880c7;
+      box-shadow: 0 0 0 2px rgba(56, 128, 199, 0.2);
+    }
+    
+    .filtro-select option {
+      padding: 4px;
+      background: white;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <!-- Zona de activación del header auto-oculto -->
+  <div class="header-trigger"></div>
+  
+  <!-- Cabecera -->
+  <header class="header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">Puesto Cabinas</div>
+    <!-- USER INFO COMENTADO - NO FUNCIONA -->
+    <!-- <div class="user-info"></div> -->
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de usuario -->
+  <div id="userSessionWidget" class="user-session-widget">
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
+  </div>
+
+  <main>
+    <!-- Sección fija - Filtros siempre visibles -->
+    <div class="fixed-header-section">
+      <!-- Estado de filtros (siempre visible) -->
+      <div class="filtros-estado" id="estadoFiltrosContainer">
+        <span id="estadoFiltros">Sin filtros aplicados</span>
+        <span class="toggle-filtros" id="toggleFiltros">▼ Expandir filtros</span>
+      </div>
+      
+      <!-- Panel de filtros (colapsable) -->
+      <div class="filtros-panel expandido" id="filtrosPanel">
+        <div class="filtros-container">
+          <div class="filtro-grupo">
+            <label>Año:</label>
+            <select id="filtroAno" multiple size="4">
+              <option value="">Cargando años...</option>
+            </select>
+          </div>
+          
+          <div class="filtro-grupo">
+            <label>Nº Sem.:</label>
+            <select id="filtroSemana" multiple size="4">
+              <option value="">Cargando semanas...</option>
+            </select>
+          </div>
+          
+          <div class="filtro-grupo">
+            <button id="btnAplicarFiltros" class="btn-filtro">
+              🔍 Aplicar Filtros
+            </button>
+            <button id="btnLimpiarFiltros" class="btn-filtro secondary">
+              🗑️ Limpiar
+            </button>
+            <button id="btnLimpiarFiltrosTexto" class="btn-filtro secondary" 
+                    onclick="limpiarFiltrosTexto()" 
+                    style="background: #5a7fa6; border-color: #5a7fa6;">
+              🧹 Limpiar Filtros de Tabla
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros existentes (Todo, Pendientes, etc.) -->
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Todo</button>
+        <button class="filter-btn" data-filter="pending">Pendientes</button>
+        <button class="filter-btn" data-filter="missing">Faltantes</button>
+        <button class="filter-btn" data-filter="pendingNomissing">Pendientes sin faltantes</button>
+        <span id="cargaTrabajo" class="carga-trabajo" style="display: none;"></span>
+      </div>
+    </div>
+
+    <!-- Sección scrolleable - Solo la tabla -->
+    <div class="scrollable-content">
+      <!-- Lista / Tabla -->
+      <div id="tableContainer" class="table-container">
+      <table id="ordenesTable" class="ordenes-table">
+        <thead id="tableHeader">
+          <!-- El header se genera dinámicamente según las columnas configuradas -->
+        </thead>
+        <tbody id="tableBody">
+          <!-- Las filas se generan dinámicamente -->
+        </tbody>
+      </table>
+      <div id="loadingTable" class="loading-message" style="display: none;">
+        Cargando tabla...
+      </div>
+      <div id="noDataTable" class="no-data" style="display: none;">
+        No hay órdenes disponibles. Aplique filtros para cargar datos.
+      </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Variables globales
+    let ORDENES = []; // Array que contendrá las órdenes obtenidas de la API
+    let puestoActual = ''; // Puesto extraído de la URL
+    let columnasConfiguradas = []; // Columnas configuradas para el puesto actual (nombres de API)
+    let columnasOriginalesBD = []; // Columnas originales de BD para mostrar títulos
+    let ESTADOS_ACTIVOS = {}; // Estados activos cargados desde la base de datos
+    let currentFilter = 'all';
+    
+    // Variables para el ordenamiento de la tabla
+    let currentSortColumn = null; // Columna por la que se está ordenando actualmente
+    let currentSortDirection = 'asc'; // Dirección de ordenamiento: 'asc' o 'desc'
+
+    console.log('🟢 Variables globales definidas');
+    
+    // Función para aplicar el color de fondo del puesto
+    function aplicarColorPuesto(colorHex) {
+      try {
+        if (!colorHex || typeof colorHex !== 'string') {
+          console.warn('⚠️ Color inválido, usando azul claro por defecto');
+          colorHex = '#87CEEB';
+        }
+        
+        // Aplicar color de fondo al main (excluyendo el header)
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+          mainElement.style.backgroundColor = colorHex;
+          console.log(`🎨 Color de fondo aplicado a main: ${colorHex}`);
+        }
+        
+        // Aplicar color de fondo a la sección fija para mantener consistencia
+        const fixedSection = document.querySelector('.fixed-header-section');
+        if (fixedSection) {
+          fixedSection.style.backgroundColor = colorHex;
+          console.log(`🎨 Color de fondo aplicado a sección fija: ${colorHex}`);
+        }
+        
+        // Aplicar color de fondo al body también para áreas no cubiertas por main
+        const bodyElement = document.body;
+        if (bodyElement) {
+          bodyElement.style.backgroundColor = colorHex;
+          console.log(`🎨 Color de fondo aplicado a body: ${colorHex}`);
+        }
+        
+        // Mantener el header con su color original (no aplicar color al header)
+        const headerElement = document.querySelector('header');
+        if (headerElement) {
+          headerElement.style.backgroundColor = ''; // Resetear para que use el CSS original
+        }
+        
+      } catch (error) {
+        console.error('❌ Error aplicando color de puesto:', error);
+      }
+    }
+
+    const $tableContainer = document.getElementById('tableContainer');
+    const $table = document.getElementById('ordenesTable');
+    const $tableHeader = document.getElementById('tableHeader');
+    const $tableBody = document.getElementById('tableBody');
+    const $loadingTable = document.getElementById('loadingTable');
+    const $noDataTable = document.getElementById('noDataTable');
+    const $buttons = document.querySelectorAll('.filter-btn');
+    
+    console.log('🟢 Elementos DOM tabla obtenidos:', {
+      tableContainer: !!$tableContainer,
+      table: !!$table,
+      tableHeader: !!$tableHeader,
+      tableBody: !!$tableBody,
+      loadingTable: !!$loadingTable,
+      noDataTable: !!$noDataTable
+    });
+    
+    // Referencia temporal para compatibilidad con código existente
+    const $list = $tableContainer;
+    const $filtroAno = document.getElementById('filtroAno');
+    const $filtroSemana = document.getElementById('filtroSemana');
+    const $btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
+    const $btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
+    const $estadoFiltros = document.getElementById('estadoFiltros');
+    const $estadoFiltrosContainer = document.getElementById('estadoFiltrosContainer');
+    const $cargaTrabajo = document.getElementById('cargaTrabajo');
+    const $filtrosPanel = document.getElementById('filtrosPanel');
+    const $toggleFiltros = document.getElementById('toggleFiltros');
+    
+    console.log('🟢 Elementos DOM filtros obtenidos:', {
+      filtroAno: !!$filtroAno,
+      filtroSemana: !!$filtroSemana,
+      btnAplicarFiltros: !!$btnAplicarFiltros,
+      estadoFiltros: !!$estadoFiltros
+    });
+    
+    let filtrosPanelColapsado = false;
+
+    // Función para colapsar/expandir el panel de filtros
+    function toggleFiltrosPanel() {
+      if (filtrosPanelColapsado) {
+        // Expandir
+        $filtrosPanel.classList.remove('colapsado');
+        $filtrosPanel.classList.add('expandido');
+        $toggleFiltros.textContent = '▲ Ocultar filtros';
+        filtrosPanelColapsado = false;
+      } else {
+        // Colapsar
+        $filtrosPanel.classList.remove('expandido');
+        $filtrosPanel.classList.add('colapsado');
+        $toggleFiltros.textContent = '▼ Expandir filtros';
+        filtrosPanelColapsado = true;
+      }
+    }
+    
+    // Auto-colapsar cuando se aplican filtros
+    function autoColapsarFiltros() {
+      if (!filtrosPanelColapsado) {
+        setTimeout(() => {
+          toggleFiltrosPanel();
+        }, 500); // Pequeño delay para que el usuario vea el cambio
+      }
+    }
+
+    // Calcular y mostrar la carga de trabajo total en minutos
+    function actualizarCargaTrabajo(ordenesFiltradas) {
+      // Si se pasan órdenes filtradas, usarlas; si no, usar todas las órdenes
+      const ordenesParaCalcular = ordenesFiltradas || ORDENES;
+      
+      if (!ordenesParaCalcular || ordenesParaCalcular.length === 0) {
+        $cargaTrabajo.style.display = 'none';
+        return;
+      }
+
+      let tiempoTotal = 0;
+      let ordenesContadas = 0;
+
+      ordenesParaCalcular.forEach(orden => {
+        // Buscar TIEMPO_TOTAL en cualquier campo que pueda contenerlo
+        let tiempo = orden.TIEMPO_TOTAL || orden.tiempoTotal || orden.TiempoTotal || 0;
+        
+        if (tiempo && !isNaN(tiempo)) {
+          tiempoTotal += parseFloat(tiempo);
+          ordenesContadas++;
+        }
+      });
+
+      if (tiempoTotal > 0) {
+        // Convertir minutos a horas y minutos para mejor legibilidad
+        const horas = Math.floor(tiempoTotal / 60);
+        const minutos = Math.round(tiempoTotal % 60);
+        
+        let textoTiempo = '';
+        if (horas > 0) {
+          textoTiempo = `${horas}h ${minutos}min`;
+        } else {
+          textoTiempo = `${minutos} min`;
+        }
+        
+        $cargaTrabajo.textContent = `⏱️ Carga Total: ${textoTiempo} (${tiempoTotal.toFixed(1)} min)`;
+        $cargaTrabajo.style.display = 'inline-block';
+      } else {
+        $cargaTrabajo.style.display = 'none';
+      }
+    }
+
+    // Cargar columnas configuradas para el puesto actual desde la API
+    async function cargarColumnasConfiguradas() {
+      try {
+        console.log('📋 INICIANDO cargarColumnasConfiguradas...');
+        
+        if (!puestoActual) {
+          console.error('❌ No se ha definido el puesto actual');
+          // Usar columnas por defecto
+          columnasConfiguradas = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+          columnasOriginalesBD = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+          
+          // Aplicar color azul claro por defecto
+          aplicarColorPuesto('#87CEEB');
+          console.log('🎨 Color azul claro aplicado por defecto (sin puesto)');
+          
+          generarHeaderTabla();
+          return;
+        }
+
+        console.log(`📋 Cargando columnas configuradas para puesto: ${puestoActual}`);
+        
+        const url = `/api/puesto-columnas/${puestoActual}`;
+        console.log(`📋 URL del endpoint: ${url}`);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        console.log(`📋 Respuesta del servidor: ${response.status} ${response.statusText}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('📋 Respuesta columnas configuradas:', data);
+
+        if (data.success && data.columnas && data.columnas.length > 0) {
+          // Usar las columnas configuradas desde la BD
+          // data.columnas = códigos originales (para buscar datos)
+          // data.columnas_nombres = nombres personalizados (para headers)
+          columnasConfiguradas = data.columnas;  // Códigos originales
+          columnasOriginalesBD = data.columnas_nombres || data.columnas;  // Nombres para headers
+          
+          console.log(`✅ ${data.total} columnas configuradas para el puesto ${puestoActual}:`);
+          console.log(`📋 Columnas (códigos para datos):`, columnasConfiguradas);
+          console.log(`📋 Nombres para headers:`, columnasOriginalesBD);
+          console.log(`📊 Puesto: ${data.puesto_nombre} (ID: ${data.puesto_id})`);
+          
+          // Aplicar color de fondo del puesto
+          if (data.color_pantalla) {
+            aplicarColorPuesto(data.color_pantalla);
+            console.log(`🎨 Color aplicado: ${data.color_pantalla}`);
+          }
+          
+          // Generar el header de la tabla
+          console.log('📋 Generando header de tabla...');
+          generarHeaderTabla();
+          console.log('✅ Header de tabla generado');
+        } else {
+          console.warn('⚠️ No se encontraron columnas configuradas o respuesta vacía, usando columnas por defecto');
+          console.warn('📋 Datos recibidos:', data);
+          columnasConfiguradas = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+          columnasOriginalesBD = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+          
+          // Aplicar color de fondo del puesto si está disponible
+          if (data && data.color_pantalla) {
+            aplicarColorPuesto(data.color_pantalla);
+            console.log(`🎨 Color aplicado (columnas por defecto): ${data.color_pantalla}`);
+          }
+          
+          console.log('📋 Generando header con columnas por defecto...');
+          generarHeaderTabla();
+          console.log('✅ Header generado con columnas por defecto');
+        }
+
+      } catch (error) {
+        console.error('❌ Error cargando columnas configuradas:', error);
+        // Usar columnas por defecto en caso de error
+        console.warn('⚠️ Usando columnas por defecto debido al error');
+        columnasConfiguradas = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+        columnasOriginalesBD = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+        
+        // Aplicar color azul claro por defecto en caso de error
+        aplicarColorPuesto('#87CEEB');
+        console.log('🎨 Color azul claro aplicado por defecto (error)');
+        
+        console.log('📋 Generando header con columnas por defecto (error)...');
+        generarHeaderTabla();
+        console.log('✅ Header generado con columnas por defecto (error)');
+      }
+    }
+
+    // Generar el header de la tabla dinámicamente
+    function generarHeaderTabla() {
+      const headerRow = document.createElement('tr');
+      const filtrosRow = document.createElement('tr');
+      filtrosRow.classList.add('filtros-row');
+      
+      // Agregar columnas configuradas
+      columnasConfiguradas.forEach((codigoColumna, index) => {
+        const th = document.createElement('th');
+        
+        // Obtener el nombre personalizado del header
+        const nombreHeader = columnasOriginalesBD[index] || codigoColumna;
+        
+        // Crear contenedor para el texto y los iconos de ordenamiento
+        const headerContent = document.createElement('div');
+        headerContent.className = 'header-content';
+        headerContent.style.display = 'flex';
+        headerContent.style.alignItems = 'center';
+        headerContent.style.justifyContent = 'space-between';
+        headerContent.style.cursor = 'pointer';
+        
+        // Texto del encabezado - usar el nombre personalizado
+        const headerText = document.createElement('span');
+        headerText.textContent = nombreHeader;
+        headerContent.appendChild(headerText);
+        
+        // Contenedor para los iconos de ordenamiento
+        const sortIcons = document.createElement('span');
+        sortIcons.className = 'sort-icons';
+        sortIcons.innerHTML = '↕️'; // Icono neutral de ordenamiento
+        sortIcons.style.fontSize = '0.8em';
+        sortIcons.style.marginLeft = '4px';
+        headerContent.appendChild(sortIcons);
+        
+        // Añadir el contenedor al encabezado
+        th.appendChild(headerContent);
+        th.classList.add(`col-${codigoColumna}`);
+        th.setAttribute('data-column', codigoColumna);  // Usar el código original para buscar datos
+        
+        // Añadir evento de clic para ordenar - usar código original
+        th.addEventListener('click', () => {
+          sortTable(codigoColumna, index);
+        });
+        
+        headerRow.appendChild(th);
+        
+        // Crear filtro para esta columna
+        const thFiltro = document.createElement('th');
+        const inputFiltro = document.createElement('input');
+        inputFiltro.type = 'text';
+        inputFiltro.className = 'filtro-texto';
+        inputFiltro.id = `filtro-${index}`;
+        inputFiltro.placeholder = `Buscar ${nombreHeader}...`;
+        
+        // Añadir icono visual con CSS
+        inputFiltro.style.backgroundImage = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%233880c7\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"></circle><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"></line></svg>')";
+        inputFiltro.style.backgroundRepeat = "no-repeat";
+        inputFiltro.style.backgroundPosition = "right 8px center";
+        inputFiltro.style.backgroundSize = "16px 16px";
+        inputFiltro.style.paddingRight = "30px";
+        
+        inputFiltro.addEventListener('keyup', aplicarFiltrosTexto);
+        thFiltro.appendChild(inputFiltro);
+        filtrosRow.appendChild(thFiltro);
+      });
+      
+      // Agregar columna "En progreso"
+      const thEnProceso = document.createElement('th');
+      thEnProceso.textContent = 'En progreso';
+      thEnProceso.classList.add('col-en-proceso');
+      thEnProceso.style.width = '130px'; // Ancho mayor para evitar corte del 100%
+      thEnProceso.style.textAlign = 'center';
+      headerRow.appendChild(thEnProceso);
+      
+      // Agregar columna "Estado" 
+      const thEstado = document.createElement('th');
+      thEstado.textContent = 'Estado';
+      thEstado.classList.add('col-estado');
+      thEstado.style.width = '200px'; // Ancho mayor para 3 botones
+      thEstado.style.textAlign = 'center';
+      headerRow.appendChild(thEstado);
+      
+      // NUEVO: Agregar columna "Motivo Faltante" solo en el filtro "missing"
+      if (currentFilter === 'missing') {
+        const thMotivoFaltante = document.createElement('th');
+        thMotivoFaltante.textContent = 'Motivo Faltante';
+        thMotivoFaltante.classList.add('col-motivo-faltante');
+        headerRow.appendChild(thMotivoFaltante);
+      }
+      
+      // Crear filtro para la columna "En progreso" - DESPLEGABLE con valores únicos
+      const thFiltroEnProceso = document.createElement('th');
+      const selectFiltroEnProceso = document.createElement('select');
+      selectFiltroEnProceso.className = 'filtro-select';
+      selectFiltroEnProceso.id = 'filtro-en-proceso';
+      
+      // Opción por defecto
+      const optionDefault = document.createElement('option');
+      optionDefault.value = '';
+      optionDefault.textContent = 'Seleccionar Progreso';
+      selectFiltroEnProceso.appendChild(optionDefault);
+      
+      // Recopilar valores únicos de progreso de la tabla actual
+      const valoresProgreso = new Set();
+      const filas = $tableBody.querySelectorAll('tr');
+      filas.forEach(fila => {
+        const inputProgreso = fila.querySelector('.progress-input');
+        if (inputProgreso) {
+          const valor = inputProgreso.value;
+          if (valor !== '') {
+            valoresProgreso.add(parseInt(valor));
+          }
+        }
+      });
+      
+      // Ordenar valores y crear opciones
+      const valoresOrdenados = Array.from(valoresProgreso).sort((a, b) => a - b);
+      valoresOrdenados.forEach(valor => {
+        const option = document.createElement('option');
+        option.value = valor + '%';
+        option.textContent = valor + '%';
+        selectFiltroEnProceso.appendChild(option);
+      });
+      
+      selectFiltroEnProceso.addEventListener('change', aplicarFiltrosTexto);
+      thFiltroEnProceso.appendChild(selectFiltroEnProceso);
+      filtrosRow.appendChild(thFiltroEnProceso);
+      
+      // Crear filtro para la columna "Estado" - DESPLEGABLE con estados fijos
+      const thFiltroEstado = document.createElement('th');
+      const selectFiltroEstado = document.createElement('select');
+      selectFiltroEstado.className = 'filtro-select';
+      selectFiltroEstado.id = 'filtro-estado';
+      
+      // Opciones para el filtro de estado
+      const opcionesEstado = [
+        { value: '', text: 'Seleccionar Estado' },
+        { value: 'Hecho', text: 'Hecho' },
+        { value: 'En proceso', text: 'En proceso' },
+        { value: 'Faltante', text: 'Faltante' }
+      ];
+      
+      opcionesEstado.forEach(opcion => {
+        const option = document.createElement('option');
+        option.value = opcion.value;
+        option.textContent = opcion.text;
+        selectFiltroEstado.appendChild(option);
+      });
+      
+      selectFiltroEstado.addEventListener('change', aplicarFiltrosTexto);
+      thFiltroEstado.appendChild(selectFiltroEstado);
+      filtrosRow.appendChild(thFiltroEstado);
+      
+      // NUEVO: Agregar filtro para la columna "Motivo Faltante" solo en el filtro "missing"
+      if (currentFilter === 'missing') {
+        const thFiltroMotivoFaltante = document.createElement('th');
+        const inputFiltroMotivoFaltante = document.createElement('input');
+        inputFiltroMotivoFaltante.type = 'text';
+        inputFiltroMotivoFaltante.className = 'filtro-texto';
+        inputFiltroMotivoFaltante.id = `filtro-motivo-faltante`;
+        inputFiltroMotivoFaltante.placeholder = 'Buscar motivo...';
+        
+        // Añadir icono visual
+        inputFiltroMotivoFaltante.style.backgroundImage = "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"%233880c7\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"8\"></circle><line x1=\"21\" y1=\"21\" x2=\"16.65\" y2=\"16.65\"></line></svg>')";
+        inputFiltroMotivoFaltante.style.backgroundRepeat = "no-repeat";
+        inputFiltroMotivoFaltante.style.backgroundPosition = "right 8px center";
+        inputFiltroMotivoFaltante.style.backgroundSize = "16px 16px";
+        inputFiltroMotivoFaltante.style.paddingRight = "30px";
+        
+        inputFiltroMotivoFaltante.addEventListener('keyup', aplicarFiltrosTexto);
+        thFiltroMotivoFaltante.appendChild(inputFiltroMotivoFaltante);
+        filtrosRow.appendChild(thFiltroMotivoFaltante);
+      }
+      
+      // Limpiar y agregar el header
+      $tableHeader.innerHTML = '';
+      $tableHeader.appendChild(headerRow);
+      $tableHeader.appendChild(filtrosRow);
+    }
+
+    // Obtener el nombre exacto de la columna como viene de BD
+    function obtenerNombreColumna(codigo) {
+      // Buscar el nombre personalizado en columnasOriginalesBD
+      if (Array.isArray(columnasOriginalesBD) && columnasOriginalesBD.length > 0) {
+        // Nuevo formato: array de objetos con codigo y nombre
+        if (typeof columnasOriginalesBD[0] === 'object' && columnasOriginalesBD[0].codigo) {
+          const columnaInfo = columnasOriginalesBD.find(col => col.codigo === codigo);
+          if (columnaInfo && columnaInfo.nombre) {
+            return columnaInfo.nombre;  // Devolver nombre personalizado
+          }
+        }
+      }
+      
+      // Fallback: devolver el código original si no se encuentra nombre personalizado
+      return codigo;
+    }
+
+    // Función para aplicar filtros de texto y desplegables en la tabla
+    // Función para poblar los valores únicos en los filtros desplegables
+    function poblarFiltrosDesplegables() {
+      if (!ORDENES || ORDENES.length === 0) return;
+      
+      // Poblar filtro de "En progreso"
+      const progresosUnicos = new Set();
+      const filtroProgreso = document.getElementById('filtro-en-progreso');
+      
+      if (filtroProgreso) {
+        // Agregar valores únicos de progreso
+        ORDENES.forEach(orden => {
+          if (orden.EnProgreso !== null && orden.EnProgreso !== undefined) {
+            progresosUnicos.add(parseInt(orden.EnProgreso));
+          }
+        });
+        
+        // Limpiar opciones existentes (excepto la primera)
+        while (filtroProgreso.options.length > 1) {
+          filtroProgreso.removeChild(filtroProgreso.lastChild);
+        }
+        
+        // Agregar opciones ordenadas
+        Array.from(progresosUnicos)
+          .sort((a, b) => a - b)
+          .forEach(progreso => {
+            const option = document.createElement('option');
+            option.value = progreso;
+            option.textContent = `${progreso}%`;
+            filtroProgreso.appendChild(option);
+          });
+      }
+      
+      // Poblar filtro de "Estado" con valores típicos
+      const filtroEstado = document.getElementById('filtro-estado');
+      if (filtroEstado && filtroEstado.options.length <= 1) {
+        const estadosTipicos = ['Activo', 'Inactivo', 'Parcialmente activo'];
+        estadosTipicos.forEach(estado => {
+          const option = document.createElement('option');
+          option.value = estado.toLowerCase();
+          option.textContent = estado;
+          filtroEstado.appendChild(option);
+        });
+      }
+    }
+
+    function aplicarFiltrosTexto() {
+      const filas = $tableBody.querySelectorAll('tr');
+      
+      // Obtener valores de todos los filtros (inputs y selects)
+      const filtros = [];
+      const inputsTexto = $tableHeader.querySelectorAll('.filtro-texto');
+      const selects = $tableHeader.querySelectorAll('.filtro-select');
+      
+      // Procesar filtros de texto
+      inputsTexto.forEach(input => {
+        const valor = input.value.toLowerCase().trim();
+        filtros.push({ tipo: 'texto', valor: valor, elemento: input });
+        
+        // Resaltar filtros con valor
+        if (valor !== '') {
+          input.style.backgroundColor = "#e6f2fb";
+          input.style.borderColor = "#3880c7";
+          input.style.fontWeight = "bold";
+        } else {
+          input.style.backgroundColor = "white";
+          input.style.borderColor = "#b3d6ee";
+          input.style.fontWeight = "normal";
+        }
+      });
+      
+      // Procesar filtros de desplegable
+      selects.forEach(select => {
+        const valor = select.value.toLowerCase().trim();
+        filtros.push({ tipo: 'select', valor: valor, elemento: select });
+        
+        // Resaltar selects con valor
+        if (valor !== '') {
+          select.style.backgroundColor = "#e6f2fb";
+          select.style.borderColor = "#3880c7";
+          select.style.fontWeight = "bold";
+        } else {
+          select.style.backgroundColor = "white";
+          select.style.borderColor = "#b3d6ee";
+          select.style.fontWeight = "normal";
+        }
+      });
+      
+      // Verificar si hay filtros activos
+      const hayFiltrosActivos = filtros.some(filtro => filtro.valor !== '');
+      
+      // Siempre mostrar el botón de limpiar filtros, pero deshabilitado si no hay filtros activos
+      const btnLimpiarTexto = document.getElementById('btnLimpiarFiltrosTexto');
+      if (btnLimpiarTexto) {
+        btnLimpiarTexto.disabled = !hayFiltrosActivos;
+        btnLimpiarTexto.style.opacity = hayFiltrosActivos ? "1" : "0.5";
+      }
+      
+      // Filtrar filas
+      filas.forEach(fila => {
+        let mostrarFila = true;
+        const celdas = fila.querySelectorAll('td');
+        
+        // Verificar cada filtro contra su celda correspondiente
+        filtros.forEach((filtro, index) => {
+          if (filtro.valor && index < celdas.length) {
+            const celda = celdas[index];
+            
+            // Filtrado especial para columnas "En progreso" y "Estado"
+            if (filtro.elemento.id === 'filtro-en-proceso') {
+              // Filtrar por valor de progreso
+              const inputProgreso = celda.querySelector('.progress-input');
+              if (inputProgreso) {
+                const valorProgreso = inputProgreso.value + '%';
+                if (valorProgreso.toLowerCase() !== filtro.valor) {
+                  mostrarFila = false;
+                }
+              }
+            } else if (filtro.elemento.id === 'filtro-estado') {
+              // Filtrar por estado activo (checked)
+              const toggles = celda.querySelectorAll('.toggle input[type="checkbox"]');
+              let tieneEstadoSeleccionado = false;
+              
+              toggles.forEach(toggle => {
+                if (toggle.checked) {
+                  const labelText = toggle.parentElement.querySelector('span').textContent.toLowerCase();
+                  if (labelText === filtro.valor) {
+                    tieneEstadoSeleccionado = true;
+                  }
+                }
+              });
+              
+              if (!tieneEstadoSeleccionado) {
+                mostrarFila = false;
+              }
+            } else {
+              // Filtrado normal de texto
+              const textoCelda = celda.textContent.toLowerCase();
+              if (!textoCelda.includes(filtro.valor)) {
+                mostrarFila = false;
+              }
+            }
+          }
+        });
+        
+        // Mostrar/ocultar fila
+        fila.style.display = mostrarFila ? '' : 'none';
+      });
+      
+      // Actualizar contador de filas visibles
+      actualizarContadorFiltros();
+    }
+
+    // Función para actualizar el contador de registros filtrados
+    function actualizarContadorFiltros() {
+      const totalFilas = $tableBody.querySelectorAll('tr').length;
+      const filasVisibles = $tableBody.querySelectorAll('tr:not([style*="display: none"])').length;
+      
+      // Buscar si existe un contador previo y eliminarlo
+      let contador = document.getElementById('contador-filtros');
+      if (contador) {
+        contador.remove();
+      }
+      
+      // Crear nuevo contador siempre, para mostrar el total
+      contador = document.createElement('div');
+      contador.id = 'contador-filtros';
+      contador.className = 'contador-filtros';
+      
+      // Obtener filtros activos
+      const filtrosActivos = Array.from($tableHeader.querySelectorAll('.filtro-texto'))
+        .filter(input => input.value.trim() !== '');
+      
+      if (filtrosActivos.length > 0) {
+        // Si hay filtros activos
+        contador.innerHTML = `📊 <strong>Mostrando ${filasVisibles} de ${totalFilas} registros</strong> (Filtrado)`;
+        contador.style.background = '#d6e8f5';
+        contador.style.borderColor = '#3880c7';
+      } else {
+        // Sin filtros activos
+        contador.innerHTML = `📊 Total: ${totalFilas} registros`;
+        contador.style.background = '#f0f0f0';
+        contador.style.borderColor = '#ddd';
+      }
+      
+      // Insertar antes de la tabla
+      $table.parentNode.insertBefore(contador, $table);
+    }
+
+    // Función para limpiar todos los filtros de texto
+    function limpiarFiltrosTexto() {
+      // Limpiar inputs de texto
+      const inputs = $tableHeader.querySelectorAll('.filtro-texto');
+      inputs.forEach(input => {
+        input.value = '';
+        // Restablecer estilo
+        input.style.backgroundColor = "white";
+        input.style.borderColor = "#b3d6ee";
+        input.style.fontWeight = "normal";
+      });
+      
+      // Limpiar selects desplegables
+      const selects = $tableHeader.querySelectorAll('.filtro-select');
+      selects.forEach(select => {
+        select.value = '';
+        // Restablecer estilo
+        select.style.backgroundColor = "white";
+        select.style.borderColor = "#b3d6ee";
+        select.style.fontWeight = "normal";
+      });
+      
+      // Mostrar todas las filas
+      const filas = $tableBody.querySelectorAll('tr');
+      filas.forEach(fila => {
+        fila.style.display = '';
+      });
+      
+      // Eliminar contador
+      const contador = document.getElementById('contador-filtros');
+      if (contador) {
+        contador.remove();
+      }
+      
+      // Ocultar botón de limpiar filtros de tabla
+      const btnLimpiarTexto = document.getElementById('btnLimpiarFiltrosTexto');
+      if (btnLimpiarTexto) {
+        btnLimpiarTexto.style.display = 'none';
+      }
+    }
+
+    // Función auxiliar para manejar estados de carga
+    function mostrarEstadoCarga() {
+      $loadingTable.style.display = 'block';
+      $table.style.display = 'none';
+      $noDataTable.style.display = 'none';
+    }
+
+    // Cargar años disponibles desde la API (igual que puestos en Crearpuesto)
+    async function cargarAños() {
+      try {
+        console.log('Cargando años desde la API...');
+        
+        // Hacer petición a nuestra API local
+        const response = await fetch('/api/anos', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de la API años:', data);
+
+        if (data.success && data.anos) {
+          // Limpiar opciones existentes (sin opción vacía en multiselect)
+          $filtroAno.innerHTML = '';
+          
+          // Agregar opciones desde la API
+          data.anos.forEach(ano => {
+            const option = document.createElement('option');
+            option.value = ano;
+            option.textContent = ano;
+            $filtroAno.appendChild(option);
+          });
+          
+          console.log(`${data.total} años cargados correctamente`);
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando años:', error);
+        
+        // Cargar opciones de respaldo estáticas (sin opción vacía)
+        $filtroAno.innerHTML = `
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+        `;
+      }
+    }
+
+    // Cargar semanas disponibles desde la API (igual que puestos en Crearpuesto)
+    async function cargarSemanas() {
+      try {
+        console.log('Cargando semanas desde la API...');
+        
+        // Hacer petición a nuestra API local
+        const response = await fetch('/api/semanas', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Respuesta de la API semanas:', data);
+
+        if (data.success && data.semanas) {
+          // Limpiar opciones existentes (sin opción vacía en multiselect)
+          $filtroSemana.innerHTML = '';
+          
+          // Agregar opciones desde la API
+          data.semanas.forEach(semana => {
+            const option = document.createElement('option');
+            option.value = semana;
+            option.textContent = `Semana ${semana}`;
+            $filtroSemana.appendChild(option);
+          });
+          
+          console.log(`${data.total} semanas cargadas correctamente`);
+        } else {
+          throw new Error(data.message || 'Error en la respuesta de la API');
+        }
+
+      } catch (error) {
+        console.error('Error cargando semanas:', error);
+        
+        // Cargar opciones de respaldo estáticas (sin opción vacía)
+        $filtroSemana.innerHTML = '';
+        for (let i = 1; i <= 52; i++) {
+          $filtroSemana.innerHTML += `<option value="${i}">Semana ${i}</option>`;
+        }
+      }
+    }
+
+    // Aplicar filtros múltiples
+    async function aplicarFiltros() {
+      const anosSeleccionados = Array.from($filtroAno.selectedOptions).map(opt => opt.value);
+      const semanasSeleccionadas = Array.from($filtroSemana.selectedOptions).map(opt => opt.value);
+      
+      if (anosSeleccionados.length === 0 && semanasSeleccionadas.length === 0) {
+        alert('Debe seleccionar al menos un año o semana para aplicar filtros');
+        return;
+      }
+      
+      if (!puestoActual || puestoActual === 'PUESTO_DEFAULT') {
+        alert('No se pudo detectar el puesto actual. Verifique la URL.');
+        return;
+      }
+      
+      // Mostrar loading al iniciar
+      mostrarEstadoCarga();
+      
+      try {
+        // Construir URL con parámetros
+        const params = new URLSearchParams();
+        params.append('puesto', puestoActual);
+        
+        anosSeleccionados.forEach(ano => params.append('anos[]', ano));
+        semanasSeleccionadas.forEach(semana => params.append('semanas[]', semana));
+        
+        const url = `/api/ordenes?${params.toString()}`;
+        console.log(`Consultando: ${url}`);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Respuesta de órdenes:', data);
+        
+        if (data.success && data.ordenes) {
+          ORDENES = data.ordenes;
+          
+          // Inicializar campo faltante si no existe
+          ORDENES.forEach(orden => {
+            if (orden.faltante === undefined || orden.faltante === null) {
+              orden.faltante = false;
+            }
+          });
+          
+          // Cargar estados activos desde la base de datos y aplicarlos
+          console.log('🔄 INICIANDO carga de estados activos...');
+          const estadosActivos = await cargarEstadosActivos();
+          console.log('🔄 Estados activos devueltos por cargarEstadosActivos():', estadosActivos);
+          ESTADOS_ACTIVOS = estadosActivos; // Actualizar variable global
+          console.log('🔄 Variable global ESTADOS_ACTIVOS actualizada:', ESTADOS_ACTIVOS);
+          aplicarEstadosActivos(estadosActivos);
+          
+          let mensaje = `🔍 Filtros activos: `;
+          if (anosSeleccionados.length > 0) {
+            mensaje += `Año${anosSeleccionados.length > 1 ? 's' : ''}: ${anosSeleccionados.join(', ')}`;
+          }
+          if (semanasSeleccionadas.length > 0) {
+            if (anosSeleccionados.length > 0) mensaje += ' | ';
+            mensaje += `Semana${semanasSeleccionadas.length > 1 ? 's' : ''}: ${semanasSeleccionadas.join(', ')}`;
+          }
+          mensaje += ` | ${data.total} órdenes encontradas`;
+          
+          $estadoFiltros.textContent = mensaje;
+          $estadoFiltrosContainer.className = 'filtros-estado activo';
+          
+          // Calcular y mostrar la carga de trabajo total
+          actualizarCargaTrabajo();
+          
+          // Auto-colapsar el panel después de aplicar filtros
+          autoColapsarFiltros();
+          
+          // Ocultar loading y mostrar las órdenes aplicando el filtro actual
+          console.log('🔄 Ocultando loading y aplicando filtros...');
+          $loadingTable.style.display = 'none';
+          console.log('📊 ORDENES cargadas:', ORDENES?.length, 'columnasConfiguradas:', columnasConfiguradas?.length);
+          applyFilterSync(currentFilter);
+          
+          // Verificación final de estado de elementos
+          console.log('🔍 Estado final después de applyFilter:');
+          console.log('  - loadingTable.display:', $loadingTable.style.display);
+          console.log('  - table.display:', $table.style.display);
+          console.log('  - noDataTable.display:', $noDataTable.style.display);
+          
+          console.log(`${data.total} órdenes cargadas para el puesto ${puestoActual}`);
+        } else {
+          ORDENES = [];
+          $noDataTable.style.display = 'block';
+          $table.style.display = 'none';
+          $estadoFiltros.textContent = 'Sin resultados';
+          $estadoFiltrosContainer.className = 'filtros-estado';
+          // Ocultar carga de trabajo cuando no hay resultados
+          actualizarCargaTrabajo();
+        }
+        
+      } catch (error) {
+        console.error('Error al cargar órdenes:', error);
+        $noDataTable.style.display = 'block';
+        $table.style.display = 'none';
+        $estadoFiltros.textContent = 'Error en filtros';
+        $estadoFiltrosContainer.className = 'filtros-estado';
+        // Ocultar carga de trabajo cuando hay error
+        actualizarCargaTrabajo();
+      }
+    }
+
+    // Limpiar filtros múltiples
+    function limpiarFiltros() {
+      // Deseleccionar todas las opciones
+      Array.from($filtroAno.options).forEach(option => option.selected = false);
+      Array.from($filtroSemana.options).forEach(option => option.selected = false);
+      
+      // Limpiar filtros de texto también
+      limpiarFiltrosTexto();
+      
+      // Limpiar las órdenes
+      ORDENES = [];
+      $noDataTable.style.display = 'block';
+      $table.style.display = 'none';
+      
+      $estadoFiltros.textContent = 'Sin filtros aplicados';
+      $estadoFiltrosContainer.className = 'filtros-estado';
+      
+      // Ocultar carga de trabajo cuando se limpian filtros
+      actualizarCargaTrabajo();
+      
+      // También limpiar filtros de texto si existen
+      limpiarFiltrosTexto();
+      
+      // Expandir panel cuando se limpian filtros
+      if (filtrosPanelColapsado) {
+        toggleFiltrosPanel();
+      }
+      
+      console.log('Filtros limpiados');
+    }
+
+    // Función para obtener parámetros de la URL
+    function obtenerParametroUrl(nombre) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(nombre);
+    }
+
+    // Función para obtener el puesto actual
+    function obtenerPuestoActual() {
+      // Intentar obtener el puesto de diferentes formas
+      puestoActual = obtenerParametroUrl('puesto') || 
+                   obtenerParametroUrl('nombre') || 
+                   obtenerParametroUrl('codigo') || 
+                   'PUESTO_DEFAULT';
+      
+      console.log(`Puesto actual detectado: ${puestoActual}`);
+      
+      // Actualizar título con el nombre del puesto
+      actualizarTituloPuesto(puestoActual);
+      
+      return puestoActual;
+    }
+
+    // Función para actualizar el título con el nombre del puesto
+    function actualizarTituloPuesto(codigoPuesto) {
+      // Mapeo inverso código → nombre
+      const mapeoNombres = {
+        'CLINCAB1': 'Clinchado',
+        'DECOCAB1': 'Decoración',
+        'ESPECIALES': 'Especiales',
+        'MONTCAB1': 'Suelos',
+        'MONTCAB2': 'Techos',
+        'MONTCAB3': 'Bajotecho'
+      };
+      
+      const nombrePuesto = mapeoNombres[codigoPuesto] || codigoPuesto;
+      const headerTitle = document.querySelector('.header-title');
+      
+      if (headerTitle) {
+        headerTitle.textContent = `Puesto ${nombrePuesto}`;
+      }
+      
+      // También actualizar el título de la página
+      document.title = `Puesto CAB - ${nombrePuesto}`;
+    }
+
+    // Función para verificar si una orden está marcada como hecho en los estados activos
+    function isOrdenMarcadaComoHecho(codlinea, gfh) {
+      const claveItem = `${codlinea}_${gfh}`;
+      console.log(`🔍 isOrdenMarcadaComoHecho(${codlinea}, ${gfh}) -> ${claveItem}`);
+      console.log(`   📋 ESTADOS_ACTIVOS existe:`, !!ESTADOS_ACTIVOS);
+      console.log(`   📋 Total claves en ESTADOS_ACTIVOS:`, Object.keys(ESTADOS_ACTIVOS || {}).length);
+      console.log(`   📋 Clave buscada existe:`, !!(ESTADOS_ACTIVOS && ESTADOS_ACTIVOS[claveItem]));
+      
+      if (ESTADOS_ACTIVOS && ESTADOS_ACTIVOS[claveItem]) {
+        console.log(`   📊 Estado encontrado:`, ESTADOS_ACTIVOS[claveItem]);
+        const estadoLimpio = ESTADOS_ACTIVOS[claveItem].estado.trim(); // Eliminar espacios en blanco
+        const resultado = estadoLimpio === 'Hecho';
+        console.log(`   🧹 Estado limpio: "${estadoLimpio}"`);
+        console.log(`   ✅ Resultado: ${resultado}`);
+        return resultado;
+      } else {
+        console.log(`   ❌ No se encontró estado para la clave ${claveItem}`);
+        return false;
+      }
+    }
+
+    // Función para verificar si una orden está marcada como faltante en los estados activos
+    function isOrdenMarcadaComoFaltante(codlinea, gfh) {
+      const claveItem = `${codlinea}_${gfh}`;
+      console.log(`🔍 isOrdenMarcadaComoFaltante(${codlinea}, ${gfh}) -> ${claveItem}`);
+      console.log(`   📋 ESTADOS_ACTIVOS existe:`, !!ESTADOS_ACTIVOS);
+      console.log(`   📋 Total claves en ESTADOS_ACTIVOS:`, Object.keys(ESTADOS_ACTIVOS || {}).length);
+      console.log(`   � Clave buscada existe:`, !!(ESTADOS_ACTIVOS && ESTADOS_ACTIVOS[claveItem]));
+      
+      if (ESTADOS_ACTIVOS && ESTADOS_ACTIVOS[claveItem]) {
+        console.log(`   📊 Estado encontrado:`, ESTADOS_ACTIVOS[claveItem]);
+        const estadoLimpio = ESTADOS_ACTIVOS[claveItem].estado.trim(); // Eliminar espacios en blanco
+        const resultado = estadoLimpio === 'Faltante';
+        console.log(`   🧹 Estado limpio: "${estadoLimpio}"`);
+        console.log(`   ✅ Resultado: ${resultado}`);
+        return resultado;
+      } else {
+        console.log(`   ❌ No se encontró estado para la clave ${claveItem}`);
+        return false;
+      }
+    }
+
+    // Función para verificar si una orden está en proceso y obtener su progreso
+    function isOrdenEnProceso(codlinea, gfh) {
+      const k = `${codlinea}_${gfh}`;
+      const e = ESTADOS_ACTIVOS?.[k];
+      if (!e) return { activo: false, progreso: null };
+      const estado = (e.estado || '').trim();
+      const progreso = (typeof e.progreso === 'number') ? e.progreso : null;
+      return { activo: estado === 'EnProceso' && progreso !== null && progreso > 0, progreso };
+    }
+
+    // Función para cargar el progreso específico de una orden
+    async function cargarProgresoOrden(codlinea, gfh) {
+      try {
+        const params = new URLSearchParams({
+          codlinea: codlinea,
+          gfh: gfh
+        });
+        
+        const url = `/api/obtener-realizacion?${params.toString()}`;
+        console.log(`📊 Cargando progreso para ${codlinea}_${gfh}: ${url}`);
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+          const progreso = result.total_realizacion || 0;
+          console.log(`✅ Progreso cargado para ${codlinea}_${gfh}: ${progreso}%`);
+          return progreso;
+        } else {
+          console.warn(`❌ Error cargando progreso para ${codlinea}_${gfh}:`, result.message);
+          return 0;
+        }
+      } catch (error) {
+        console.error(`💥 Error de conexión al cargar progreso para ${codlinea}_${gfh}:`, error);
+        return 0;
+      }
+    }
+
+    // Función para ajustar valores a múltiplos de 5 entre 0 y 100
+    function clampStep5(v) {
+      if (v == null || Number.isNaN(+v)) return null;
+      let n = Math.max(0, Math.min(100, Math.round(+v / 5) * 5));
+      return n;
+    }
+
+    // Render de una orden como fila de tabla con toggles interactivos
+    async function renderTableRow(orden) {
+      console.log('🔧 Renderizando fila para orden:', orden.NumeroPedido, 'Columnas disponibles:', columnasConfiguradas?.length);
+      console.log('📋 Columnas configuradas actuales:', columnasConfiguradas);
+      console.log('🔍 Datos de la orden:', orden);
+      
+      if (!columnasConfiguradas || columnasConfiguradas.length === 0) {
+        console.warn('⚠️ No hay columnas configuradas, usando columnas por defecto');
+        columnasConfiguradas = ['NumeroPedido', 'DescripcionPieza', 'TiempoTotal', 'Modelo'];
+        console.log('📋 Usando columnas por defecto:', columnasConfiguradas);
+      }
+      
+      // Usar funciones para verificar estados desde ESTADOS_ACTIVOS
+      const isHecho = isOrdenMarcadaComoHecho(orden.CODLINEA, orden.GFH);
+      const isFaltante = isOrdenMarcadaComoFaltante(orden.CODLINEA, orden.GFH);
+      
+      // Cargar progreso dinámicamente de la base de datos
+      let progresoActual = 0;
+      let isProceso = false;
+      
+      // Cargar progreso desde la base de datos
+      try {
+        progresoActual = await cargarProgresoOrden(orden.CODLINEA, orden.GFH);
+        console.log(`📊 Progreso cargado para ${orden.CODLINEA}_${orden.GFH}: ${progresoActual}%`);
+      } catch (error) {
+        console.warn(`⚠️ No se pudo cargar progreso para ${orden.CODLINEA}_${orden.GFH}, usando 0%`);
+        progresoActual = 0;
+      }
+      
+      // Lógica de equivalencia: si está marcado como "Hecho" O tiene 100%, tratar como "Hecho"
+      let progresoFinal = progresoActual;
+      let isHechoFinal = isHecho;
+      
+      if (isHecho || progresoActual >= 100) {
+        // Si está marcado como Hecho O progreso = 100%, aplicar lógica "Hecho"
+        progresoFinal = 100;
+        isProceso = false;
+        isHechoFinal = true;
+        console.log(`🎯 Orden ${orden.CODLINEA}_${orden.GFH} tratada como "Hecha" (Hecho: ${isHecho}, Progreso: ${progresoActual}%)`);
+      } else {
+        isProceso = progresoActual > 0;
+      }
+      
+      // Determinar estilos para los toggles
+      const hechoStyle = isHechoFinal ? 'background: #28a745; border-color: #28a745; color: white;' : 'background: #e9f7ef; border-color: #cfead7; color: #1f8b4c;';
+      const faltanteStyle = isFaltante ? 'background: #dc3545; border-color: #dc3545; color: white;' : 'background: #fff4e6; border-color: #ffd7a8; color: #b36b00;';
+      const procesoStyle = isProceso ? 'background: #0d6efd; border-color: #0d6efd; color: white;' : 'background: #e8f1ff; border-color: #c7d9ff; color: #235aa6;';
+      
+      // Crear la fila
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-id', orden.CODLINEA);
+      tr.classList.add('orden-row');
+      
+      // Agregar columnas configuradas
+      columnasConfiguradas.forEach((columna, index) => {
+        const td = document.createElement('td');
+        td.classList.add(`col-${columna}`);
+        
+        // Usar directamente el nombre de la columna de BD para obtener el valor
+        let valor = orden[columna];
+        console.log(`🔍 Columna "${columna}": ${valor}`);
+        
+        // Si no encontramos el valor, mostrar N/A y hacer debug
+        if (valor === undefined || valor === null) {
+          console.warn(`❌ No se encontró valor para columna "${columna}"`);
+          console.log(`📋 Campos disponibles en la orden:`, Object.keys(orden));
+          valor = 'N/A';
+        }
+        
+        // Formatear valores especiales
+        if (columna.toLowerCase().includes('tiempo')) {
+          valor = `${valor || 0} min`;
+        } else if (columna.toLowerCase().includes('numero')) {
+          td.classList.add('col-numero');
+        }
+        
+        td.textContent = valor;
+        tr.appendChild(td);
+      });
+      
+      // Determinar si está marcado como "Hecho" para deshabilitar controles
+      const flechasDisabled = isHechoFinal ? 'disabled' : '';
+      const inputReadonly = 'readonly'; // Siempre readonly, solo se modifica con flechas
+      // NUEVO: Deshabilitar botón "Faltante" cuando "Hecho" esté marcado
+      const faltanteDisabled = isHechoFinal ? 'disabled' : '';
+      
+      // Agregar columna "En progreso" 
+      const tdEnProceso = document.createElement('td');
+      tdEnProceso.classList.add('col-en-proceso');
+      tdEnProceso.style.textAlign = 'center';
+      tdEnProceso.style.verticalAlign = 'middle';
+      tdEnProceso.innerHTML = `
+        <div class="en-proceso-cell">
+          <div class="progress-wrap" aria-label="Progreso ${orden.NumeroPedido}" title="Al establecer un valor > 0%, se activará automáticamente 'En Proceso'">
+            <button class="progress-arrow down" type="button" aria-label="Bajar 5%" ${flechasDisabled}>▼</button>
+            <input class="progress-input" type="number" min="0" max="100" step="5" inputmode="numeric" pattern="[0-9]*" 
+                  aria-label="Porcentaje de progreso" 
+                  value="${progresoFinal}" 
+                  data-original-value="${progresoFinal}" 
+                  placeholder="0" 
+                  title="Al establecer un valor > 0%, se activará automáticamente 'En Proceso'" 
+                  ${inputReadonly}>
+            <button class="progress-arrow up" type="button" aria-label="Subir 5%" ${flechasDisabled}>▲</button>
+            <span class="progress-sufix">%</span>
+          </div>
+        </div>
+      `;
+      tr.appendChild(tdEnProceso);
+      
+      // Agregar columna "Estado"
+      const tdEstado = document.createElement('td');
+      tdEstado.classList.add('col-estado');
+      tdEstado.style.textAlign = 'center';
+      tdEstado.style.verticalAlign = 'middle';
+      tdEstado.innerHTML = `
+        <div class="estado-cell">
+          <label class="toggle done" title="Marcar como fabricada" style="${hechoStyle}">
+            <input type="checkbox" class="t-hecho" ${isHechoFinal ? 'checked' : ''} aria-label="Hecho: ${orden.NumeroPedido}">
+            <span>Hecho</span>
+          </label>
+          <label class="toggle processing" title="Indicador de estado: En proceso" style="${procesoStyle}">
+            <input type="checkbox" class="t-proceso" ${isProceso ? 'checked' : ''} disabled aria-label="Indicador: En proceso ${orden.NumeroPedido}">
+            <span>En proceso</span>
+          </label>
+          <label class="toggle missing" title="Marcar faltante" style="${faltanteStyle}">
+            <input type="checkbox" class="t-faltante" ${isFaltante ? 'checked' : ''} ${faltanteDisabled} aria-label="Faltante: ${orden.NumeroPedido}">
+            <span>Faltante</span>
+          </label>
+        </div>
+      `;
+      tr.appendChild(tdEstado);
+      
+      // NUEVO: Agregar columna "Motivo Faltante" solo en el filtro "missing"
+      if (currentFilter === 'missing') {
+        const tdMotivoFaltante = document.createElement('td');
+        tdMotivoFaltante.classList.add('col-motivo-faltante');
+        
+        // Obtener el texto del faltante desde los estados activos
+        const claveItem = `${orden.CODLINEA}_${orden.GFH}`;
+        const estadoActual = ESTADOS_ACTIVOS[claveItem];
+        const textoFaltante = estadoActual?.texto_faltante || '';
+        
+        // Contenedor para los chips de motivos
+        const motivosContainer = document.createElement('div');
+        motivosContainer.className = 'motivos-chips-container';
+        motivosContainer.setAttribute('data-codlinea', orden.CODLINEA);
+        motivosContainer.setAttribute('data-gfh', orden.GFH);
+        
+        // Si hay texto, parsearlo y crear chips
+        if (textoFaltante) {
+          // Parsear el texto para separar motivos (formato: "Motivo1, Motivo2, Otro: descripción")
+          const motivos = parsearMotivos(textoFaltante);
+          motivos.forEach(motivo => {
+            const chip = crearChipMotivo(motivo, orden.CODLINEA, orden.GFH);
+            motivosContainer.appendChild(chip);
+          });
+        }
+        
+        // Botón para agregar más motivos
+        const btnAgregar = document.createElement('button');
+        btnAgregar.className = 'btn-agregar-motivo';
+        btnAgregar.innerHTML = '+ Agregar motivo';
+        btnAgregar.onclick = (e) => {
+          e.stopPropagation();
+          abrirModalEditarMotivos(orden.CODLINEA, orden.GFH, textoFaltante);
+        };
+        motivosContainer.appendChild(btnAgregar);
+        
+        tdMotivoFaltante.appendChild(motivosContainer);
+        tr.appendChild(tdMotivoFaltante);
+      }
+      
+      return tr;
+    }
+
+    async function applyFilter(type) {
+      currentFilter = type || currentFilter;
+      
+      console.log('🔍 applyFilter called with:', type, 'ORDENES length:', ORDENES?.length);
+      
+      // NUEVO: Regenerar header si cambió el filtro (para mostrar/ocultar columna Motivo Faltante)
+      generarHeaderTabla();
+      
+      // Si no hay órdenes cargadas, mostrar mensaje
+      if (!ORDENES || ORDENES.length === 0) {
+        console.log('❌ No hay órdenes, mostrando mensaje no-data');
+        $noDataTable.style.display = 'block';
+        $table.style.display = 'none';
+        return;
+      }
+      
+      let filtered = ORDENES.slice();
+      switch (currentFilter) {
+        case 'pending':
+          // Pendientes: no están marcados como Hecho
+          filtered = filtered.filter(x => !isOrdenMarcadaComoHecho(x.CODLINEA, x.GFH));
+          break;
+        case 'missing':
+          // Faltantes: solo los marcados como Faltante
+          filtered = filtered.filter(x => isOrdenMarcadaComoFaltante(x.CODLINEA, x.GFH));
+          break;
+        case 'pendingNomissing':
+          // Pendientes sin faltantes: ni Hecho ni Faltante
+          filtered = filtered.filter(x => !isOrdenMarcadaComoHecho(x.CODLINEA, x.GFH) && !isOrdenMarcadaComoFaltante(x.CODLINEA, x.GFH));
+          break;
+      }
+      
+      console.log('📊 Filtered orders:', filtered.length, 'Columnas configuradas:', columnasConfiguradas?.length);
+      
+      // Limpiar el cuerpo de la tabla
+      $tableBody.innerHTML = '';
+      
+      // Aplicar ordenamiento si hay una columna de ordenamiento seleccionada
+      if (currentSortColumn !== null) {
+        console.log(`🔄 Ordenando por columna: ${currentSortColumn} (${currentSortDirection})`);
+        filtered.sort((a, b) => {
+          const valueA = a[currentSortColumn];
+          const valueB = b[currentSortColumn];
+          
+          // Comparar valores según su tipo
+          let comparison = 0;
+          if (valueA === null || valueA === undefined) return 1;
+          if (valueB === null || valueB === undefined) return -1;
+          
+          // Si son números, comparar numéricamente
+          if (!isNaN(valueA) && !isNaN(valueB)) {
+            comparison = Number(valueA) - Number(valueB);
+          } else {
+            // Para strings, comparar alfabéticamente
+            comparison = String(valueA).localeCompare(String(valueB));
+          }
+          
+          // Aplicar dirección de ordenamiento
+          return currentSortDirection === 'asc' ? comparison : -comparison;
+        });
+      }
+      
+      // Agregar filas filtradas
+      if (filtered.length === 0) {
+        console.log('❌ No hay órdenes filtradas, mostrando no-data');
+        $loadingTable.style.display = 'none';
+        $noDataTable.style.display = 'block';
+        $table.style.display = 'none';
+        // Actualizar carga de trabajo cuando no hay resultados
+        actualizarCargaTrabajo([]);
+      } else {
+        console.log('✅ Mostrando tabla con', filtered.length, 'órdenes');
+        console.log('🔧 Ocultando loading y no-data, mostrando tabla...');
+        $loadingTable.style.display = 'none';
+        $noDataTable.style.display = 'none';
+        $table.style.display = 'table';
+        
+        // Renderizar filas de manera asíncrona en paralelo para mejor rendimiento
+        const rowPromises = filtered.map(async (orden, index) => {
+          console.log(`➕ Agregando orden ${index + 1}:`, orden.NumeroPedido);
+          const row = await renderTableRow(orden);
+          return { row, index };
+        });
+        
+        // Esperar a que todas las filas se rendericen y luego agregarlas en orden
+        const rowResults = await Promise.all(rowPromises);
+        rowResults.forEach(({ row }) => {
+          $tableBody.appendChild(row);
+        });
+        
+        console.log('✅ Tabla renderizada completamente');
+        console.log('🔍 Estado final de elementos:');
+        console.log('  - loadingTable.display:', $loadingTable.style.display);
+        console.log('  - table.display:', $table.style.display);
+        console.log('  - noDataTable.display:', $noDataTable.style.display);
+        
+        // Poblar filtros desplegables con valores únicos
+        poblarFiltrosDesplegables();
+        
+        // FORZAR ocultación del loading una vez más para asegurar
+        $loadingTable.style.display = 'none';
+        $loadingTable.style.visibility = 'hidden';
+        console.log('🔧 FORZADO: Loading ocultado definitivamente');
+        
+        // Actualizar carga de trabajo con las órdenes filtradas
+        actualizarCargaTrabajo(filtered);
+      }
+    }
+    
+    // Función wrapper para llamadas síncronas a applyFilter
+    function applyFilterSync(type) {
+      applyFilter(type).catch(error => {
+        console.error('Error en applyFilter:', error);
+      });
+    }
+    
+    // Función para ordenar la tabla por una columna específica
+    function sortTable(columnName, columnIndex) {
+      console.log(`🔄 Ordenando tabla por columna: ${columnName} (índice: ${columnIndex})`);
+      
+      // Actualizar los iconos de ordenamiento en todos los encabezados
+      const headers = document.querySelectorAll('#tableHeader th');
+      headers.forEach(header => {
+        const icons = header.querySelector('.sort-icons');
+        if (icons) {
+          icons.innerHTML = '↕️'; // Restablecer a icono neutral
+          icons.style.opacity = '0.5';
+        }
+      });
+      
+      // Si hacemos clic en la misma columna, invertir la dirección de ordenamiento
+      if (currentSortColumn === columnName) {
+        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        // Si es una columna diferente, establecer como ascendente por defecto
+        currentSortColumn = columnName;
+        currentSortDirection = 'asc';
+      }
+      
+      // Actualizar el icono de la columna ordenada
+      const currentHeader = document.querySelector(`th[data-column="${columnName}"]`);
+      if (currentHeader) {
+        const icons = currentHeader.querySelector('.sort-icons');
+        if (icons) {
+          icons.innerHTML = currentSortDirection === 'asc' ? '↑' : '↓';
+          icons.style.opacity = '1';
+        }
+      }
+      
+      // Aplicar el filtro actual para actualizar la tabla con el nuevo ordenamiento
+      applyFilterSync(currentFilter);
+    }
+
+    // Función para registrar cambios de estado en la base de datos
+    async function registrarEstado(codlinea, gfh, estado, progreso = null) {
+      try {
+        console.log(`Iniciando registro de estado: ${estado} para CODLINEA: ${codlinea}, GFH: ${gfh}, progreso: ${progreso}`);
+        
+        const requestBody = {
+          codlinea: codlinea,
+          gfh: gfh,
+          estado: estado
+        };
+        
+        // NUEVO: Agregar texto del faltante si está disponible
+        if (estado === 'Faltante' && window.textoFaltanteActual) {
+          requestBody.texto_faltante = window.textoFaltanteActual;
+          console.log(`📝 Incluyendo texto de faltante: "${window.textoFaltanteActual}"`);
+        }
+        
+        // Para estado EnProceso, usar realizacion_frontend en lugar de progreso
+        if (estado === 'EnProceso' && progreso !== null) {
+          requestBody.realizacion_frontend = progreso;
+        } else if (estado === 'NoHecho' && progreso !== null) {
+          // NUEVO: Para NoHecho con valor específico de progreso (-100)
+          requestBody.realizacion_frontend = progreso;
+        } else if (progreso !== null) {
+          requestBody.progreso = progreso;
+        }
+        
+        console.log(`📤 Enviando datos al servidor:`, requestBody);
+        
+        const response = await fetch('/api/registrar-estado', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        console.log(`Respuesta del servidor - Status: ${response.status}`);
+        
+        const result = await response.json();
+        
+        console.log(`Resultado completo del servidor:`, result);
+        
+        // Log detallado para depuración
+        if (result.requiresConfirmation) {
+          console.log('⚠️ ALERTA: Se requiere confirmación para actualización negativa');
+          console.log('📋 Datos recibidos en respuesta:');
+          console.log(`   - codlinea: ${result.codlinea}`);
+          console.log(`   - gfh: ${result.gfh}`);
+          console.log(`   - current_value: ${result.current_value}`);
+          console.log(`   - mensaje: ${result.message}`);
+          if (result.debug_info) {
+            console.log('🔍 Información de depuración:');
+            console.log(result.debug_info);
+          }
+        }
+        
+        if (result.success) {
+          console.log(`✅ Estado registrado exitosamente:`, result.registro);
+          
+          // Actualizar la variable global ESTADOS_ACTIVOS inmediatamente
+          const claveItem = `${codlinea}_${gfh}`;
+          ESTADOS_ACTIVOS[claveItem] = {
+            ...(ESTADOS_ACTIVOS[claveItem] || {}),
+            CODLINEA: codlinea,
+            GFH: gfh,
+            estado: (estado === 'NoEnProceso' && progreso == null) ? 'NoEnProceso' : estado,
+            progreso: progreso ?? null,
+            fecha: new Date().toISOString().split('T')[0], // Fecha actual
+            turno: 'TM' // Por ahora usar TM por defecto
+          };
+          console.log(`🔄 ESTADOS_ACTIVOS actualizado para ${claveItem}:`, ESTADOS_ACTIVOS[claveItem]);
+          
+          return true; // Indicar éxito
+        } else if (result.requiresConfirmation) {
+          // Caso especial para actualización negativa que requiere confirmación
+          console.warn('⚠️ Actualización negativa detectada:', result.message);
+          
+          const confirmarNegativo = confirm(`${result.message}\n\n¿Desea continuar con esta actualización negativa?`);
+          
+          if (confirmarNegativo) {
+            console.log('✅ Usuario confirmó actualización negativa, reintentando...');
+            // Reintentar con el flag de confirmación
+            const requestBodyConfirmado = {
+              ...requestBody,
+              confirmar_negativo: true
+            };
+            
+            console.log('📤 Reenviando solicitud con confirmación:', requestBodyConfirmado);
+            
+            const responseConfirmado = await fetch('/api/registrar-estado', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(requestBodyConfirmado)
+            });
+            
+            const resultConfirmado = await responseConfirmado.json();
+            
+            if (resultConfirmado.success) {
+              console.log('✅ Actualización negativa registrada exitosamente:', resultConfirmado);
+              
+              // Actualizar estados activos con el nuevo valor
+              ESTADOS_ACTIVOS[claveItem] = {
+                ...(ESTADOS_ACTIVOS[claveItem] || {}),
+                CODLINEA: codlinea,
+                GFH: gfh,
+                estado: estado,
+                progreso: progreso ?? null,
+                fecha: new Date().toISOString().split('T')[0],
+                turno: 'TM'
+              };
+              
+              return true; // Indicar éxito
+            } else {
+              console.error('❌ Error en actualización negativa:', resultConfirmado.message);
+              return false;
+            }
+          } else {
+            console.log('❌ Usuario rechazó actualización negativa, restaurando valor original');
+            console.log('⚠️ Datos recibidos:', result);
+            
+            // Restaurar el valor original en la interfaz si hay un campo de entrada afectado
+            if (result.current_value !== undefined) {
+              // MÉTODO DIRECTO: Buscar directamente todos los inputs de progreso
+              const allProgressInputs = document.querySelectorAll('.progress-input');
+              let inputFound = false;
+              
+              console.log(`🔍 Buscando inputs de progreso para CODLINEA=${codlinea}, GFH=${gfh}. Total inputs: ${allProgressInputs.length}`);
+              
+              // Para cada input de progreso en la página
+              for (const input of allProgressInputs) {
+                // Buscar la fila que contiene este input
+                const row = input.closest('tr');
+                if (!row) continue;
+                
+                // Verificar si es la fila correcta comparando data-id (CODLINEA)
+                const rowCodelinea = row.getAttribute('data-id');
+                if (rowCodelinea !== codlinea) continue;
+                
+                console.log(`📋 Encontrada fila con CODLINEA=${codlinea}, verificando si corresponde a GFH=${gfh}`);
+                
+                // Ahora necesitamos verificar si esta fila corresponde al GFH correcto
+                // Implementamos múltiples estrategias para encontrar el GFH
+                
+                // 1. Buscar en atributos de datos explícitos si existen
+                if (row.hasAttribute('data-gfh') && row.getAttribute('data-gfh') === gfh) {
+                  console.log(`✅ Encontrado por data-gfh`);
+                  inputFound = true;
+                } else {
+                  // 2. Buscar una celda que contenga exactamente el GFH
+                  const cells = row.querySelectorAll('td');
+                  for (const cell of cells) {
+                    const cellText = cell.textContent.trim();
+                    if (cellText === gfh) {
+                      console.log(`✅ Encontrado por texto exacto de celda`);
+                      inputFound = true;
+                      break;
+                    }
+                    
+                    // 3. Verificar si el GFH está contenido en la celda (podría tener texto adicional)
+                    if (cellText.includes(gfh)) {
+                      console.log(`✅ Encontrado por texto contenido en celda`);
+                      inputFound = true;
+                      break;
+                    }
+                  }
+                }
+                
+                // Si encontramos una coincidencia, actualizar el valor del input
+                if (inputFound) {
+                  console.log(`🎯 Restaurando input para ${codlinea}_${gfh} al valor ${result.current_value}%`);
+                  
+                  // Actualizar el valor del input
+                  input.value = result.current_value;
+                  
+                  // También actualizar el atributo data-original-value
+                  input.setAttribute('data-original-value', result.current_value);
+                  
+                  // Forzar un evento de actualización visual
+                  input.dispatchEvent(new Event('change'));
+                  
+                  // Mostrar alerta para informar al usuario
+                  alert(`La actualización negativa ha sido cancelada. El valor de progreso ha sido restaurado a ${result.current_value}%.`);
+                  
+                  break; // Salir del bucle una vez que se ha actualizado el input
+                }
+              }
+              
+              if (!inputFound) {
+                console.warn(`❌ No se pudo encontrar el input de progreso para ${codlinea}_${gfh}`);
+                alert(`No se pudo restaurar el valor original (${result.current_value}%). Por favor, actualice la página para ver los valores correctos.`);
+              }
+            } else {
+              console.warn(`⚠️ No se recibió valor actual del servidor para restaurar`);
+              alert('No se pudo obtener el valor original del servidor. Por favor, actualice la página para ver los valores correctos.');
+            }
+            
+            return false;
+          }
+        } else {
+          console.error('❌ Error registrando estado:', result.message);
+          return false; // Indicar fallo
+        }
+      } catch (error) {
+        console.error('💥 Error de conexión al registrar estado:', error);
+        return false; // Indicar fallo
+      }
+    }
+
+    // Función para cargar estados activos desde la base de datos
+    async function cargarEstadosActivos() {
+      try {
+        console.log('🔄 Cargando estados activos desde la base de datos...');
+        
+        if (!puestoActual || puestoActual === 'PUESTO_DEFAULT') {
+          console.warn('No hay puesto actual definido, usando ESPECIALES por defecto');
+          return {};
+        }
+        
+        // Obtener filtros actuales (los mismos que se usaron para cargar las órdenes)
+        const anosSeleccionados = Array.from($filtroAno.selectedOptions).map(opt => opt.value);
+        const semanasSeleccionadas = Array.from($filtroSemana.selectedOptions).map(opt => opt.value);
+        
+        // Construir URL con parámetros
+        const params = new URLSearchParams();
+        params.append('puesto', puestoActual);
+        
+        anosSeleccionados.forEach(ano => params.append('anos[]', ano));
+        semanasSeleccionadas.forEach(semana => params.append('semanas[]', semana));
+        
+        const url = `/api/obtener-estados-activos?${params.toString()}`;
+        console.log(`📡 Consultando estados activos: ${url}`);
+        
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log(`✅ Estados activos cargados: ${result.total} registros encontrados`);
+          console.log('📊 Estados activos recibidos:', result.estados);
+          
+          // DEBUG: Verificar si existe el CODLINEA específico que está en la BD
+          const codlineaEspecifico = '41937050_GF350000MTJ';
+          if (result.estados[codlineaEspecifico]) {
+            console.log(`🎯 ENCONTRADO estado para ${codlineaEspecifico}:`, result.estados[codlineaEspecifico]);
+          } else {
+            console.log(`❌ NO ENCONTRADO estado para ${codlineaEspecifico}`);
+            console.log('🔍 Claves disponibles:', Object.keys(result.estados));
+          }
+          
+          return result.estados;
+        } else {
+          console.error('❌ Error cargando estados activos:', result.message);
+          return {};
+        }
+      } catch (error) {
+        console.error('💥 Error de conexión al cargar estados activos:', error);
+        return {};
+      }
+    }
+
+    // Aplicar estados activos a las órdenes
+    function aplicarEstadosActivos(estadosActivos) {
+      console.log('🎯 Iniciando aplicación de estados activos...');
+      console.log('📋 Estados recibidos para aplicar:', estadosActivos);
+      console.log(`📦 Total de órdenes a procesar: ${ORDENES.length}`);
+      
+      let estadosAplicados = 0;
+      
+      // Solo contamos cuántos estados se encontraron
+      ORDENES.forEach(orden => {
+        const claveItem = `${orden.CODLINEA}_${orden.GFH}`;
+        
+        if (estadosActivos[claveItem]) {
+          const estadoActivo = estadosActivos[claveItem];
+          const estado = estadoActivo.estado;
+          
+          console.log(`🔄 Estado encontrado para orden ${orden.NumeroPedido} (${claveItem}): '${estado}'`);
+          estadosAplicados++;
+        }
+      });
+      
+      console.log(`✅ Estados procesados: ${estadosAplicados} de ${ORDENES.length} órdenes`);
+      
+      if (estadosAplicados === 0) {
+        console.log(`ℹ️ No se encontraron estados activos para las órdenes cargadas`);
+      }
+    }
+
+    // Delegación de eventos para toggles en la tabla
+    $tableBody.addEventListener('change', async (e) => {
+      const row = e.target.closest('.orden-row');
+      if (!row) return;
+      const id = row.getAttribute('data-id');
+      const orden = ORDENES.find(x => x.CODLINEA === id);
+      if (!orden) return;
+
+      let estadoARegistrar = null;
+      let progreso = null;
+
+      if (e.target.classList.contains('t-hecho')) {
+        const nuevoEstado = e.target.checked;
+        const input = row.querySelector('.progress-input');
+        const checkboxProceso = row.querySelector('.t-proceso');
+        const checkboxFaltante = row.querySelector('.t-faltante');
+        const flechaUp = row.querySelector('.progress-arrow.up');
+        const flechaDown = row.querySelector('.progress-arrow.down');
+        
+        // Si está marcando como "Hecho", procesar normalmente
+        if (nuevoEstado) {
+          // Marcar como Hecho: poner 100%, desmarcar proceso, deshabilitar flechas
+          input.value = 100;
+          input.setAttribute('data-original-value', 100);
+          checkboxProceso.checked = false;
+          flechaUp.disabled = true;
+          flechaDown.disabled = true;
+          
+          // NUEVO: Deshabilitar el botón "Faltante" cuando "Hecho" está marcado
+          if (checkboxFaltante) {
+            checkboxFaltante.checked = false; // Desmarcar si estaba marcado
+            checkboxFaltante.disabled = true; // Deshabilitar el control
+          }
+          
+          console.log(`✅ Marcado como "Hecho": progreso establecido a 100%, botón Faltante deshabilitado`);
+          estadoARegistrar = 'Hecho';
+        } else {
+          // NUEVO: Confirmación al desmarcar "Hecho"
+          if (confirm('¿Está seguro que desea desmarcar esta tarea como "Hecho"?')) {
+            // Desmarcar Hecho: habilitar flechas, mantener progreso actual
+            flechaUp.disabled = false;
+            flechaDown.disabled = false;
+            
+            // NUEVO: Habilitar el botón "Faltante" cuando "Hecho" se desmarca
+            if (checkboxFaltante) {
+              checkboxFaltante.disabled = false; // Habilitar el control
+            }
+            
+            console.log(`🔄 Desmarcado "Hecho": flechas habilitadas, botón Faltante habilitado`);
+            estadoARegistrar = 'NoHecho';
+            progreso = -100; // Establecer Realización a -100 como solicitado
+          } else {
+            // Si cancela, revertir el checkbox
+            console.log(`❌ Operación cancelada: se mantiene estado "Hecho"`);
+            e.target.checked = true; // Mantener checkbox marcado
+            return; // Salir sin registrar cambios
+          }
+        }
+      }
+      
+      if (e.target.classList.contains('t-faltante')) {
+        const checkboxHecho = row.querySelector('.t-hecho');
+        
+        // NUEVO: Prevenir marcar "Faltante" si "Hecho" está marcado
+        if (e.target.checked && checkboxHecho && checkboxHecho.checked) {
+          console.log('❌ No se puede marcar "Faltante" cuando "Hecho" está activo');
+          e.target.checked = false; // Revertir el cambio
+          alert('No se puede marcar como "Faltante" una tarea que ya está marcada como "Hecho".');
+          return; // Salir sin registrar cambios
+        }
+        
+        const nuevoEstado = e.target.checked;
+        
+        // Si se marca como faltante, abrir el modal multiselect
+        if (nuevoEstado) {
+          // Abrir modal y esperar selección
+          abrirModalFaltante(
+            // Callback cuando se confirma
+            async (textoFaltante) => {
+              console.log(`📝 Motivos de faltante seleccionados: "${textoFaltante}"`);
+              
+              // Determinar estado a registrar
+              estadoARegistrar = 'Faltante';
+              
+              // Guardar el texto del faltante para enviar al servidor
+              window.textoFaltanteActual = textoFaltante;
+              
+              // Registrar cambio de estado en la base de datos
+              if (orden.CODLINEA && orden.GFH) {
+                console.log(`Registrando estado: ${estadoARegistrar} para CODLINEA: ${orden.CODLINEA}, GFH: ${orden.GFH}`);
+                
+                const exitoso = await registrarEstado(
+                  orden.CODLINEA,
+                  orden.GFH,
+                  estadoARegistrar,
+                  null // progreso no aplica para Faltante
+                );
+                
+                if (exitoso) {
+                  console.log('✅ Estado Faltante registrado exitosamente');
+                  // Mantener checkbox marcado
+                  e.target.checked = true;
+                  
+                  // Actualizar caché local de estados
+                  const k = `${orden.CODLINEA}_${orden.GFH}`;
+                  ESTADOS_ACTIVOS[k] = {
+                    ...(ESTADOS_ACTIVOS[k] || {}),
+                    CODLINEA: orden.CODLINEA,
+                    GFH: orden.GFH,
+                    estado: 'Faltante',
+                    texto_faltante: textoFaltante
+                  };
+                } else {
+                  console.error('❌ Error al registrar estado Faltante');
+                  e.target.checked = false; // Revertir el checkbox
+                }
+              }
+              
+              // Limpiar variable global
+              window.textoFaltanteActual = null;
+            },
+            // Callback cuando se cancela
+            () => {
+              console.log('❌ Usuario canceló la selección de motivos para faltante');
+              e.target.checked = false; // Revertir el checkbox
+            }
+          );
+          
+          // Salir de la función - el registro se hace en el callback del modal
+          return;
+        } else {
+          // Si se desmarca, registrar NoFaltante
+          estadoARegistrar = 'NoFaltante';
+          window.textoFaltanteActual = null;
+        }
+      }
+
+      // El "En proceso" ya no se controla con click, ahora es un indicador automático
+      // pero mantenemos el código para compatibilidad, aunque no debería ejecutarse nunca
+      if (e.target.classList.contains('t-proceso')) {
+        console.log('⚠️ Intento de marcar "En proceso" manualmente - Esta funcionalidad ha cambiado');
+        // Prevenir la acción ya que el checkbox está deshabilitado y es solo un indicador
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Informar al usuario del cambio
+        alert('El estado "En Proceso" ahora es automático y se activa cuando el progreso es mayor que 0%.');
+        
+        // Restaurar estado original (aunque no debería poder cambiar por estar disabled)
+        const input = row.querySelector('.progress-input');
+        const valorOriginal = parseFloat(input.getAttribute('data-original-value')) || 0;
+        let valorActual = clampStep5(input.value) || 0;
+        
+        // Determinar si debería estar checked basado en el valor actual
+        e.target.checked = valorActual > 0;
+        return; // No continuar con el registro de estado
+      }
+
+      // Registrar cambio de estado en la base de datos PRIMERO
+      if (estadoARegistrar && orden.CODLINEA && orden.GFH) {
+        console.log(`Registrando estado: ${estadoARegistrar} para CODLINEA: ${orden.CODLINEA}, GFH: ${orden.GFH}, progreso: ${progreso}`);
+        
+        const registroExitoso = await registrarEstado(orden.CODLINEA, orden.GFH, estadoARegistrar, progreso);
+        
+        if (registroExitoso) {
+          console.log(`✅ Estado registrado exitosamente, actualizando fila específica...`);
+          
+          // NUEVO: Si estamos en "Pendientes sin faltantes" y se marcó como "Hecho", ocultar la fila inmediatamente
+          if (currentFilter === 'pendingNomissing' && estadoARegistrar === 'Hecho') {
+            console.log(`🎯 Ocultando fila inmediatamente en filtro "Pendientes sin faltantes" - ${orden.CODLINEA}_${orden.GFH}`);
+            const row = e.target.closest('.orden-row');
+            if (row) {
+              // Aplicar animación de fade out
+              row.classList.add('fade-out');
+              
+              // Remover la fila después de la animación
+              setTimeout(() => {
+                row.remove();
+              }, 300);
+            }
+          } else if (currentFilter === 'pendingNomissing' && estadoARegistrar === 'Faltante') {
+            // NUEVO: Si se marcó como "Faltante" en "Pendientes sin faltantes", ocultar la fila inmediatamente
+            console.log(`🎯 Ocultando fila por Faltante en filtro "Pendientes sin faltantes" - ${orden.CODLINEA}_${orden.GFH}`);
+            const row = e.target.closest('.orden-row');
+            if (row) {
+              // Aplicar animación de fade out
+              row.classList.add('fade-out');
+              
+              // Remover la fila después de la animación
+              setTimeout(() => {
+                row.remove();
+              }, 300);
+            }
+          } else if (currentFilter === 'pendingNomissing' && (estadoARegistrar === 'NoHecho' || estadoARegistrar === 'NoFaltante')) {
+            // NUEVO: Si se desmarcó "Hecho" o "Faltante" en "Pendientes sin faltantes", recargar el filtro para que aparezca
+            console.log(`🔄 Desmarcado estado en filtro "Pendientes sin faltantes", recargando filtro...`);
+            // Esperar un poco para que se procese el cambio en la BD
+            setTimeout(() => {
+              applyFilterSync(currentFilter);
+            }, 500);
+          } else {
+            // Usar actualización selectiva para TODOS los demás casos
+            await actualizarFilaEspecifica(orden.CODLINEA, orden.GFH);
+          }
+        } else {
+          console.error(`❌ Error registrando estado, revirtiendo checkbox...`);
+          // Revertir el checkbox si hubo error
+          e.target.checked = !e.target.checked;
+        }
+      } else {
+        console.warn(`No se pudo registrar estado:`, {
+          estadoARegistrar,
+          CODLINEA: orden.CODLINEA,
+          GFH: orden.GFH,
+          orden: orden
+        });
+        // Revertir el checkbox si no se puede registrar
+        e.target.checked = !e.target.checked;
+      }
+    });
+
+    // Variables para debounce de las flechas
+    let debounceTimers = new Map(); // Para guardar timers por fila
+    const DEBOUNCE_DELAY = 1500; // 1.5 segundos de espera
+
+    // Función para actualizar solo una fila específica en lugar de toda la tabla
+    async function actualizarFilaEspecifica(codlinea, gfh) {
+      try {
+        console.log(`🔄 Actualizando solo la fila: ${codlinea}_${gfh}`);
+        
+        // Buscar la fila en el DOM
+        const row = document.querySelector(`[data-id="${codlinea}"]`);
+        if (!row) {
+          console.warn(`⚠️ No se encontró la fila para ${codlinea}`);
+          return;
+        }
+        
+        // Buscar la orden en los datos
+        const orden = ORDENES.find(x => x.CODLINEA === codlinea && x.GFH === gfh);
+        if (!orden) {
+          console.warn(`⚠️ No se encontró la orden para ${codlinea}_${gfh}`);
+          return;
+        }
+        
+        // Cargar el progreso actualizado
+        const progresoActual = await cargarProgresoOrden(codlinea, gfh);
+        
+        // Verificar estados actuales
+        const isHecho = isOrdenMarcadaComoHecho(codlinea, gfh);
+        const isFaltante = isOrdenMarcadaComoFaltante(codlinea, gfh);
+        const esProceso100 = progresoActual >= 100;
+        
+        // Actualizar solo los elementos de progreso en esta fila
+        const input = row.querySelector('.progress-input');
+        const checkboxProceso = row.querySelector('.t-proceso');
+        const checkboxHecho = row.querySelector('.t-hecho');
+        const checkboxFaltante = row.querySelector('.t-faltante');
+        const labelProceso = checkboxProceso.closest('.toggle.processing');
+        const labelHecho = checkboxHecho.closest('.toggle.done');
+        const labelFaltante = checkboxFaltante.closest('.toggle.missing');
+        const flechaUp = row.querySelector('.progress-arrow.up');
+        const flechaDown = row.querySelector('.progress-arrow.down');
+        
+        if (input && checkboxProceso && labelProceso && checkboxHecho && labelHecho && checkboxFaltante && labelFaltante && flechaUp && flechaDown) {
+          // Actualizar el input
+          input.value = progresoActual;
+          input.setAttribute('data-original-value', progresoActual);
+          
+          // Lógica de equivalencia Hecho ↔ 100%
+          if (isHecho || esProceso100) {
+            // Si está marcado como Hecho O tiene 100%, aplicar estado "Hecho"
+            input.value = 100;
+            checkboxHecho.checked = true;
+            checkboxProceso.checked = false; // Desmarcar "En proceso"
+            
+            // Deshabilitar flechas
+            flechaUp.disabled = true;
+            flechaDown.disabled = true;
+            
+            // Estilos para "Hecho"
+            labelHecho.style.cssText = 'background: #28a745; border-color: #28a745; color: white;';
+            labelProceso.style.cssText = 'background: #e8f1ff; border-color: #c7d9ff; color: #235aa6;';
+            
+            console.log(`✅ Estado "Hecho" aplicado: ${codlinea}_${gfh} - 100%`);
+          } else {
+            // Estado normal de progreso
+            const isProceso = progresoActual > 0;
+            checkboxProceso.checked = isProceso;
+            checkboxHecho.checked = false;
+            
+            // Habilitar flechas
+            flechaUp.disabled = false;
+            flechaDown.disabled = false;
+            
+            // Estilos según progreso
+            const procesoStyle = isProceso ? 
+              'background: #0d6efd; border-color: #0d6efd; color: white;' : 
+              'background: #e8f1ff; border-color: #c7d9ff; color: #235aa6;';
+            labelProceso.style.cssText = procesoStyle;
+            labelHecho.style.cssText = 'background: #e9f7ef; border-color: #cfead7; color: #1f8b4c;';
+            
+            console.log(`✅ Estado progreso aplicado: ${codlinea}_${gfh} - ${progresoActual}%`);
+          }
+          
+          // Actualizar estado "Faltante" independientemente
+          checkboxFaltante.checked = isFaltante;
+          const faltanteStyle = isFaltante ? 
+            'background: #dc3545; border-color: #dc3545; color: white;' : 
+            'background: #fff4e6; border-color: #ffd7a8; color: #b36b00;';
+          labelFaltante.style.cssText = faltanteStyle;
+          
+          console.log(`✅ Fila actualizada: ${codlinea}_${gfh} - Progreso: ${progresoActual}%, Hecho: ${isHecho}, Faltante: ${isFaltante}`);
+        }
+        
+      } catch (error) {
+        console.error(`💥 Error actualizando fila ${codlinea}_${gfh}:`, error);
+      }
+    }
+
+    // Delegación de eventos para flechas de progreso
+    $tableBody.addEventListener('click', async (e) => {
+      const row = e.target.closest('.orden-row');
+      if (!row) return;
+      const id = row.getAttribute('data-id');
+      const orden = ORDENES.find(x => x.CODLINEA === id);
+      if (!orden) return;
+
+      // Flechas up/down
+      if (e.target.classList.contains('progress-arrow')) {
+        // Verificar si la flecha está deshabilitada
+        if (e.target.disabled) {
+          console.log(`🚫 Flecha deshabilitada para orden ${orden.CODLINEA}_${orden.GFH}`);
+          return;
+        }
+        
+        const input = row.querySelector('.progress-input');
+        const chk = row.querySelector('.t-proceso');
+        let val = clampStep5(input.value || 0) ?? 0;
+        
+        if (e.target.classList.contains('up'))  val = Math.min(100, val + 5);
+        if (e.target.classList.contains('down')) val = Math.max(0,   val - 5);
+        
+        // Actualizar el input inmediatamente para feedback visual
+        input.value = val || '';
+        
+        // Crear clave única para esta fila
+        const filaKey = `${orden.CODLINEA}_${orden.GFH}`;
+        
+        // Cancelar timer previo si existe
+        if (debounceTimers.has(filaKey)) {
+          clearTimeout(debounceTimers.get(filaKey));
+        }
+        
+        // Crear nuevo timer con debounce
+        const timer = setTimeout(async () => {
+          console.log(`⏰ Ejecutando registro con debounce para ${filaKey}: ${val}%`);
+          
+          // Caso especial: Si llega a 100%, marcar como "Hecho"
+          if (val >= 100) {
+            console.log(`🎯 Progreso llegó a 100%, registrando como "Hecho"`);
+            const ok = await registrarEstado(orden.CODLINEA, orden.GFH, 'Hecho', null);
+            if (ok) {
+              await actualizarFilaEspecifica(orden.CODLINEA, orden.GFH);
+            }
+          }
+          // Si el valor llega a 0, desmarcar automáticamente En Proceso
+          else if (val <= 0) {
+            console.log(`⏬ Progreso llegó a 0%, desactivando "En Proceso"`);
+            chk.checked = false; // Actualizar el estado visual del checkbox
+            const estado = 'NoEnProceso';
+            const progreso = null;
+            const ok = await registrarEstado(orden.CODLINEA, orden.GFH, estado, progreso);
+            if (ok) {
+              await actualizarFilaEspecifica(orden.CODLINEA, orden.GFH);
+            }
+          }
+          // CAMBIO: Si el valor es > 0 (pero < 100), SIEMPRE marcar como "En Proceso" automáticamente
+          else if (val > 0 && val < 100) {
+            console.log(`⏫ Progreso ${val}%, activando automáticamente "En Proceso"`);
+            chk.checked = true; // Activar el indicador visual
+            const estado = 'EnProceso';
+            const progreso = val;
+            const ok = await registrarEstado(orden.CODLINEA, orden.GFH, estado, progreso);
+            if (ok) {
+              await actualizarFilaEspecifica(orden.CODLINEA, orden.GFH);
+            }
+          }
+          
+          // Limpiar el timer del Map
+          debounceTimers.delete(filaKey);
+        }, DEBOUNCE_DELAY);
+        
+        // Guardar el timer en el Map
+        debounceTimers.set(filaKey, timer);
+        
+        console.log(`🕐 Timer iniciado para ${filaKey}: ${val}% (esperando ${DEBOUNCE_DELAY}ms)`);
+      }
+    });
+
+    // Botones de filtro
+    $buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        $buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilterSync(btn.dataset.filter);
+      });
+    });
+
+    // Event listeners para los filtros
+    $btnAplicarFiltros.addEventListener('click', aplicarFiltros);
+    $btnLimpiarFiltros.addEventListener('click', limpiarFiltros);
+    
+    // Event listener para toggle del panel de filtros
+    $estadoFiltrosContainer.addEventListener('click', toggleFiltrosPanel);
+
+    // NUEVO: Event listener para edición de motivo de faltante
+    $tableBody.addEventListener('blur', async (e) => {
+      if (e.target.classList.contains('motivo-faltante-input')) {
+        const input = e.target;
+        const codlinea = input.getAttribute('data-codlinea');
+        const gfh = input.getAttribute('data-gfh');
+        let nuevoTexto = input.value.trim();
+        
+        // Obtener el valor original para comparar (del atributo data-original)
+        const valorOriginal = input.getAttribute('data-original') || '';
+        
+        // Si no hay cambio, no hacer nada
+        if (nuevoTexto === valorOriginal) {
+          console.log(`📝 Sin cambios en motivo faltante para ${codlinea}_${gfh}`);
+          return;
+        }
+        
+        // Asegurar que no exceda 200 caracteres (cortar si es necesario)
+        if (nuevoTexto.length > 200) {
+          nuevoTexto = nuevoTexto.substring(0, 200);
+          input.value = nuevoTexto;
+          console.log(`✂️ Texto cortado a 200 caracteres: "${nuevoTexto}"`);
+        }
+        
+        console.log(`📝 Actualizando motivo faltante para ${codlinea}_${gfh}: "${nuevoTexto}"`);
+        
+        // Indicar que se está guardando
+        input.classList.add('saving');
+        input.disabled = true;
+        
+        try {
+          const response = await fetch('/api/actualizar-texto-faltante', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              codlinea: codlinea,
+              gfh: gfh,
+              texto_faltante: nuevoTexto
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            console.log('✅ Motivo faltante actualizado exitosamente');
+            
+            // Actualizar el estado global
+            const claveItem = `${codlinea}_${gfh}`;
+            if (ESTADOS_ACTIVOS[claveItem]) {
+              ESTADOS_ACTIVOS[claveItem].texto_faltante = nuevoTexto;
+            }
+            
+            // Actualizar el valor original en el input para futuras comparaciones
+            input.setAttribute('data-original', nuevoTexto);
+            
+            // Mostrar feedback visual temporal
+            input.style.borderColor = '#28a745';
+            setTimeout(() => {
+              input.style.borderColor = '';
+            }, 2000);
+          } else {
+            console.error('❌ Error actualizando motivo faltante:', result.message);
+            alert(`Error: ${result.message}`);
+          }
+        } catch (error) {
+          console.error('💥 Error de conexión:', error);
+          alert('Error de conexión. Intente nuevamente.');
+        } finally {
+          // Restaurar estado del input
+          input.classList.remove('saving');
+          input.disabled = false;
+        }
+      }
+    }, true); // Usar capture para asegurar que se ejecute
+
+    // NUEVO: Event listener para validación en tiempo real del motivo faltante
+    $tableBody.addEventListener('input', (e) => {
+      if (e.target.classList.contains('motivo-faltante-input')) {
+        const input = e.target;
+        const currentLength = input.value.length;
+        const maxLength = 200;
+
+        // Si excede el límite, cortar el texto en 200 caracteres
+        if (currentLength > maxLength) {
+          input.value = input.value.substring(0, maxLength);
+          const newLength = input.value.length;
+          input.title = `${newLength}/${maxLength} caracteres (LÍMITE ALCANZADO)`;
+          input.style.borderColor = '#dc3545'; // Rojo al límite
+          return;
+        }
+        
+        // Actualizar el título con el contador de caracteres
+        input.title = `${currentLength}/${maxLength} caracteres`;
+        
+        // Cambiar color según la proximidad al límite
+        if (currentLength > 50) {
+          input.style.borderColor = '#ff9800'; // Naranja de advertencia
+        } else if (currentLength === maxLength) {
+          input.style.borderColor = '#dc3545'; // Rojo al límite
+        } else {
+          input.style.borderColor = '#ddd'; // Normal
+        }
+      }
+    });
+
+    // NUEVO: Event listener adicional para prevenir pegado de texto que exceda el límite
+    $tableBody.addEventListener('paste', (e) => {
+      if (e.target.classList.contains('motivo-faltante-input')) {
+        const input = e.target;
+        const maxLength = 200;
+        
+        // Usar setTimeout para procesar después del pegado
+        setTimeout(() => {
+          if (input.value.length > maxLength) {
+            input.value = input.value.substring(0, maxLength);
+            input.title = `${maxLength}/${maxLength} caracteres (LÍMITE ALCANZADO)`;
+            input.style.borderColor = '#dc3545';
+            
+            // Mostrar alerta informativa
+            alert(`El texto pegado excedía el límite. Se ha cortado a ${maxLength} caracteres.`);
+          }
+        }, 1);
+      }
+    });
+
+    // NUEVA: Función para verificar estructura de la tabla
+    async function verificarEstructuraTabla() {
+      try {
+        console.log('🔍 Verificando estructura de la tabla DatosUserCAB...');
+        
+        const response = await fetch('/api/verificar-estructura-tabla');
+        const result = await response.json();
+        
+        if (result.success) {
+          if (result.campo_faltante_existe) {
+            console.log('✅ Campo Faltante existe en la tabla DatosUserCAB');
+          } else {
+            console.warn('⚠️ Campo Faltante NO existe en la tabla DatosUserCAB');
+            console.warn('📋 Ejecute el script SQL: sql/agregar_campo_faltante.sql');
+            alert('ADVERTENCIA: El campo "Faltante" no existe en la base de datos.\n\nPor favor, ejecute el script SQL ubicado en:\nsql/agregar_campo_faltante.sql\n\nLa funcionalidad de texto de faltante no funcionará hasta que se agregue este campo.');
+          }
+          
+          console.log('📊 Estructura de la tabla:', result.columnas);
+        } else {
+          console.error('❌ Error verificando estructura de la tabla:', result.message);
+        }
+      } catch (error) {
+        console.error('💥 Error de conexión verificando estructura:', error);
+      }
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🚀 Inicializando pantalla PuestoCAB...');
+      
+      // NUEVO: Verificar estructura de la tabla al inicializar
+      await verificarEstructuraTabla();
+      
+      // Obtener puesto actual de la URL
+      obtenerPuestoActual();
+      console.log('🏢 Puesto actual obtenido:', puestoActual);
+      
+      // Cargar columnas configuradas para el puesto (con llamada a API)
+      console.log('📋 Cargando columnas configuradas...');
+      await cargarColumnasConfiguradas();
+      console.log('📋 Columnas configuradas cargadas:', columnasConfiguradas);
+      
+      // Cargar filtros
+      console.log('📅 Cargando filtros...');
+      cargarAños();
+      cargarSemanas();
+      
+      // Mostrar estado inicial sin órdenes
+      console.log('🔍 Aplicando filtro inicial...');
+      applyFilterSync('all');
+      
+      console.log(`✅ PuestoCAB inicializado para puesto: ${puestoActual}`);
+    });
+  </script>
+
+  <!-- Scripts del sistema de login COMENTADOS - NO FUNCIONA -->
+  <!-- <script src="/assets/js/login-module.js"></script> -->
+  
+  <!-- CONFIGURACIÓN DE LOGIN COMENTADA - NO FUNCIONA -->
+  <!--
+  <script>
+    // Configuración específica de PuestoCAB
+    document.addEventListener('userLoggedIn', function(e) {
+      const user = e.detail;
+      console.log('Usuario autenticado en PuestoCAB:', user);
+      
+      // Verificar permisos para esta página
+      if (user.nivel < 1) {
+        alert('No tiene permisos para acceder a esta página');
+        loginModule.handleLogout();
+        return;
+      }
+      
+      // Personalizar contenido según el nivel de usuario
+      updatePageForUser(user);
+    });
+    
+    function updatePageForUser(user) {
+      // Ejemplo: mostrar/ocultar funciones según el nivel del usuario
+      const adminFunctions = document.querySelectorAll('.admin-only');
+      adminFunctions.forEach(element => {
+        element.style.display = user.nivel >= 5 ? 'block' : 'none';
+      });
+    }
+  </script>
+  -->
+  
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- =====================================================
+       MODAL MULTISELECT PARA MOTIVOS DE FALTANTE
+       ===================================================== -->
+  <div id="modalFaltante" class="modal-faltante-overlay">
+    <div class="modal-faltante">
+      <div class="modal-faltante-header">
+        <h3>📋 Seleccionar Motivos del Faltante</h3>
+        <button class="modal-faltante-close" onclick="cerrarModalFaltante()">&times;</button>
+      </div>
+      <div class="modal-faltante-body">
+        <p>Seleccione uno o más motivos para este faltante:</p>
+        
+        <!-- Buscador de motivos -->
+        <div class="motivos-search-container">
+          <input type="text" id="motivosSearchInput" class="motivos-search-input" 
+                 placeholder="🔍 Buscar motivo..." oninput="filtrarMotivos()">
+        </div>
+        
+        <div id="motivosList" class="motivos-list">
+          <!-- Los motivos se cargan dinámicamente -->
+        </div>
+        
+        <div id="noMotivosFound" class="no-motivos-message" style="display: none;">
+          No se encontraron motivos que coincidan con la búsqueda.
+        </div>
+        
+        <!-- Campo para "Otro" -->
+        <div id="motivoOtroContainer" class="motivo-otro-container">
+          <label for="motivoOtroInput">📝 Especifique el motivo:</label>
+          <input type="text" id="motivoOtroInput" class="motivo-otro-input" 
+                 placeholder="Escriba el motivo personalizado..." maxlength="200">
+        </div>
+        
+        <!-- Sección para agregar nuevos motivos (solo usuarios con permisos) -->
+        <div class="agregar-motivo-section">
+          <button type="button" class="agregar-motivo-toggle" onclick="toggleAgregarMotivo()">
+            ➕ Agregar nuevo motivo al catálogo
+          </button>
+          <div id="agregarMotivoForm" class="agregar-motivo-form">
+            <input type="text" id="nuevoMotivoInput" placeholder="Escriba el nuevo motivo..." maxlength="200">
+            <button type="button" onclick="agregarNuevoMotivo()">Guardar motivo</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-faltante-footer">
+        <button class="btn-modal btn-modal-cancel" onclick="cerrarModalFaltante()">Cancelar</button>
+        <button id="btnConfirmarFaltante" class="btn-modal btn-modal-confirm" onclick="confirmarFaltante()">
+          Confirmar Faltante
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       SEGUNDO MODAL: DETALLES DE MOTIVOS
+       ===================================================== -->
+  <div id="modalDetallesMotivos" class="modal-faltante-overlay">
+    <div class="modal-faltante modal-detalles">
+      <div class="modal-faltante-header">
+        <h3>📝 Detalles de los Motivos</h3>
+        <button class="modal-faltante-close" onclick="cerrarModalDetalles()">&times;</button>
+      </div>
+      <div class="modal-faltante-body">
+        <p>Agregue detalles opcionales para cada motivo seleccionado (máximo 50 caracteres):</p>
+        
+        <div id="detallesMotivosContainer" class="detalles-motivos-container">
+          <!-- Los campos de detalles se generan dinámicamente -->
+        </div>
+      </div>
+      <div class="modal-faltante-footer">
+        <button class="btn-modal btn-modal-cancel" onclick="volverASeleccion()">← Volver</button>
+        <button class="btn-modal btn-modal-confirm" onclick="confirmarDetallesMotivos()">
+          Confirmar Todo
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Script para el modal de faltantes -->
+  <script>
+    // Variables globales para el modal de faltantes
+    let motivosFaltanteCache = [];
+    let motivosSeleccionados = [];
+    let faltanteCallback = null;
+    let faltanteCancelCallback = null;
+    
+    // Cargar motivos de faltante desde la API
+    async function cargarMotivosFaltante() {
+      try {
+        const response = await fetch('/api/motivos-faltante');
+        const data = await response.json();
+        
+        if (data.success) {
+          motivosFaltanteCache = data.motivos;
+          renderizarMotivos();
+        } else {
+          console.error('Error cargando motivos:', data.message);
+          // Usar motivos por defecto si falla
+          motivosFaltanteCache = [
+            { id: 1, descripcion: 'Falta material', orden: 1 },
+            { id: 2, descripcion: 'Pieza dañada', orden: 2 },
+            { id: 99, descripcion: 'Otro', orden: 99 }
+          ];
+          renderizarMotivos();
+        }
+      } catch (error) {
+        console.error('Error cargando motivos de faltante:', error);
+        // Usar motivos por defecto si hay error de red
+        motivosFaltanteCache = [
+          { id: 1, descripcion: 'Falta material', orden: 1 },
+          { id: 2, descripcion: 'Pieza dañada', orden: 2 },
+          { id: 99, descripcion: 'Otro', orden: 99 }
+        ];
+        renderizarMotivos();
+      }
+    }
+    
+    // Renderizar la lista de motivos en el modal
+    function renderizarMotivos() {
+      const container = document.getElementById('motivosList');
+      container.innerHTML = '';
+      
+      // Limpiar búsqueda
+      const searchInput = document.getElementById('motivosSearchInput');
+      if (searchInput) searchInput.value = '';
+      document.getElementById('noMotivosFound').style.display = 'none';
+      
+      motivosFaltanteCache.forEach(motivo => {
+        const isOtro = motivo.descripcion.toLowerCase() === 'otro';
+        const div = document.createElement('div');
+        div.className = 'motivo-item';
+        div.dataset.id = motivo.id;
+        div.dataset.descripcion = motivo.descripcion;
+        div.dataset.esOtro = isOtro ? 'true' : 'false';
+        
+        div.innerHTML = `
+          <input type="checkbox" id="motivo_${motivo.id}" value="${motivo.id}">
+          <label for="motivo_${motivo.id}">${motivo.descripcion}</label>
+        `;
+        
+        // Evento click en el item completo
+        div.addEventListener('click', (e) => {
+          if (e.target.tagName !== 'INPUT') {
+            const checkbox = div.querySelector('input[type="checkbox"]');
+            checkbox.checked = !checkbox.checked;
+            handleMotivoChange(checkbox, isOtro);
+          }
+        });
+        
+        // Evento change en el checkbox
+        const checkbox = div.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', () => handleMotivoChange(checkbox, isOtro));
+        
+        container.appendChild(div);
+      });
+    }
+    
+    // Filtrar motivos por texto de búsqueda
+    function filtrarMotivos() {
+      const searchInput = document.getElementById('motivosSearchInput');
+      const searchText = searchInput.value.toLowerCase().trim();
+      const items = document.querySelectorAll('#motivosList .motivo-item');
+      const noResultsMsg = document.getElementById('noMotivosFound');
+      
+      let visibleCount = 0;
+      
+      items.forEach(item => {
+        const descripcion = item.dataset.descripcion.toLowerCase();
+        const matches = descripcion.includes(searchText);
+        
+        if (matches || searchText === '') {
+          item.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+      
+      // Mostrar mensaje si no hay resultados
+      noResultsMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+    
+    // Manejar cambio de selección de motivo
+    function handleMotivoChange(checkbox, esOtro) {
+      const item = checkbox.closest('.motivo-item');
+      
+      if (checkbox.checked) {
+        item.classList.add('selected');
+      } else {
+        item.classList.remove('selected');
+      }
+      
+      // Mostrar/ocultar campo "Otro"
+      if (esOtro) {
+        const otroContainer = document.getElementById('motivoOtroContainer');
+        otroContainer.classList.toggle('visible', checkbox.checked);
+        if (checkbox.checked) {
+          document.getElementById('motivoOtroInput').focus();
+        }
+      }
+      
+      actualizarBotonConfirmar();
+    }
+    
+    // Actualizar estado del botón confirmar
+    function actualizarBotonConfirmar() {
+      const checkboxes = document.querySelectorAll('#motivosList input[type="checkbox"]:checked');
+      const btn = document.getElementById('btnConfirmarFaltante');
+      
+      // Verificar si "Otro" está seleccionado y tiene texto
+      const otroCheckbox = document.querySelector('#motivosList .motivo-item[data-es-otro="true"] input[type="checkbox"]');
+      const otroTexto = document.getElementById('motivoOtroInput').value.trim();
+      
+      let habilitado = checkboxes.length > 0;
+      
+      // Si solo "Otro" está seleccionado, necesita texto
+      if (checkboxes.length === 1 && otroCheckbox && otroCheckbox.checked && !otroTexto) {
+        habilitado = false;
+      }
+      
+      btn.disabled = !habilitado;
+    }
+    
+    // Abrir el modal de faltantes
+    function abrirModalFaltante(onConfirm, onCancel) {
+      faltanteCallback = onConfirm;
+      faltanteCancelCallback = onCancel;
+      
+      // Resetear selecciones
+      motivosSeleccionados = [];
+      document.querySelectorAll('#motivosList input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.motivo-item').classList.remove('selected');
+      });
+      document.getElementById('motivoOtroInput').value = '';
+      document.getElementById('motivoOtroContainer').classList.remove('visible');
+      document.getElementById('agregarMotivoForm').classList.remove('visible');
+      
+      // Recargar motivos por si hay nuevos
+      cargarMotivosFaltante();
+      
+      // Mostrar modal
+      document.getElementById('modalFaltante').classList.add('active');
+      actualizarBotonConfirmar();
+    }
+    
+    // Cerrar el modal de faltantes
+    function cerrarModalFaltante() {
+      document.getElementById('modalFaltante').classList.remove('active');
+      
+      if (faltanteCancelCallback) {
+        faltanteCancelCallback();
+      }
+      
+      faltanteCallback = null;
+      faltanteCancelCallback = null;
+    }
+    
+    // Confirmar la selección de faltantes (abre el segundo modal)
+    function confirmarFaltante() {
+      const seleccionados = [];
+      
+      document.querySelectorAll('#motivosList input[type="checkbox"]:checked').forEach(cb => {
+        const item = cb.closest('.motivo-item');
+        const descripcion = item.dataset.descripcion;
+        const esOtro = item.dataset.esOtro === 'true';
+        
+        if (esOtro) {
+          const textoOtro = document.getElementById('motivoOtroInput').value.trim();
+          if (textoOtro) {
+            seleccionados.push({ motivo: 'Otro', texto: textoOtro });
+          }
+        } else {
+          seleccionados.push({ motivo: descripcion, texto: '' });
+        }
+      });
+      
+      if (seleccionados.length === 0) {
+        return;
+      }
+      
+      // Guardar motivos seleccionados temporalmente
+      motivosSeleccionados = seleccionados;
+      
+      // Cerrar primer modal y abrir segundo modal
+      document.getElementById('modalFaltante').classList.remove('active');
+      abrirModalDetalles(seleccionados);
+    }
+    
+    // Abrir modal de detalles
+    function abrirModalDetalles(motivos) {
+      const container = document.getElementById('detallesMotivosContainer');
+      container.innerHTML = '';
+      
+      motivos.forEach((motivo, index) => {
+        const div = document.createElement('div');
+        div.className = 'detalle-motivo-item';
+        div.dataset.index = index;
+        
+        const label = document.createElement('div');
+        label.className = 'detalle-motivo-label';
+        label.textContent = motivo.motivo === 'Otro' ? `Otro: ${motivo.texto}` : motivo.motivo;
+        label.onclick = () => {
+          div.classList.add('active');
+          div.querySelector('input').focus();
+        };
+        
+        const inputWrapper = document.createElement('div');
+        inputWrapper.className = 'detalle-motivo-input-wrapper';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'detalle-motivo-input';
+        input.placeholder = 'Descripción detallada (opcional)...';
+        input.maxLength = 50;
+        input.value = motivo.detalle || '';
+        input.oninput = (e) => {
+          const counter = inputWrapper.querySelector('.detalle-motivo-counter');
+          const length = e.target.value.length;
+          counter.textContent = `${length}/50`;
+          counter.className = 'detalle-motivo-counter';
+          if (length > 40) counter.classList.add('warning');
+          if (length >= 50) counter.classList.add('error');
+          
+          // Actualizar el motivo
+          motivosSeleccionados[index].detalle = e.target.value;
+        };
+        input.onfocus = () => div.classList.add('active');
+        input.onblur = () => div.classList.remove('active');
+        
+        const counter = document.createElement('div');
+        counter.className = 'detalle-motivo-counter';
+        counter.textContent = `${(motivo.detalle || '').length}/50`;
+        
+        inputWrapper.appendChild(input);
+        inputWrapper.appendChild(counter);
+        
+        div.appendChild(label);
+        div.appendChild(inputWrapper);
+        container.appendChild(div);
+      });
+      
+      document.getElementById('modalDetallesMotivos').classList.add('active');
+    }
+    
+    // Cerrar modal de detalles
+    function cerrarModalDetalles() {
+      document.getElementById('modalDetallesMotivos').classList.remove('active');
+      
+      // Volver a abrir el primer modal
+      document.getElementById('modalFaltante').classList.add('active');
+    }
+    
+    // Volver al modal de selección
+    function volverASeleccion() {
+      cerrarModalDetalles();
+    }
+    
+    // Confirmar todos los detalles y finalizar
+    function confirmarDetallesMotivos() {
+      // Construir texto final concatenando motivos y sus detalles
+      const partes = motivosSeleccionados.map(m => {
+        if (m.motivo === 'Otro') {
+          // Para "Otro", ya tenemos el texto base
+          return m.detalle ? `${m.texto} (${m.detalle})` : m.texto;
+        } else {
+          // Para otros motivos
+          return m.detalle ? `${m.motivo}: ${m.detalle}` : m.motivo;
+        }
+      });
+      
+      const textoFinal = partes.join(', ');
+      
+      console.log('📋 Texto final con detalles:', textoFinal);
+      
+      // Cerrar modal de detalles
+      document.getElementById('modalDetallesMotivos').classList.remove('active');
+      
+      // Ejecutar callback con el texto
+      if (faltanteCallback) {
+        faltanteCallback(textoFinal);
+      }
+      
+      faltanteCallback = null;
+      faltanteCancelCallback = null;
+    }
+    
+    // Toggle formulario para agregar motivo
+    function toggleAgregarMotivo() {
+      const form = document.getElementById('agregarMotivoForm');
+      form.classList.toggle('visible');
+      if (form.classList.contains('visible')) {
+        document.getElementById('nuevoMotivoInput').focus();
+      }
+    }
+    
+    // Agregar nuevo motivo al catálogo
+    async function agregarNuevoMotivo() {
+      const input = document.getElementById('nuevoMotivoInput');
+      const descripcion = input.value.trim();
+      
+      if (!descripcion) {
+        alert('Por favor, escriba una descripción para el motivo.');
+        return;
+      }
+      
+      try {
+        const response = await fetch('/api/motivos-faltante', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descripcion: descripcion, orden: 50 })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ Motivo agregado exitosamente');
+          input.value = '';
+          document.getElementById('agregarMotivoForm').classList.remove('visible');
+          cargarMotivosFaltante(); // Recargar lista
+        } else {
+          alert('❌ Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error agregando motivo:', error);
+        alert('❌ Error de conexión al agregar motivo');
+      }
+    }
+    
+    // Escuchar tecla Escape para cerrar modales
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modalFaltante = document.getElementById('modalFaltante');
+        const modalDetalles = document.getElementById('modalDetallesMotivos');
+        
+        if (modalDetalles.classList.contains('active')) {
+          cerrarModalDetalles();
+        } else if (modalFaltante.classList.contains('active')) {
+          cerrarModalFaltante();
+        }
+      }
+    });
+    
+    // =====================================================
+    // FUNCIONES PARA MANEJAR CHIPS DE MOTIVOS EN LA COLUMNA
+    // =====================================================
+    
+    // Parsear texto de motivos en array de objetos
+    function parsearMotivos(textoFaltante) {
+      if (!textoFaltante || textoFaltante.trim() === '') {
+        return [];
+      }
+      
+      const motivos = [];
+      const partes = textoFaltante.split(',').map(p => p.trim());
+      
+      partes.forEach(parte => {
+        if (parte) {
+          // Verificar si tiene formato "Motivo: detalle"
+          if (parte.includes(':')) {
+            const [motivo, detalle] = parte.split(':').map(s => s.trim());
+            motivos.push({ motivo, detalle });
+          } else {
+            // Si no tiene ":", es un motivo sin detalle
+            motivos.push({ motivo: parte, detalle: '' });
+          }
+        }
+      });
+      
+      return motivos;
+    }
+    
+    // Crear chip visual para un motivo
+    function crearChipMotivo(motivoObj, codlinea, gfh) {
+      const chip = document.createElement('div');
+      chip.className = 'motivo-chip';
+      
+      const texto = document.createElement('span');
+      texto.className = 'motivo-chip-text';
+      texto.textContent = motivoObj.detalle 
+        ? `${motivoObj.motivo}: ${motivoObj.detalle}` 
+        : motivoObj.motivo;
+      texto.title = texto.textContent; // Tooltip con texto completo
+      
+      const btnRemove = document.createElement('button');
+      btnRemove.className = 'motivo-chip-remove';
+      btnRemove.innerHTML = '×';
+      btnRemove.title = 'Eliminar motivo';
+      btnRemove.onclick = async (e) => {
+        e.stopPropagation();
+        await eliminarMotivo(codlinea, gfh, motivoObj);
+      };
+      
+      chip.appendChild(texto);
+      chip.appendChild(btnRemove);
+      
+      return chip;
+    }
+    
+    // Eliminar un motivo específico
+    async function eliminarMotivo(codlinea, gfh, motivoAEliminar) {
+      try {
+        // Obtener estado actual
+        const claveItem = `${codlinea}_${gfh}`;
+        const estadoActual = ESTADOS_ACTIVOS[claveItem];
+        const textoActual = estadoActual?.texto_faltante || '';
+        
+        // Parsear motivos actuales
+        const motivos = parsearMotivos(textoActual);
+        
+        // Filtrar el motivo a eliminar
+        const motivosFiltrados = motivos.filter(m => {
+          const textoMotivo = m.detalle ? `${m.motivo}: ${m.detalle}` : m.motivo;
+          const textoAEliminar = motivoAEliminar.detalle 
+            ? `${motivoAEliminar.motivo}: ${motivoAEliminar.detalle}` 
+            : motivoAEliminar.motivo;
+          return textoMotivo !== textoAEliminar;
+        });
+        
+        // Si no quedan motivos, cambiar estado a NoFaltante
+        if (motivosFiltrados.length === 0) {
+          const confirmar = confirm('¿Eliminar el último motivo cambiará el estado a "No Faltante". ¿Continuar?');
+          if (!confirmar) return;
+          
+          await registrarEstado(codlinea, gfh, 'NoFaltante', null);
+          console.log('✅ Estado cambiado a NoFaltante');
+        } else {
+          // Reconstruir texto
+          const nuevoTexto = motivosFiltrados.map(m => 
+            m.detalle ? `${m.motivo}: ${m.detalle}` : m.motivo
+          ).join(', ');
+          
+          // Actualizar en servidor
+          const response = await fetch('/api/actualizar-texto-faltante', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codlinea, gfh, texto_faltante: nuevoTexto })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Actualizar cache local
+            if (ESTADOS_ACTIVOS[claveItem]) {
+              ESTADOS_ACTIVOS[claveItem].texto_faltante = nuevoTexto;
+            }
+            
+            console.log('✅ Motivo eliminado exitosamente');
+          } else {
+            alert('❌ Error al eliminar motivo: ' + data.message);
+          }
+        }
+        
+        // Recargar tabla para reflejar cambios
+        await applyFilter(currentFilter);
+        
+      } catch (error) {
+        console.error('💥 Error eliminando motivo:', error);
+        alert('❌ Error de conexión al eliminar motivo');
+      }
+    }
+    
+    // Abrir modal para editar/agregar motivos a una orden existente
+    function abrirModalEditarMotivos(codlinea, gfh, textoActual) {
+      // Pre-seleccionar motivos actuales
+      const motivosActuales = parsearMotivos(textoActual);
+      
+      // Abrir modal con callback personalizado
+      abrirModalFaltante(async (nuevoTexto) => {
+        try {
+          // Actualizar texto en servidor
+          const response = await fetch('/api/actualizar-texto-faltante', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codlinea, gfh, texto_faltante: nuevoTexto })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            // Actualizar cache local
+            const claveItem = `${codlinea}_${gfh}`;
+            if (ESTADOS_ACTIVOS[claveItem]) {
+              ESTADOS_ACTIVOS[claveItem].texto_faltante = nuevoTexto;
+            }
+            
+            console.log('✅ Motivos actualizados exitosamente');
+            
+            // Recargar tabla
+            await applyFilter(currentFilter);
+          } else {
+            alert('❌ Error al actualizar motivos: ' + data.message);
+          }
+        } catch (error) {
+          console.error('💥 Error actualizando motivos:', error);
+          alert('❌ Error de conexión al actualizar motivos');
+        }
+      }, null);
+    }
+    
+    // Escuchar input en campo "Otro" para actualizar botón
+    document.getElementById('motivoOtroInput').addEventListener('input', actualizarBotonConfirmar);
+    
+    // Cargar motivos al iniciar
+    document.addEventListener('DOMContentLoaded', cargarMotivosFaltante);
+  </script>
+
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+  
+</body>
+</html>

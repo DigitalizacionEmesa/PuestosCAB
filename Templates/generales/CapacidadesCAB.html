@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Crear Capacidad CAB</title>
+
+  <!-- CSS principales del proyecto -->
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+
+  <!-- Ajustes específicos de esta pantalla -->
+  <style>
+    .header-title { margin-left: 0 !important; text-align: center !important; }
+    
+    /* Estilo especial para indicar que es control de jefe */
+    .control-header {
+      background: linear-gradient(135deg, #ff8c33, #ffb366) !important;
+      color: #fff !important;
+    }
+    
+    /* Botones de navegación del header */
+    .back-icon, .home-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      margin: 0 10px;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+    
+    .back-icon:hover, .home-icon:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Logo EMESA */
+    .emesa-logo {
+      height: 50px;
+      margin-left: auto;
+      margin-right: 20px;
+    }
+    
+    /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
+    #userSessionWidget {
+      position: fixed !important;
+      top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
+      bottom: 15px !important;
+      right: 15px !important;
+      left: auto !important; /* Anula cualquier left que pudiera estar definido */
+      z-index: 10001 !important;
+      max-width: 250px !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important; /* Sombra para destacar */
+      width: auto !important; /* Asegura que el ancho sea automático */
+      transform: none !important; /* Anula cualquier transformación previa */
+    }
+    
+    /* Estilo adicional para la clase interna */
+    #userSessionWidget .user-info {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      color: white !important;
+    }
+    
+    /* Estilos responsive para el widget de usuario */
+    @media (max-width: 768px) {
+      #userSessionWidget {
+        bottom: 10px !important;
+        right: 10px !important;
+        transform: scale(0.9) !important;
+        top: auto !important;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      #userSessionWidget {
+        bottom: 8px !important;
+        right: 8px !important;
+        transform: scale(0.85) !important;
+        top: auto !important;
+      }
+    }
+
+    .form-card{
+      max-width: 1100px; margin: 24px auto; background: #ffffffcc; border-radius: 16px;
+      padding: 32px; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid #b3d6ee;
+      min-width: 320px; /* Ancho mínimo para evitar cortes */
+    }
+    
+    @media (max-width: 1200px) {
+      .form-card {
+        margin: 16px;
+        max-width: none;
+      }
+    }
+    .field-row{ display:grid; grid-template-columns: 220px 1fr; gap:16px; align-items:center; margin-bottom: 16px; }
+    @media (max-width:900px){ .field-row{ grid-template-columns:1fr; gap:8px; } }
+    @media (max-width:700px){ .field-row{ grid-template-columns:1fr; } }
+    .actions{ display:flex; gap:16px; justify-content:flex-end; margin-top:24px; }
+    .btn.cancelar{ background:#e85c5c; padding: 12px 24px; } 
+    .btn.cancelar:hover{ background:#c94646; }
+    .btn.btn-guardar { padding: 12px 24px; }
+    .hint { font-size: .9rem; color:#666; }
+    .input-error{ border-color:#dc3545 !important; background:#fff0f0 !important; }
+    
+    /* Estilos mejorados para inputs y selects */
+    input[type="text"], input[type="number"], input[type="date"], select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #b3d6ee;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: white;
+      transition: border-color 0.3s ease;
+      box-sizing: border-box;
+    }
+    
+    input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, select:focus {
+      outline: none;
+      border-color: #3880c7;
+      box-shadow: 0 0 0 3px rgba(56, 128, 199, 0.1);
+    }
+    
+    label {
+      font-weight: 600;
+      color: #2c6aa6;
+      font-size: 1rem;
+    }
+    
+    /* Estilos para secciones colapsables */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+      padding: 5px 0;
+      border-radius: 8px;
+    }
+    
+    /* Estilos para sección fija (no colapsable) */
+    .section-header-fixed {
+      display: flex;
+      align-items: center;
+      padding: 5px 0;
+      margin-bottom: 20px;
+    }
+    
+    .section-content-fixed {
+      display: block;
+      opacity: 1;
+    }
+    
+    .section-header:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    
+    .collapse-icon {
+      font-size: 1.2rem;
+      transition: transform 0.3s ease;
+      margin-left: 10px;
+      color: #666;
+      font-weight: bold;
+    }
+    
+    .collapse-icon.collapsed {
+      transform: rotate(-90deg);
+    }
+    
+    .section-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    
+    .section-content.collapsed {
+      max-height: 0;
+      opacity: 0;
+      margin-top: 0;
+      padding-top: 0;
+    }
+    
+    .section-content:not(.collapsed) {
+      max-height: 1000px;
+      opacity: 1;
+      margin-top: 20px;
+    }
+    
+    /* Estilos para el toggle button */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+      margin: 0;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: #4caf50;
+    }
+    
+    .toggle-switch input:focus + .toggle-slider {
+      box-shadow: 0 0 1px #4caf50;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(26px);
+    }
+    
+    .toggle-label {
+      font-size: 0.9rem;
+      color: #666;
+      font-weight: normal;
+    }
+    
+    .toggle-switch input:checked ~ .toggle-label {
+      color: #4caf50;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Cabecera -->
+  <header class="header control-header">
+    <button class="back-icon" onclick="history.back()" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+    <button class="home-icon" onclick="window.location.href='/templates/generales/PuestosCAB.html'" aria-label="Inicio">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10.5L12 3l9 7.5"></path>
+        <path d="M5 9.5V21h14V9.5"></path>
+        <path d="M9 21v-6h6v6"></path>
+      </svg>
+    </button>
+    <div class="header-title">CAPACIDADES CAB</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+
+  <!-- Widget de usuario -->
+  <div id="userSessionWidget" class="user-session-widget">
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
+  </div>
+
+  <main class="container">
+    <!-- SECCIÓN 1: CAPACIDADES POR PUESTO - FUNCIONALIDAD COMENTADA
+    <div class="form-card">
+      <div class="section-header" onclick="toggleSection('puesto')">
+        <h2 style="margin: 0; color: #333; font-size: 1.4rem; border-bottom: 2px solid #ff8c33; padding-bottom: 8px; flex: 1;">
+          📊 Capacidades por Puesto
+        </h2>
+        <span class="collapse-icon" id="puestoIcon">▼</span>
+      </div>
+      
+      <div class="section-content" id="puestoContent">
+        <form id="formCapacidad" novalidate>-->
+          <!-- Turno -->
+          <!--<div class="field-row">
+            <label for="turno">Turno</label>
+            <select id="turno" name="turno" required aria-required="true">-->
+              <!-- value=TM/TT/TN, etiquetas con rango -->
+              <!--<option value="TM">TM</option>
+              <option value="TT">TT</option>
+              <option value="TN">TN</option>
+            </select>
+          </div>-->
+
+          <!-- Fecha -->
+          <!--<div class="field-row">
+            <label for="fecha">Fecha</label>
+            <input id="fecha" name="fecha" type="date" required aria-required="true">
+          </div>-->
+
+          <!-- Puesto -->
+          <!-- <div class="field-row">
+            <label for="puesto">Puesto</label>
+            <select id="puesto" name="puesto" required aria-required="true">
+              <option value="" selected disabled>Selecciona un puesto…</option>
+            </select>
+            <div id="puestosMsg" class="hint">Cargando lista de puestos desde la base de datos…</div>
+          </div>-->
+
+          <!-- Capacidad -->
+          <!-- <div class="field-row">
+            <label for="capacidad">Capacidad</label>
+            <input id="capacidad" name="capacidad" type="number" min="0" step="1"
+                   placeholder="Ej.: 120" required aria-required="true" />
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn cancelar" onclick="history.back()">Cancelar</button>
+            <button type="submit" class="btn btn-guardar">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    FIN SECCIÓN COMENTADA -->
+
+    <!-- SECCIÓN 2: CAPACIDADES POR OPERARIO -->
+    <div class="form-card" style="margin-top: 32px;">
+      <div class="section-header-fixed">
+        <h2 style="margin: 0; color: #333; font-size: 1.4rem; border-bottom: 2px solid #4caf50; padding-bottom: 8px; flex: 1;">
+          👤 Capacidades por Operario
+        </h2>
+      </div>
+      
+      <div class="section-content-fixed">
+        <form id="formCapacidadOperario" novalidate>
+          <!-- Toggle para Fijar Jornada -->
+          <div class="field-row">
+            <label for="fijarJornada">Fijar Jornada:</label>
+            <div class="toggle-container">
+              <label class="toggle-switch">
+                <input type="checkbox" id="fijarJornada">
+                <span class="toggle-slider"></span>
+              </label>
+              <span class="toggle-label">Modo jornada fija</span>
+            </div>
+          </div>
+
+          <!-- Turno Operario -->
+          <div class="field-row">
+            <label for="turnoOperario">Turno</label>
+            <select id="turnoOperario" name="turnoOperario" required aria-required="true">
+              <option value="TM">TM</option>
+              <option value="TT">TT</option>
+              <option value="TN">TN</option>
+            </select>
+          </div>
+
+          <!-- Fecha Operario -->
+          <div class="field-row">
+            <label for="fechaOperario">Fecha</label>
+            <input id="fechaOperario" name="fechaOperario" type="date" required aria-required="true">
+          </div>
+
+          <!-- Operario -->
+          <div class="field-row">
+            <label for="operario">Operario</label>
+            <select id="operario" name="operario" required aria-required="true">
+              <option value="" selected disabled>Selecciona turno y fecha primero…</option>
+            </select>
+            <div id="operariosMsg" class="hint">Selecciona turno y fecha para cargar operarios disponibles…</div>
+          </div>
+
+          <!-- Capacidad Operario -->
+          <div class="field-row">
+            <label for="capacidadOperario">Capacidad</label>
+            <input id="capacidadOperario" name="capacidadOperario" type="number" min="0" step="1"
+                   placeholder="Ej.: 85" required aria-required="true" />
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn cancelar" onclick="history.back()">Cancelar</button>
+            <button type="submit" class="btn btn-guardar">Guardar Capacidad Operario</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        console.log('🔒 Verificando permisos de acceso a CapacidadesCAB.html...');
+        const response = await fetch('/api/validar-acceso-pantalla', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ pantalla: 'CapacidadesCAB.html' })
+        });
+
+        if (response.ok) {
+          const accesoData = await response.json();
+          console.log('Resultado validación acceso:', accesoData);
+          
+          if (!accesoData.success || !accesoData.acceso_permitido) {
+            console.log('❌ Acceso denegado - Redirigiendo...');
+            alert('No tiene permisos suficientes para acceder a esta pantalla.');
+            window.location.href = '/templates/generales/PuestosCAB.html';
+            return;
+          } else {
+            console.log('✅ Acceso permitido - Cargando página...');
+          }
+        } else {
+          console.warn('No se pudo validar el acceso - Permitiendo por defecto');
+        }
+      } catch (error) {
+        console.error('Error al validar acceso:', error);
+        // En caso de error, permitir acceso por defecto para no bloquear la funcionalidad
+      }
+    });
+
+    // ============================================================================
+    // FUNCIÓN PARA COLAPSAR/EXPANDIR SECCIONES
+    // ============================================================================
+    
+    function toggleSection(sectionType) {
+      const content = document.getElementById(sectionType + 'Content');
+      const icon = document.getElementById(sectionType + 'Icon');
+      
+      if (content && icon) {
+        content.classList.toggle('collapsed');
+        icon.classList.toggle('collapsed');
+        
+        // Guardar estado en localStorage
+        const isCollapsed = content.classList.contains('collapsed');
+        localStorage.setItem(`cab_section_${sectionType}_collapsed`, isCollapsed);
+        
+        console.log(`📁 Sección ${sectionType} ${isCollapsed ? 'colapsada' : 'expandida'}`);
+      }
+    }
+    
+    // Función para restaurar el estado de las secciones desde localStorage
+    function restoreCollapsedStates() {
+      const sections = ['puesto']; // Solo la sección de puesto es colapsable
+      
+      sections.forEach(sectionType => {
+        const isCollapsed = localStorage.getItem(`cab_section_${sectionType}_collapsed`) === 'true';
+        const content = document.getElementById(sectionType + 'Content');
+        const icon = document.getElementById(sectionType + 'Icon');
+        
+        if (content && icon && isCollapsed) {
+          content.classList.add('collapsed');
+          icon.classList.add('collapsed');
+          console.log(`🔄 Restaurando sección ${sectionType} como colapsada`);
+        }
+      });
+    }
+
+    // ============================================================================
+    // LÓGICA PARA FORMULARIO DE CAPACIDADES POR PUESTO - COMENTADA
+    // ============================================================================
+    /*
+    const form = document.getElementById('formCapacidad');
+    const turno = document.getElementById('turno');
+    const fecha = document.getElementById('fecha');
+    const capacidad = document.getElementById('capacidad');
+    const puesto = document.getElementById('puesto');
+    const puestosMsg = document.getElementById('puestosMsg');
+
+    const LS_TURNO = 'cab_cap_last_turno';
+    const LS_FECHA = 'cab_cap_last_fecha';
+
+    function showMsg(texto, tipo='success'){
+      const n = document.createElement('div');
+      n.className = `notification ${tipo} show`;
+      n.textContent = texto;
+      document.body.appendChild(n);
+      setTimeout(()=>{ n.classList.remove('show'); n.remove(); }, 2200);
+    }
+
+    // --- Defaults solicitados ---
+    function turnoActualSegunHora(d = new Date()){
+      const h = d.getHours(); // 0-23
+      // TM: 06-13:59, TT: 14-21:59, TN: 22-23:59 y 00-05:59
+      if (h >= 6 && h < 14) return 'TM';
+      if (h >= 14 && h < 22) return 'TT';
+      return 'TN';
+    }
+
+    function fechaPorDefecto(){
+      const now = new Date();
+      // Regla especial: entre 22:00 y 23:59 -> día actual + 1
+      if (now.getHours() >= 22) {
+        now.setDate(now.getDate() + 1);
+      }
+      // formateo a YYYY-MM-DD en local
+      const y = now.getFullYear();
+      const m = String(now.getMonth()+1).padStart(2,'0');
+      const d = String(now.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function aplicarDefaults(){
+      // Si hay último registro, úsalo; en otro caso, aplica lógica "actual"
+      const lastTurno = localStorage.getItem(LS_TURNO);
+      const lastFecha = localStorage.getItem(LS_FECHA);
+
+      turno.value = lastTurno || turnoActualSegunHora();
+      fecha.value = lastFecha || fechaPorDefecto();
+
+      // Capacidad y puesto deben quedar vacíos
+      capacidad.value = '';
+      puesto.value = '';
+    }
+
+    async function cargarPuestos() {
+      try {
+        puesto.disabled = true; puestosMsg.style.display = 'block';
+        const resp = await fetch('/api/puestos', {
+          method: 'GET',
+          headers: {'Accept':'application/json','Content-Type':'application/json'}
+        });
+        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        if(!(data && data.success && Array.isArray(data.puestos))) throw new Error('Formato inesperado');
+
+        puesto.innerHTML = '<option value="" selected disabled>Selecciona un puesto…</option>';
+        data.puestos.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p; // ajusta a p.codigo si tu API devuelve objetos
+          opt.textContent = p;
+          puesto.appendChild(opt);
+        });
+        puesto.disabled = false; puestosMsg.style.display = 'none';
+      } catch (e) {
+        console.error('Error cargando puestos', e);
+        puesto.innerHTML = `
+          <option value="" selected disabled>Selecciona un puesto…</option>
+          <option value="MONTCAB1">MONTCAB1</option>
+          <option value="MONTCAB2">MONTCAB2</option>
+          <option value="MONTCAB3">MONTCAB3</option>
+          <option value="MONTCAB4">MONTCAB4</option>
+        `;
+        puesto.disabled = false;
+        puestosMsg.textContent = 'No se pudo cargar desde la API. Usando lista de respaldo.';
+      }
+    }
+
+    // Función para consultar capacidad existente
+    async function consultarCapacidadExistente() {
+      // Solo consultar si tenemos todos los valores necesarios
+      if (!turno.value || !fecha.value || !puesto.value) {
+        return;
+      }
+
+      try {
+        console.log(`🔍 Consultando capacidad existente para: Turno=${turno.value}, Fecha=${fecha.value}, Puesto=${puesto.value}`);
+        
+        const params = new URLSearchParams({
+          turno: turno.value,
+          fecha: fecha.value,
+          puesto: puesto.value
+        });
+
+        const resp = await fetch(`/api/consultar-capacidad?${params.toString()}`, {
+          method: 'GET',
+          headers: {'Accept': 'application/json', 'Content-Type': 'application/json'}
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        if (data.success && data.found) {
+          console.log(`✅ Capacidad encontrada:`, data.capacidad);
+          // Llenar automáticamente el campo capacidad
+          capacidad.value = data.capacidad.capacidad;
+          // Cambiar el color del campo para indicar que viene de BD
+          capacidad.style.backgroundColor = '#e8f5e8';
+          capacidad.style.borderColor = '#4caf50';
+          showMsg(`Capacidad cargada: ${data.capacidad.capacidad} (registro existente)`, 'success');
+        } else {
+          console.log(`ℹ️ No se encontró capacidad existente`);
+          // Limpiar el campo si no hay datos
+          capacidad.value = '';
+          // Restaurar estilo normal
+          capacidad.style.backgroundColor = '';
+          capacidad.style.borderColor = '';
+        }
+      } catch (e) {
+        console.error('Error consultando capacidad existente:', e);
+        // En caso de error, no hacer nada (mantener el campo como está)
+      }
+    }
+
+    // Event listeners para consultar capacidad existente cuando cambien los valores
+    turno.addEventListener('change', consultarCapacidadExistente);
+    fecha.addEventListener('change', consultarCapacidadExistente);
+    puesto.addEventListener('change', consultarCapacidadExistente);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      [turno, fecha, capacidad, puesto].forEach(el => el.classList.remove('input-error'));
+
+      const turnoOk = !!turno.value;
+      const fechaOk = !!fecha.value;
+      const capNum = Number(capacidad.value);
+      const capacidadOk = Number.isFinite(capNum) && capNum >= 0;
+      const puestoOk = !!puesto.value;
+
+      if(!turnoOk) turno.classList.add('input-error');
+      if(!fechaOk) fecha.classList.add('input-error');
+      if(!capacidadOk) capacidad.classList.add('input-error');
+      if(!puestoOk) puesto.classList.add('input-error');
+
+      if(!(turnoOk && fechaOk && capacidadOk && puestoOk)){
+        showMsg('Revisa los datos del formulario', 'error');
+        return;
+      }
+
+      const payload = {
+        turno: turno.value,         // TM/TT/TN
+        fecha: fecha.value,         // YYYY-MM-DD
+        capacidad: capNum,
+        puesto: puesto.value
+      };
+
+      try {
+        const resp = await fetch('/api/registrar-capacidad', {
+          method: 'POST',
+          headers: {'Accept':'application/json','Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+
+        if(resp.ok && data && data.success){
+          showMsg('Capacidad guardada correctamente', 'success');
+
+          // Guardar como "último registro" para la siguiente carga
+          localStorage.setItem(LS_TURNO, turno.value);
+          localStorage.setItem(LS_FECHA, fecha.value);
+
+          // Deja capacidad y puesto vacíos para el siguiente registro rápido
+          capacidad.value = '';
+          puesto.value = '';
+          // Restaurar estilo normal del campo capacidad
+          capacidad.style.backgroundColor = '';
+          capacidad.style.borderColor = '';
+          capacidad.focus();
+        } else {
+          showMsg(data?.message || 'Error al guardar la capacidad', 'error');
+        }
+      } catch (err) {
+        console.error('Error guardando capacidad', err);
+        showMsg('Error de conexión al guardar la capacidad', 'error');
+      }
+    });
+    */
+    // FIN LÓGICA COMENTADA PARA CAPACIDADES POR PUESTO
+
+    // ============================================================================
+    // LÓGICA PARA FORMULARIO DE CAPACIDADES POR OPERARIO
+    // ============================================================================
+
+    // Declarar variables del DOM para operarios al inicio
+    let formOperario, turnoOperario, fechaOperario, operario, capacidadOperario, operariosMsg, fijarJornada;
+
+    const LS_TURNO_OP = 'cab_cap_op_last_turno';
+    const LS_FECHA_OP = 'cab_cap_op_last_fecha';
+
+    // Función para mostrar mensajes (necesaria para operarios)
+    function showMsg(texto, tipo='success'){
+      const n = document.createElement('div');
+      n.className = `notification ${tipo} show`;
+      n.textContent = texto;
+      document.body.appendChild(n);
+      setTimeout(()=>{ n.classList.remove('show'); n.remove(); }, 2200);
+    }
+
+    // Funciones auxiliares necesarias para operarios
+    function turnoActualSegunHora(d = new Date()){
+      const h = d.getHours(); // 0-23
+      // TM: 06-13:59, TT: 14-21:59, TN: 22-23:59 y 00-05:59
+      if (h >= 6 && h < 14) return 'TM';
+      if (h >= 14 && h < 22) return 'TT';
+      return 'TN';
+    }
+
+    function fechaPorDefecto(){
+      const now = new Date();
+      // Regla especial: entre 22:00 y 23:59 -> día actual + 1
+      if (now.getHours() >= 22) {
+        now.setDate(now.getDate() + 1);
+      }
+      // formateo a YYYY-MM-DD en local
+      const y = now.getFullYear();
+      const m = String(now.getMonth()+1).padStart(2,'0');
+      const d = String(now.getDate()).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+
+    // Función para inicializar las referencias DOM
+    function inicializarElementosOperario() {
+      formOperario = document.getElementById('formCapacidadOperario');
+      turnoOperario = document.getElementById('turnoOperario');
+      fechaOperario = document.getElementById('fechaOperario');
+      operario = document.getElementById('operario');
+      capacidadOperario = document.getElementById('capacidadOperario');
+      operariosMsg = document.getElementById('operariosMsg');
+      fijarJornada = document.getElementById('fijarJornada');
+      
+      console.log('🔍 Elementos DOM inicializados:', {
+        formOperario: !!formOperario,
+        turnoOperario: !!turnoOperario,
+        fechaOperario: !!fechaOperario,
+        operario: !!operario,
+        capacidadOperario: !!capacidadOperario,
+        operariosMsg: !!operariosMsg,
+        fijarJornada: !!fijarJornada
+      });
+    }
+
+    // Aplicar defaults para formulario de operarios
+    function aplicarDefaultsOperario(){
+      const lastTurno = localStorage.getItem(LS_TURNO_OP);
+      const lastFecha = localStorage.getItem(LS_FECHA_OP);
+
+      turnoOperario.value = lastTurno || turnoActualSegunHora();
+      fechaOperario.value = lastFecha || fechaPorDefecto();
+
+      // Capacidad y operario deben quedar vacíos inicialmente
+      capacidadOperario.value = '';
+      operario.innerHTML = '<option value="" selected disabled>Cargando operarios…</option>';
+    }
+
+    // Función para manejar el cambio del toggle "Fijar Jornada"
+    function manejarCambioJornada() {
+      const isJornadaFija = fijarJornada.checked;
+      console.log(`🔄 Toggle "Fijar Jornada" cambiado: ${isJornadaFija ? 'ACTIVADO' : 'DESACTIVADO'}`);
+      
+      // Habilitar/deshabilitar campos Turno y Fecha
+      turnoOperario.disabled = isJornadaFija;
+      fechaOperario.disabled = isJornadaFija;
+      
+      // Aplicar estilos visuales
+      if (isJornadaFija) {
+        turnoOperario.style.backgroundColor = '#f5f5f5';
+        turnoOperario.style.color = '#999';
+        fechaOperario.style.backgroundColor = '#f5f5f5';
+        fechaOperario.style.color = '#999';
+      } else {
+        turnoOperario.style.backgroundColor = '';
+        turnoOperario.style.color = '';
+        fechaOperario.style.backgroundColor = '';
+        fechaOperario.style.color = '';
+      }
+      
+      // Recargar operarios con el nuevo modo
+      cargarOperarios();
+    }
+
+    // Cargar operarios basado en turno y fecha
+    async function cargarOperarios() {
+      console.log(`🔍 cargarOperarios() iniciada - Turno: '${turnoOperario?.value}', Fecha: '${fechaOperario?.value}', JornadaFija: ${fijarJornada?.checked}`);
+      
+      // Verificar que todos los elementos DOM existan
+      if (!operario || !operariosMsg || !turnoOperario || !fechaOperario || !fijarJornada) {
+        console.error('❌ Error: Elementos DOM no encontrados', {
+          operario: !!operario,
+          operariosMsg: !!operariosMsg,
+          turnoOperario: !!turnoOperario,
+          fechaOperario: !!fechaOperario,
+          fijarJornada: !!fijarJornada
+        });
+        
+        // Intentar reinicializar los elementos
+        inicializarElementosOperario();
+        
+        // Si aún no están disponibles, salir
+        if (!operario || !operariosMsg || !turnoOperario || !fechaOperario || !fijarJornada) {
+          console.error('❌ No se pudieron inicializar los elementos DOM');
+          return;
+        }
+      }
+      
+      const isJornadaFija = fijarJornada.checked;
+      
+      // Si es jornada fija, no necesitamos turno y fecha
+      if (!isJornadaFija && (!turnoOperario.value || !fechaOperario.value)) {
+        console.log(`⚠️ Faltan valores - Turno: ${!!turnoOperario.value}, Fecha: ${!!fechaOperario.value}`);
+        operario.innerHTML = '<option value="" selected disabled>Selecciona turno y fecha primero…</option>';
+        operario.disabled = true;
+        operariosMsg.textContent = 'Selecciona turno y fecha para cargar operarios disponibles…';
+        return;
+      }
+
+      try {
+        operario.disabled = true;
+        operariosMsg.style.display = 'block';
+        operariosMsg.textContent = 'Cargando operarios…';
+        
+        let url, params;
+        
+        if (isJornadaFija) {
+          // Modo jornada fija: usar endpoint para operarios de sección 10
+          url = '/api/obtener-operarios-seccion';
+          params = new URLSearchParams({
+            seccion: '10'
+          });
+          console.log(`🔍 Cargando operarios para JORNADA FIJA (IDSECCION = 10)`);
+        } else {
+          // Modo normal: usar endpoint original
+          url = '/api/obtener-operarios';
+          params = new URLSearchParams({
+            turno: turnoOperario.value,
+            fecha: fechaOperario.value
+          });
+          console.log(`🔍 Cargando operarios para Turno: ${turnoOperario.value}, Fecha: ${fechaOperario.value}`);
+        }
+        
+        console.log(`📡 URL de consulta: ${url}?${params.toString()}`);
+
+        const resp = await fetch(`${url}?${params.toString()}`, {
+          method: 'GET',
+          headers: {'Accept': 'application/json', 'Content-Type': 'application/json'}
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        
+        console.log(`📥 Respuesta del servidor:`, data);
+
+        if (!(data && data.success && Array.isArray(data.operarios))) {
+          throw new Error('Formato inesperado');
+        }
+
+        operario.innerHTML = '<option value="" selected disabled>Selecciona un operario…</option>';
+        
+        if (data.operarios.length > 0) {
+          data.operarios.forEach(op => {
+            const opt = document.createElement('option');
+            // Verificar si es el nuevo formato (objeto) o el formato antiguo (string)
+            if (typeof op === 'object' && op.value && op.text) {
+              opt.value = op.value;  // Número del operario
+              opt.textContent = op.text;  // "123 - NOMBRE APELLIDO"
+            } else {
+              // Formato antiguo (fallback)
+              opt.value = op;
+              opt.textContent = op;
+            }
+            operario.appendChild(opt);
+          });
+          operario.disabled = false;
+          operariosMsg.style.display = 'none';
+          console.log(`✅ Cargados ${data.operarios.length} operarios:`, data.operarios);
+        } else {
+          operario.innerHTML = '<option value="" selected disabled>No hay operarios disponibles</option>';
+          operario.disabled = true;
+          operariosMsg.textContent = 'No hay operarios registrados para el turno y fecha seleccionados';
+          console.log(`ℹ️ No hay operarios para los parámetros seleccionados`);
+        }
+
+      } catch (e) {
+        console.error('Error cargando operarios:', e);
+        operario.innerHTML = '<option value="" selected disabled>Error cargando operarios</option>';
+        operario.disabled = true;
+        operariosMsg.textContent = 'Error al cargar operarios. Intenta de nuevo.';
+      }
+    }
+
+    // Consultar capacidad existente por operario
+    async function consultarCapacidadOperarioExistente() {
+      // Verificar si estamos en modo jornada fija
+      const isJornadaFija = fijarJornada.checked;
+      
+      // Solo consultar si tenemos operario seleccionado
+      if (!operario.value) {
+        return;
+      }
+      
+      // En modo normal, también necesitamos turno y fecha
+      if (!isJornadaFija && (!turnoOperario.value || !fechaOperario.value)) {
+        return;
+      }
+
+      try {
+        let url, params;
+        
+        if (isJornadaFija) {
+          // Modo jornada fija: usar endpoint específico
+          console.log(`🔍 Consultando capacidad JORNADA FIJA para Operario=${operario.value}`);
+          
+          url = '/api/consultar-capacidad-operario-jornada';
+          params = new URLSearchParams({
+            operario: operario.value
+          });
+        } else {
+          // Modo normal: usar endpoint original
+          console.log(`🔍 Consultando capacidad operario existente para: Turno=${turnoOperario.value}, Fecha=${fechaOperario.value}, Operario=${operario.value}`);
+          
+          url = '/api/consultar-capacidad-operario';
+          params = new URLSearchParams({
+            turno: turnoOperario.value,
+            fecha: fechaOperario.value,
+            operario: operario.value
+          });
+        }
+
+        const resp = await fetch(`${url}?${params.toString()}`, {
+          method: 'GET',
+          headers: {'Accept': 'application/json', 'Content-Type': 'application/json'}
+        });
+
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+
+        if (data.success && data.found) {
+          console.log(`✅ Capacidad operario encontrada:`, data.capacidad);
+          // Llenar automáticamente el campo capacidad
+          capacidadOperario.value = data.capacidad.capacidad;
+          // Cambiar el color del campo para indicar que viene de BD
+          capacidadOperario.style.backgroundColor = '#e8f5e8';
+          capacidadOperario.style.borderColor = '#4caf50';
+          
+          const modoTexto = isJornadaFija ? 'jornada fija' : 'normal';
+          showMsg(`Capacidad operario cargada: ${data.capacidad.capacidad} (${modoTexto})`, 'success');
+        } else {
+          console.log(`ℹ️ No se encontró capacidad operario existente`);
+          // Limpiar el campo si no hay datos
+          capacidadOperario.value = '';
+          // Restaurar estilo normal
+          capacidadOperario.style.backgroundColor = '';
+          capacidadOperario.style.borderColor = '';
+        }
+      } catch (e) {
+        console.error('Error consultando capacidad operario existente:', e);
+        // En caso de error, no hacer nada (mantener el campo como está)
+      }
+    }
+
+    // Inicializar formulario de operarios en DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      // Restaurar estados colapsados
+      restoreCollapsedStates();
+      
+      // Inicializar formulario de puestos - COMENTADO
+      // aplicarDefaults();
+      // cargarPuestos();
+      
+      // Luego inicializar los elementos del formulario de operarios
+      inicializarElementosOperario();
+      aplicarDefaultsOperario();
+      
+      // Event listener para el toggle "Fijar Jornada"
+      fijarJornada.addEventListener('change', manejarCambioJornada);
+      
+      // Event listeners para cargar operarios cuando cambien turno o fecha
+      turnoOperario.addEventListener('change', () => {
+        cargarOperarios();
+        // Limpiar capacidad cuando cambie el turno
+        capacidadOperario.value = '';
+        capacidadOperario.style.backgroundColor = '';
+        capacidadOperario.style.borderColor = '';
+      });
+
+      fechaOperario.addEventListener('change', () => {
+        cargarOperarios();
+        // Limpiar capacidad cuando cambie la fecha
+        capacidadOperario.value = '';
+        capacidadOperario.style.backgroundColor = '';
+        capacidadOperario.style.borderColor = '';
+      });
+
+      // Event listener para consultar capacidad existente cuando cambie el operario
+      operario.addEventListener('change', consultarCapacidadOperarioExistente);
+
+      // Manejar envío del formulario de operarios
+      formOperario.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // Determinar si estamos en modo jornada fija
+        const isJornadaFija = fijarJornada.checked;
+
+        // Limpiar errores previos
+        [turnoOperario, fechaOperario, capacidadOperario, operario].forEach(el => el.classList.remove('input-error'));
+
+        // Validaciones según el modo
+        let turnoOk, fechaOk;
+        if (isJornadaFija) {
+          // En modo jornada fija, no validamos turno y fecha del usuario
+          turnoOk = true;
+          fechaOk = true;
+        } else {
+          // En modo normal, validamos turno y fecha
+          turnoOk = !!turnoOperario.value;
+          fechaOk = !!fechaOperario.value;
+        }
+        
+        const capNum = Number(capacidadOperario.value);
+        const capacidadOk = Number.isFinite(capNum) && capNum >= 0;
+        const operarioOk = !!operario.value;
+
+        // Marcar errores según el modo
+        if (!isJornadaFija) {
+          if(!turnoOk) turnoOperario.classList.add('input-error');
+          if(!fechaOk) fechaOperario.classList.add('input-error');
+        }
+        if(!capacidadOk) capacidadOperario.classList.add('input-error');
+        if(!operarioOk) operario.classList.add('input-error');
+
+        if(!(turnoOk && fechaOk && capacidadOk && operarioOk)){
+          showMsg('Revisa los datos del formulario de operario', 'error');
+          return;
+        }
+
+        // Construir payload según el modo
+        const payload = {
+          turno: isJornadaFija ? 'JORNADA' : turnoOperario.value,
+          fecha: isJornadaFija ? '1999-01-01' : fechaOperario.value,
+          capacidad: capNum,
+          operario: operario.value
+        };
+
+        console.log(`📤 Enviando datos (Modo: ${isJornadaFija ? 'JORNADA FIJA' : 'NORMAL'}):`, payload);
+
+        try {
+          const resp = await fetch('/api/registrar-capacidad-operario', {
+            method: 'POST',
+            headers: {'Accept':'application/json','Content-Type':'application/json'},
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json();
+
+          if(resp.ok && data && data.success){
+            const modoTexto = isJornadaFija ? 'jornada fija' : 'normal';
+            showMsg(`Capacidad por operario guardada correctamente (${modoTexto})`, 'success');
+
+            // Solo guardar últimos valores si no es jornada fija
+            if (!isJornadaFija) {
+              localStorage.setItem(LS_TURNO_OP, turnoOperario.value);
+              localStorage.setItem(LS_FECHA_OP, fechaOperario.value);
+            }
+
+            // Limpiar capacidad y operario para el siguiente registro rápido
+            capacidadOperario.value = '';
+            operario.value = '';
+            // Restaurar estilo normal del campo capacidad
+            capacidadOperario.style.backgroundColor = '';
+            capacidadOperario.style.borderColor = '';
+            capacidadOperario.focus();
+          } else {
+            showMsg(data?.message || 'Error al guardar la capacidad por operario', 'error');
+          }
+        } catch (err) {
+          console.error('Error guardando capacidad operario', err);
+          showMsg('Error de conexión al guardar la capacidad por operario', 'error');
+        }
+      });
+      
+      // Cargar operarios automáticamente después de aplicar defaults
+      setTimeout(() => {
+        console.log('🚀 Iniciando carga automática de operarios...');
+        cargarOperarios();
+      }, 300); // Delay para asegurar que todos los elementos estén listos
+    });
+  </script>
+
+  <!-- Scripts para el widget de usuario -->
+  <script src="/assets/css/loginModal.js"></script>
+  
+  <!-- Script para forzar posición del widget en esquina inferior derecha -->
+  <script>
+    // Asegurar que el widget siempre se muestre en la esquina inferior derecha
+    document.addEventListener('DOMContentLoaded', function() {
+      // Esperar a que el widget esté creado (puede tardar un momento)
+      setTimeout(function() {
+        const widget = document.getElementById('userSessionWidget');
+        if (widget) {
+          // Forzar posición mediante JavaScript
+          widget.style.position = 'fixed';
+          widget.style.top = 'auto';
+          widget.style.bottom = '15px';
+          widget.style.right = '15px';
+          widget.style.left = 'auto';
+        }
+      }, 500); // Esperar 500ms para asegurar que el widget ya se creó
+    });
+  </script>
+</body>
+</html>

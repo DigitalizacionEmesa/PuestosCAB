@@ -1,0 +1,27 @@
+{
+  "fvName": "Trump 3030 6kW",
+  "productionCapture": [
+    {
+      "group": "12 Laser",
+      "center": "TruLaser 3030 6kW",
+      "activity": "--"
+    }
+  ],
+  "tipoProducto": [
+    {
+      "cod_tipoproducto": "FG001"
+    },
+    {
+      "cod_tipoproducto": "FG002"
+    },
+    {
+      "cod_tipoproducto": "SF001"
+    },
+    {
+      "cod_tipoproducto": "SF002"
+    }
+  ],
+  "targetSettings": {
+    "targetEfficiency": 50
+  }
+}
