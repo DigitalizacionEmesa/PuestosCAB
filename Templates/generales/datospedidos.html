@@ -623,7 +623,7 @@
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: false });
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '', raw: true });
 
           if (jsonData.length < 2) {
             mostrarStatus('El archivo no tiene suficientes filas', 'error');
@@ -708,11 +708,22 @@
 
         const obj = {};
         cabeceras.forEach((col, idx) => {
-          let val = row[idx] !== undefined ? String(row[idx]).trim() : '';
+          const rawVal = row[idx];
+          let val = rawVal !== undefined && rawVal !== null ? String(rawVal).trim() : '';
           
-          // Convertir fechas: DD/MM/YYYY o D/M/YYYY → YYYY-MM-DD
+          // Convertir fechas: Excel serial number o DD/MM/YYYY → YYYY-MM-DD
           if (col === 'FechaEntrega' && val) {
-            val = convertirFecha(val);
+            // Si es un número serial de Excel (raw:true), convertirlo directamente
+            if (typeof rawVal === 'number') {
+              const dateFromSerial = excelSerialToDateStr(rawVal);
+              if (dateFromSerial) {
+                val = dateFromSerial;
+              } else {
+                val = convertirFecha(val);
+              }
+            } else {
+              val = convertirFecha(val);
+            }
           }
           
           obj[col] = val;
@@ -732,6 +743,21 @@
       }
 
       mostrarPreview();
+    }
+
+    // Convertir número serial de fecha Excel (raw:true) a YYYY-MM-DD
+    function excelSerialToDateStr(serial) {
+      if (typeof serial !== 'number' || serial < 1) return null;
+      // Usar SSF de XLSX para parsear el número serial de fecha
+      try {
+        const date = XLSX.SSF.parse_date_code(serial);
+        if (date && date.y && date.m && date.d) {
+          return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+        }
+      } catch(e) {
+        console.warn('Error convirtiendo serial de fecha:', serial, e);
+      }
+      return null;
     }
 
     // Convertir fecha de DD/MM/YYYY a YYYY-MM-DD

@@ -4962,7 +4962,8 @@ if __name__ == '__main__':
     print("="*50)
     print("INICIALIZANDO API...")
     print("="*50)
-    print(f"Servidor iniciándose en: http://{ip_local}:{port}")
+    print(f"  Local:   http://127.0.0.1:{port}")
+    print(f"  Red:     http://{ip_local}:{port}")
     print("="*50)
     
     import logging
@@ -4976,4 +4977,4 @@ if __name__ == '__main__':
     log = logging.getLogger('werkzeug')
     log.setLevel(logging.ERROR)
     
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port, debug=False)
