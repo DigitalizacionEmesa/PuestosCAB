@@ -141,28 +141,38 @@
       border-bottom: 2px solid #2a5a8a;
       position: sticky;
       top: 0;
-      z-index: 10;
-      cursor: grab; /* Indicador de que se puede arrastrar */
-      user-select: none; /* Evita selección de texto al arrastrar */
+      z-index: 50;
+      user-select: none; /* Evita selección de texto */
     }
     
-    /* Añadir iconos de arrastre solo a la primera fila de cabeceras */
-    .resumen-table > thead > tr:first-child > th::before {
-      content: "⋮⋮";
-      margin-right: 6px;
-      opacity: 0.6;
-      font-size: 14px;
-      transition: opacity 0.2s;
+    /* Indicadores de ordenación en cabeceras */
+    .resumen-table > thead > tr:first-child > th.sortable {
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+    
+    .resumen-table > thead > tr:first-child > th.sortable:hover {
+      background: #2a5a8a;
+    }
+    
+    .resumen-table > thead > tr:first-child > th .sort-icon {
       display: inline-block;
+      margin-left: 6px;
+      font-size: 12px;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      vertical-align: middle;
     }
     
-    .resumen-table > thead > tr:first-child > th:hover::before {
+    .resumen-table > thead > tr:first-child > th.sortable:hover .sort-icon {
+      opacity: 0.9;
+    }
+    
+    .resumen-table > thead > tr:first-child > th.sort-asc .sort-icon,
+    .resumen-table > thead > tr:first-child > th.sort-desc .sort-icon {
       opacity: 1;
-    }
-    
-    /* No mostrar icono de arrastre en la fila de filtros (segunda fila) */
-    .resumen-table > thead > tr.filtros-row > th::before {
-      content: none;
+      font-weight: bold;
     }
     
     /* Estilos para botón ocultar/mostrar columna */
@@ -548,11 +558,17 @@
       filter: brightness(0.98);
     }
 
-    /* Contenedor principal - Sin márgenes laterales como PuestoCAB */
+    /* Fijar el thead completo (cabeceras + filtros) al hacer scroll */
+    .resumen-table thead {
+      position: sticky;
+      top: 0;
+      z-index: 55;
+    }
+
+    /* Contenedor principal - overflow visible para que el sticky funcione */
     .table-container {
       margin: 16px 0;
-      overflow-x: auto;
-      overflow-y: visible;
+      overflow: visible;
       max-width: 100%;
       background: var(--card);
       border-radius: 12px;
@@ -648,14 +664,14 @@
       }
     }
 
-    /* Estilos para filtros de texto en cabeceras */
+    /* Estilos para filtros de texto en cabeceras - también sticky */
     .filtros-row th {
       padding: 8px;
       background: var(--card-secondary);
       border-bottom: 2px solid var(--border);
       position: sticky;
-      top: 42px; /* Altura de la primera fila de cabecera */
-      z-index: 9;
+      top: 46px; /* Justo debajo de la fila de cabeceras */
+      z-index: 49;
     }
 
     .filtro-texto {
@@ -698,6 +714,68 @@
       font-weight: 500;
       color: var(--text);
       text-align: center;
+    }
+
+    /* Píldoras de filtro rápido (toggles de grupo de columnas) */
+    .quick-filter-pills {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-left: 12px;
+    }
+
+    .filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 2px solid;
+      transition: all 0.2s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .filter-pill.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .filter-pill.active:hover {
+      background: #2a5a8a;
+      border-color: #2a5a8a;
+    }
+
+    .filter-pill.inactive {
+      background: #e8e8e8;
+      color: #888;
+      border-color: #ccc;
+    }
+
+    .filter-pill.inactive:hover {
+      background: #d0d0d0;
+      border-color: #aaa;
+    }
+
+    .filter-pill .pill-icon {
+      font-size: 14px;
+    }
+
+    .filter-pill .pill-count {
+      background: rgba(255,255,255,0.25);
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 0.7rem;
+      margin-left: 2px;
+    }
+
+    .filter-pill.inactive .pill-count {
+      background: rgba(0,0,0,0.08);
     }
   </style>
 </head>
@@ -773,6 +851,14 @@
         <button id="btnModificarFiltros" class="btn-modificar-filtros">
           ⚙️ Modificar filtros
         </button>
+        <div class="quick-filter-pills" id="quickFilterPills" style="display: none;">
+          <span class="filter-pill active" id="pillDatosPedidos" onclick="toggleGrupoColumnas('datospedidos')" title="Mostrar/ocultar columnas de DatosPedidos">
+            <span class="pill-icon">📋</span> DatosPedidos
+          </span>
+          <span class="filter-pill active" id="pillOFs" onclick="toggleGrupoColumnas('ofs')" title="Mostrar/ocultar columnas de OF's">
+            <span class="pill-icon">📦</span> OF's
+          </span>
+        </div>
         <div class="show-columns-dropdown">
           <button id="showColumnsBtn" class="show-columns-btn" style="display: none;">
             🔍 Columnas ocultas
@@ -1037,67 +1123,77 @@
     function renderizarTablaResumen(data) {
       console.log('Renderizando tabla de resumen...');
       
-      // Array para almacenar columnas ocultas (persistencia durante la sesión)
-      if (!window.columnasOcultas) {
-        window.columnasOcultas = [];
+      // Inicializar estados de grupos de columnas
+      if (window.gruposColumnas === undefined) {
+        window.gruposColumnas = { datospedidos: true, ofs: true };
       }
       
-      // Definir columnas fijas de DatosPedidos a mostrar
-      const columnasDP = ['FechaEntrega', 'EMB', 'TipoDecoracion', 'Modelo', 'Notas', 'Operario'];
+      // Estado de ordenación
+      if (!window.sortState) {
+        window.sortState = { colIndex: -1, direction: 0 }; // 0=none, 1=asc, 2=desc
+      }
+      
+      // Definir TODAS las columnas de DatosPedidos a mostrar
+      const columnasDP = ['FechaEntrega', 'EMB', 'TipoDecoracion', 'Modelo', 'Notas', 'Operario', 'Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales'];
       const columnasDPLabels = {
         'FechaEntrega': 'Fecha Entrega',
         'EMB': 'EMB',
         'TipoDecoracion': 'Tipo Dec.',
         'Modelo': 'Modelo',
         'Notas': 'Notas',
-        'Operario': 'Operario'
+        'Operario': 'Op.Deco',
+        'Clinchado': 'Op.Clin',
+        'Suelos': 'Op.Suel',
+        'Techos': 'Op.Tech',
+        'Bajotecho': 'Op.Bajo',
+        'Especiales': 'Op.Espe'
       };
       
-      // 1. Generar cabecera de la tabla con filtros
+      const showDP = window.gruposColumnas.datospedidos;
+      const showOFs = window.gruposColumnas.ofs;
+      
+      // 1. Generar cabecera de la tabla con filtros y sort
       const headerHtml = `
         <tr class="cabeceras-row">
-          <th class="col-numero" title="Arrastre para reorganizar columnas" data-column-id="numero">
-            Número Pedido
+          <th class="col-numero sortable" data-col-index="0" onclick="ordenarTabla(0)" title="Clic para ordenar por Número Pedido">
+            Número Pedido <span class="sort-icon">⇅</span>
           </th>
-          ${columnasDP.map(col => {
-            const columnId = `dp-${col}`;
-            const isHidden = window.columnasOcultas.includes(columnId);
-            return `<th title="Datos del pedido" 
-                     data-column-id="${columnId}" 
-                     class="col-dp ${isHidden ? 'col-hidden' : ''}">
-              ${columnasDPLabels[col]}
+          ${columnasDP.map((col, idx) => {
+            const colIndex = 1 + idx;
+            return `<th data-col-index="${colIndex}" 
+                     data-grupo="datospedidos"
+                     class="col-dp sortable ${showDP ? '' : 'col-hidden'}" 
+                     onclick="ordenarTabla(${colIndex})"
+                     title="Clic para ordenar por ${columnasDPLabels[col]}">
+              ${columnasDPLabels[col]} <span class="sort-icon">⇅</span>
             </th>`;
           }).join('')}
           ${data.puestos.map((puesto, index) => {
-            const columnId = `puesto-${index}`;
-            const isHidden = window.columnasOcultas.includes(columnId);
-            return `<th title="Arrastre para reorganizar columnas" 
-                     data-column-id="${columnId}" 
-                     class="${isHidden ? 'col-hidden' : ''}">
-              ${puesto}
-              <button type="button" class="toggle-column-btn" title="Ocultar/mostrar columna" onclick="toggleColumn('${columnId}')">${isHidden ? '+' : '−'}</button>
+            const colIndex = 1 + columnasDP.length + index;
+            return `<th data-col-index="${colIndex}" 
+                     data-grupo="ofs"
+                     class="sortable ${showOFs ? '' : 'col-hidden'}" 
+                     onclick="ordenarTabla(${colIndex})"
+                     title="Clic para ordenar por ${puesto}">
+              ${puesto} <span class="sort-icon">⇅</span>
             </th>`;
           }).join('')}
         </tr>
         <tr class="filtros-row">
-          <th class="col-numero" data-column-id="numero">
+          <th class="col-numero" data-col-index="0">
             <input type="text" class="filtro-texto" id="filtro-numero" 
                    placeholder="Filtrar por número..." 
                    onkeyup="aplicarFiltrosTexto()">
           </th>
           ${columnasDP.map(col => {
-            const columnId = `dp-${col}`;
-            const isHidden = window.columnasOcultas.includes(columnId);
-            return `<th data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}">
+            return `<th data-grupo="datospedidos" class="${showDP ? '' : 'col-hidden'}">
               <input type="text" class="filtro-texto" id="filtro-dp-${col}" 
                      placeholder="Filtrar ${columnasDPLabels[col].toLowerCase()}..." 
                      onkeyup="aplicarFiltrosTexto()">
             </th>`;
           }).join('')}
           ${data.puestos.map((puesto, index) => {
-            const columnId = `puesto-${index}`;
-            const isHidden = window.columnasOcultas.includes(columnId);
-            return `<th data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}">
+            return `<th data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}">
               <input type="text" class="filtro-texto" id="filtro-puesto-${index}" 
                      placeholder="Buscar ${puesto}..." 
                      onkeyup="aplicarFiltrosTexto()">
@@ -1113,8 +1209,6 @@
         
         // Celdas de DatosPedidos
         const celdasDP = columnasDP.map(col => {
-          const columnId = `dp-${col}`;
-          const isHidden = window.columnasOcultas.includes(columnId);
           const valor = dp[col];
           let texto = valor !== null && valor !== undefined ? String(valor) : '';
           
@@ -1126,7 +1220,7 @@
           
           // Columna Notas: editable inline
           if (col === 'Notas') {
-            return `<td data-column-id="${columnId}" class="col-dp-val col-notas ${isHidden ? 'col-hidden' : ''}">
+            return `<td data-grupo="datospedidos" class="col-dp-val col-notas ${showDP ? '' : 'col-hidden'}">
               <textarea class="notas-editable" 
                         data-pedido="${pedido.numeroPedido}"
                         data-original="${texto.replace(/"/g, '&quot;')}"
@@ -1137,7 +1231,7 @@
           
           // Columna Operario: editable inline (máx 3 dígitos)
           if (col === 'Operario') {
-            return `<td data-column-id="${columnId}" class="col-dp-val col-operario ${isHidden ? 'col-hidden' : ''}">
+            return `<td data-grupo="datospedidos" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
               <input type="text" class="operario-editable" 
                      data-pedido="${pedido.numeroPedido}"
                      data-original="${texto}"
@@ -1148,17 +1242,29 @@
             </td>`;
           }
           
-          return `<td data-column-id="${columnId}" class="col-dp-val ${isHidden ? 'col-hidden' : ''}">${texto}</td>`;
+          // Columnas editables genéricas: Clinchado, Suelos, Techos, Bajotecho, Especiales
+          if (['Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales'].includes(col)) {
+            return `<td data-grupo="datospedidos" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
+              <input type="text" class="operario-editable" 
+                     data-pedido="${pedido.numeroPedido}"
+                     data-campo="${col}"
+                     data-original="${texto}"
+                     value="${texto}"
+                     maxlength="10"
+                     placeholder="-"
+                     onblur="guardarCampoDP(this, '${pedido.numeroPedido}', '${col}')">
+            </td>`;
+          }
+          
+          return `<td data-grupo="datospedidos" class="col-dp-val ${showDP ? '' : 'col-hidden'}">${texto}</td>`;
         }).join('');
         
-        // Celdas de puestos
-        const celdasPuestos = data.puestos.map((puesto, index) => {
-          const columnId = `puesto-${index}`;
-          const isHidden = window.columnasOcultas.includes(columnId);
+        // Celdas de puestos (OF's)
+        const celdasPuestos = data.puestos.map(puesto => {
           const piezasPuesto = pedido.puestos_data[puesto] || [];
           
           if (piezasPuesto.length === 0) {
-            return `<td data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}"></td>`;
+            return `<td data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}"></td>`;
           }
           
           const tarjetas = piezasPuesto.map(pieza => {
@@ -1166,12 +1272,12 @@
             return `<div class="estado-tarjeta ${claseEstado}">${pieza.descripcion}</div>`;
           }).join('');
           
-          return `<td data-column-id="${columnId}" class="${isHidden ? 'col-hidden' : ''}">${tarjetas}</td>`;
+          return `<td data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}">${tarjetas}</td>`;
         }).join('');
         
         return `
           <tr>
-            <td class="pedido-numero" data-column-id="numero">${pedido.numeroPedido}</td>
+            <td class="pedido-numero">${pedido.numeroPedido}</td>
             ${celdasDP}
             ${celdasPuestos}
           </tr>
@@ -1180,7 +1286,170 @@
       
       $tableBody.innerHTML = filas;
       
-      console.log(`Tabla renderizada con ${data.pedidos.length} pedidos y ${data.puestos.length} puestos`);
+      // Restaurar indicador de ordenación si existía
+      if (window.sortState.colIndex >= 0 && window.sortState.direction > 0) {
+        actualizarIndicadorSort();
+      }
+      
+      // Mostrar píldoras de filtro rápido
+      document.getElementById('quickFilterPills').style.display = 'flex';
+      actualizarEstadoPills();
+      
+      console.log(`Tabla renderizada con ${data.pedidos.length} pedidos, ${columnasDP.length} cols DP y ${data.puestos.length} puestos`);
+    }
+
+    // ============================================================
+    // ORDENACIÓN DE COLUMNAS (clic en cabecera)
+    // ============================================================
+    function ordenarTabla(colIndex) {
+      console.log(`🔽 Ordenando por columna ${colIndex}...`);
+      
+      // Determinar dirección: none -> asc -> desc -> none
+      if (window.sortState.colIndex === colIndex) {
+        window.sortState.direction = (window.sortState.direction + 1) % 3; // 0->1->2->0
+      } else {
+        window.sortState.colIndex = colIndex;
+        window.sortState.direction = 1; // asc
+      }
+      
+      actualizarIndicadorSort();
+      
+      if (window.sortState.direction === 0) {
+        // Volver al orden original (re-renderizar desde datos)
+        if (RESUMEN_DATA) {
+          const tbody = $tableBody;
+          const rows = Array.from(tbody.querySelectorAll('tr'));
+          // El orden original es el de los datos
+          const sortedRows = [...rows].sort((a, b) => {
+            const aNum = parseInt(a.querySelector('td:first-child').textContent) || 0;
+            const bNum = parseInt(b.querySelector('td:first-child').textContent) || 0;
+            return aNum - bNum;
+          });
+          sortedRows.forEach(row => tbody.appendChild(row));
+        }
+        return;
+      }
+      
+      const asc = window.sortState.direction === 1;
+      
+      const tbody = $tableBody;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      
+      rows.sort((a, b) => {
+        const cellsA = a.querySelectorAll('td');
+        const cellsB = b.querySelectorAll('td');
+        
+        if (colIndex >= cellsA.length || colIndex >= cellsB.length) return 0;
+        
+        let valA = cellsA[colIndex].textContent.trim();
+        let valB = cellsB[colIndex].textContent.trim();
+        
+        // Intentar comparación numérica
+        const numA = parseFloat(valA.replace(/[^0-9.-]/g, ''));
+        const numB = parseFloat(valB.replace(/[^0-9.-]/g, ''));
+        
+        if (!isNaN(numA) && !isNaN(numB) && valA.replace(/[^0-9.-]/g, '') === valA && valB.replace(/[^0-9.-]/g, '') === valB) {
+          return asc ? numA - numB : numB - numA;
+        }
+        
+        // Comparación de texto (case-insensitive)
+        return asc ? valA.localeCompare(valB, 'es', { sensitivity: 'base' }) 
+                   : valB.localeCompare(valA, 'es', { sensitivity: 'base' });
+      });
+      
+      // Reordenar filas en el DOM
+      rows.forEach(row => tbody.appendChild(row));
+      
+      console.log(`✅ Ordenado columna ${colIndex} ${asc ? 'ASC ↑' : 'DESC ↓'}`);
+    }
+    
+    function actualizarIndicadorSort() {
+      // Limpiar todas las clases e iconos
+      document.querySelectorAll('#tableHeader th.sortable').forEach(th => {
+        th.classList.remove('sort-asc', 'sort-desc');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.textContent = '⇅';
+      });
+      
+      if (window.sortState.colIndex >= 0 && window.sortState.direction > 0) {
+        const th = document.querySelector(`#tableHeader th[data-col-index="${window.sortState.colIndex}"]`);
+        if (th) {
+          const icon = th.querySelector('.sort-icon');
+          if (window.sortState.direction === 1) {
+            th.classList.add('sort-asc');
+            if (icon) icon.textContent = '▲';
+          } else {
+            th.classList.add('sort-desc');
+            if (icon) icon.textContent = '▼';
+          }
+        }
+      }
+    }
+
+    // ============================================================
+    // TOGGLE DE GRUPOS DE COLUMNAS (PÍLDORAS)
+    // ============================================================
+    function toggleGrupoColumnas(grupo) {
+      console.log(`🔘 Toggle grupo: ${grupo}`);
+      
+      window.gruposColumnas[grupo] = !window.gruposColumnas[grupo];
+      const visible = window.gruposColumnas[grupo];
+      
+      // Mostrar/ocultar todas las celdas de este grupo
+      const elementos = document.querySelectorAll(`[data-grupo="${grupo}"]`);
+      elementos.forEach(el => {
+        if (visible) {
+          el.classList.remove('col-hidden');
+        } else {
+          el.classList.add('col-hidden');
+          // Limpiar filtros de columnas ocultas
+          const input = el.querySelector('.filtro-texto');
+          if (input && input.value.trim() !== '') {
+            input.value = '';
+          }
+        }
+      });
+      
+      // Limpiar ordenación si se oculta la columna ordenada
+      if (!visible && window.sortState.colIndex >= 0) {
+        const sortedTh = document.querySelector(`#tableHeader th.sortable[data-col-index="${window.sortState.colIndex}"]`);
+        if (sortedTh && sortedTh.getAttribute('data-grupo') === grupo) {
+          window.sortState = { colIndex: -1, direction: 0 };
+          actualizarIndicadorSort();
+          // Reordenar al orden original
+          if (RESUMEN_DATA) aplicarFiltrosTexto();
+        }
+      }
+      
+      actualizarEstadoPills();
+      actualizarContadorFiltros();
+      
+      console.log(`✅ Grupo ${grupo}: ${visible ? 'visible' : 'oculto'}`);
+    }
+    
+    function actualizarEstadoPills() {
+      const pillDP = document.getElementById('pillDatosPedidos');
+      const pillOFs = document.getElementById('pillOFs');
+      
+      if (pillDP) {
+        if (window.gruposColumnas.datospedidos) {
+          pillDP.className = 'filter-pill active';
+          pillDP.querySelector('.pill-icon').textContent = '📋';
+        } else {
+          pillDP.className = 'filter-pill inactive';
+          pillDP.querySelector('.pill-icon').textContent = '📋';
+        }
+      }
+      
+      if (pillOFs) {
+        if (window.gruposColumnas.ofs) {
+          pillOFs.className = 'filter-pill active';
+          pillOFs.querySelector('.pill-icon').textContent = '📦';
+        } else {
+          pillOFs.className = 'filter-pill inactive';
+          pillOFs.querySelector('.pill-icon').textContent = '📦';
+        }
+      }
     }
 
     // Obtener clase CSS según el estado
@@ -1335,10 +1604,12 @@
           break;
         case 'loading':
           $loadingTable.style.display = 'block';
+          document.getElementById('quickFilterPills').style.display = 'none';
           break;
         case 'nodata':
           $noDataTable.style.display = 'block';
           $filtrosAplicados.style.display = 'none';
+          document.getElementById('quickFilterPills').style.display = 'none';
           break;
       }
     }
@@ -1380,6 +1651,9 @@
       RESUMEN_DATA = null;
       FILTROS_ACTUALES = { anos: [], semanas: [] };
       $filtrosAplicados.style.display = 'none';
+      document.getElementById('quickFilterPills').style.display = 'none';
+      window.sortState = { colIndex: -1, direction: 0 };
+      window.gruposColumnas = { datospedidos: true, ofs: true }; // Resetear píldoras
       
       // También limpiar filtros de texto si existen
       limpiarFiltrosTexto();
@@ -1446,401 +1720,6 @@
       console.log('🟢 Página de resumen inicializada correctamente');
     });
     
-    // Variables para el arrastre de columnas
-    let draggedColumn = null;
-    let draggedIndex = -1;
-    let originalColumnOrder = [];
-    let currentOrder = [];
-
-    // Función para inicializar el arrastre de columnas después de renderizar la tabla
-    function inicializarArrastreColumnas() {
-      console.log('🔄 Inicializando funcionalidad de arrastre de columnas...');
-      
-      // Obtener todas las cabeceras de columna (primera fila solamente)
-      const headerRow = $tableHeader.querySelector('tr:first-child');
-      if (!headerRow) {
-        console.warn('⚠️ No se encontró la fila de cabeceras');
-        return;
-      }
-      
-      const columnHeaders = headerRow.querySelectorAll('th');
-      
-      // Guardar el orden original de columnas
-      originalColumnOrder = Array.from(columnHeaders);
-      currentOrder = [...originalColumnOrder];
-      
-      // Añadir atributos draggable a cada columna
-      columnHeaders.forEach((th, index) => {
-        th.setAttribute('draggable', 'true');
-        th.dataset.columnIndex = index;
-        
-        // Eventos de arrastre
-        th.addEventListener('dragstart', handleDragStart);
-        th.addEventListener('dragenter', handleDragEnter);
-        th.addEventListener('dragover', handleDragOver);
-        th.addEventListener('dragleave', handleDragLeave);
-        th.addEventListener('drop', handleDrop);
-        th.addEventListener('dragend', handleDragEnd);
-      });
-      
-      console.log(`✅ Arrastre de columnas inicializado para ${columnHeaders.length} columnas`);
-    }
-    
-    // Funciones para manejar eventos de arrastre
-    
-    function handleDragStart(e) {
-      this.classList.add('dragging');
-      draggedColumn = this;
-      draggedIndex = parseInt(this.dataset.columnIndex);
-      
-      // Para mejor UX, establecer los datos de transferencia
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/html', this.innerHTML);
-      
-      console.log(`🔄 Inicio de arrastre: columna ${this.textContent.trim()} (índice ${draggedIndex})`);
-    }
-    
-    function handleDragOver(e) {
-      if (e.preventDefault) {
-        e.preventDefault(); // Necesario para permitir el drop
-      }
-      e.dataTransfer.dropEffect = 'move';
-      return false;
-    }
-    
-    function handleDragEnter(e) {
-      this.classList.add('drag-over');
-    }
-    
-    function handleDragLeave(e) {
-      this.classList.remove('drag-over');
-    }
-    
-    function handleDrop(e) {
-      if (e.stopPropagation) {
-        e.stopPropagation(); // Detener redirecciones de navegador
-      }
-      
-      // Quitar clase de arrastre
-      this.classList.remove('drag-over');
-      
-      // No hacer nada si se suelta la columna sobre sí misma
-      if (draggedColumn === this) return false;
-      
-      // Obtener índice de destino
-      const targetIndex = parseInt(this.dataset.columnIndex);
-      
-      // Reordenar columnas
-      moverColumna(draggedIndex, targetIndex);
-      
-      console.log(`🔄 Columna movida: desde ${draggedIndex} hasta ${targetIndex}`);
-      
-      return false;
-    }
-    
-    function handleDragEnd(e) {
-      // Quitar todas las clases de arrastre
-      document.querySelectorAll('.resumen-table th').forEach(th => {
-        th.classList.remove('dragging');
-        th.classList.remove('drag-over');
-      });
-    }
-    
-    // Función para mover una columna de un índice a otro
-    function moverColumna(fromIndex, toIndex) {
-      console.log(`🔄 Moviendo columna de índice ${fromIndex} a índice ${toIndex}...`);
-      
-      // No hacer nada si los índices son iguales
-      if (fromIndex === toIndex) return;
-      
-      try {
-        // Guardar referencias a los filtros antes de moverlos para restaurarlos después
-        const filtros = [];
-        
-        // Mover columnas en todas las filas de la tabla
-        const rows = $resumenTable.querySelectorAll('tr');
-        
-        rows.forEach((row, rowIndex) => {
-          const cells = row.querySelectorAll('th, td');
-          if (cells.length <= Math.max(fromIndex, toIndex)) return;
-          
-          const cellToMove = cells[fromIndex];
-          const targetCell = cells[toIndex];
-          
-          // Si es la fila de filtros, guarda el input antes de mover
-          if (row.classList.contains('filtros-row')) {
-            const inputToMove = cellToMove.querySelector('input');
-            if (inputToMove) {
-              // Guardar el valor y otros atributos importantes
-              filtros.push({
-                id: inputToMove.id,
-                value: inputToMove.value,
-                placeholder: inputToMove.placeholder
-              });
-            }
-          }
-          
-          // Insertar antes o después dependiendo de la dirección
-          if (fromIndex < toIndex) {
-            // Mover hacia la derecha (insertar después)
-            if (targetCell.nextSibling) {
-              row.insertBefore(cellToMove, targetCell.nextSibling);
-            } else {
-              row.appendChild(cellToMove);
-            }
-          } else {
-            // Mover hacia la izquierda (insertar antes)
-            row.insertBefore(cellToMove, targetCell);
-          }
-        });
-        
-        // Actualizar los índices de las columnas
-        actualizarIndicesColumnas();
-        
-        // Restaurar funcionalidad de los filtros si es necesario
-        if (filtros.length > 0) {
-          setTimeout(() => {
-            filtros.forEach(filtro => {
-              const input = document.getElementById(filtro.id);
-              if (input) {
-                input.value = filtro.value;
-                // Disparar un evento para que se apliquen los filtros
-                if (filtro.value) {
-                  const event = new Event('keyup');
-                  input.dispatchEvent(event);
-                }
-              }
-            });
-          }, 100);
-        }
-        
-        console.log('✅ Columna movida exitosamente');
-      } catch (error) {
-        console.error('Error al mover columna:', error);
-        // En caso de error, recargar la tabla para evitar estados inconsistentes
-        if (RESUMEN_DATA) {
-          renderizarTablaResumen(RESUMEN_DATA);
-        }
-      }
-    }
-    
-    // Función para actualizar los índices de las columnas después de moverlas
-    function actualizarIndicesColumnas() {
-      const headerRow = $tableHeader.querySelectorAll('tr')[0];
-      if (!headerRow) return;
-      
-      const columnHeaders = headerRow.querySelectorAll('th');
-      
-      // Actualizar los índices
-      columnHeaders.forEach((th, index) => {
-        th.dataset.columnIndex = index;
-      });
-      
-      console.log('🔄 Índices de columnas actualizados');
-    }
-    
-    // Modificamos la función renderizarTablaResumen para inicializar el arrastre después de renderizar
-    const renderizarTablaResumenOriginal = renderizarTablaResumen;
-    renderizarTablaResumen = function(data) {
-      // Llamar a la función original primero
-      renderizarTablaResumenOriginal(data);
-      
-      // Después de renderizar, inicializar el arrastre de columnas
-      inicializarArrastreColumnas();
-      
-      // Actualizar el menú desplegable de columnas ocultas
-      actualizarMenuColumnasOcultas();
-      
-      console.log('✅ Tabla renderizada con funcionalidad de arrastre de columnas');
-    };
-    
-    // Función para mostrar/ocultar una columna específica
-    function toggleColumn(columnId, closeMenu = true) {
-      console.log(`🔍 Toggling columna: ${columnId}`);
-      
-      // Inicializar el array si no existe
-      if (!window.columnasOcultas) {
-        window.columnasOcultas = [];
-      }
-      
-      const isHidden = window.columnasOcultas.includes(columnId);
-      
-      if (isHidden) {
-        // MOSTRAR COLUMNA
-        // 1. Quitar del array de columnas ocultas
-        window.columnasOcultas = window.columnasOcultas.filter(id => id !== columnId);
-        
-        // 2. Mostrar todas las celdas con el data-column-id (cabeceras, filtros y datos)
-        const allElements = document.querySelectorAll(`[data-column-id="${columnId}"]`);
-        console.log(`👁️ Mostrando ${allElements.length} elementos de la columna ${columnId}`);
-        
-        allElements.forEach(el => {
-          el.classList.remove('col-hidden');
-        });
-        
-        // 3. Cambiar el botón a "-"
-        const toggleButton = document.querySelector(`th[data-column-id="${columnId}"] .toggle-column-btn`);
-        if (toggleButton) {
-          toggleButton.textContent = "−";
-          toggleButton.title = "Ocultar columna";
-        }
-        
-        console.log(`👁️ Columna ${columnId} mostrada`);
-      } else {
-        // OCULTAR COLUMNA
-        // 1. Añadir al array de columnas ocultas
-        window.columnasOcultas.push(columnId);
-        
-        // 2. Obtener todas las celdas con el data-column-id (cabeceras, filtros y datos)
-        const allElements = document.querySelectorAll(`[data-column-id="${columnId}"]`);
-        console.log(`🙈 Ocultando ${allElements.length} elementos de la columna ${columnId}`);
-        
-        allElements.forEach(el => {
-          // Añadir clase para ocultar
-          el.classList.add('col-hidden');
-          
-          // Si es un filtro, limpiarlo
-          const filterInput = el.querySelector('.filtro-texto');
-          if (filterInput && filterInput.value.trim() !== '') {
-            // Guardar valor anterior por si se restaura
-            filterInput.setAttribute('data-previous-value', filterInput.value);
-            
-            // Limpiar y aplicar el cambio
-            filterInput.value = '';
-            const event = new Event('keyup');
-            filterInput.dispatchEvent(event);
-            console.log(`🧹 Filtro limpiado en columna ${columnId}`);
-          }
-        });
-        
-        // 3. Cambiar el botón a "+"
-        const toggleButton = document.querySelector(`th[data-column-id="${columnId}"] .toggle-column-btn`);
-        if (toggleButton) {
-          toggleButton.textContent = "+";
-          toggleButton.title = "Mostrar columna";
-        }
-        
-        console.log(`🙈 Columna ${columnId} ocultada`);
-      }
-      
-      // Actualizar el menú desplegable de columnas ocultas
-      actualizarMenuColumnasOcultas();
-      
-      // Actualizar el contador de filtros si es necesario
-      actualizarContadorFiltros();
-      
-      // Cerrar el menú desplegable si se solicita
-      if (closeMenu) {
-        const dropdown = document.getElementById('columnsDropdown');
-        if (dropdown && dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-        }
-      }
-    }
-    
-    // Función para actualizar el menú desplegable de columnas ocultas
-    function actualizarMenuColumnasOcultas() {
-      const dropdown = document.getElementById('columnsDropdown');
-      const showColumnsBtn = document.getElementById('showColumnsBtn');
-      
-      if (!window.columnasOcultas || window.columnasOcultas.length === 0) {
-        // No hay columnas ocultas, ocultar el botón
-        showColumnsBtn.style.display = 'none';
-        dropdown.innerHTML = '';
-        return;
-      }
-      
-      // Modificar el botón principal para reflejar la cantidad de columnas ocultas
-      showColumnsBtn.style.display = 'inline-block';
-      const columnasCount = window.columnasOcultas.length;
-      const plural = columnasCount > 1 ? 's' : '';
-      showColumnsBtn.textContent = `🔍 ${columnasCount} columna${plural} oculta${plural}`;
-      
-      // Generar las opciones del menú
-      let optionsHtml = '';
-      
-      if (columnasCount > 1) {
-        // Añadir opción para mostrar todas las columnas si hay más de una oculta
-        optionsHtml += `<div class="column-option" style="font-weight: bold; background: #f0f8ff; color: #0066cc; padding: 12px 16px;" 
-          onclick="mostrarTodasLasColumnas()">
-          ✓ Mostrar todas las columnas (${columnasCount})
-        </div>`;
-      }
-      
-      window.columnasOcultas.forEach(columnId => {
-        // Extraer el nombre de la columna del atributo data-column-id
-        const headerCell = document.querySelector(`thead th[data-column-id="${columnId}"]`);
-        let columnName = columnId;
-        if (headerCell) {
-          // Obtener solo el texto sin incluir el botón
-          columnName = headerCell.childNodes[0].textContent.trim();
-        }
-        
-        optionsHtml += `<div class="column-option" onclick="toggleColumn('${columnId}', true)">
-            Mostrar "${columnName}"
-          </div>`;
-      });
-      
-      dropdown.innerHTML = optionsHtml;
-    }
-    
-    // Controlar el menú desplegable
-    document.getElementById('showColumnsBtn').addEventListener('click', function(event) {
-      const dropdown = document.getElementById('columnsDropdown');
-      
-      // Alternar visibilidad del menú
-      dropdown.classList.toggle('show');
-      
-      // Posicionar correctamente el menú para evitar que salga del viewport
-      if (dropdown.classList.contains('show')) {
-        // Asegurarse de que el menú no se salga por la derecha
-        const btnRect = this.getBoundingClientRect();
-        const dropdownWidth = dropdown.offsetWidth;
-        
-        // Si el menú se sale por la derecha, alinearlo al borde derecho del botón
-        if (btnRect.right - dropdownWidth < 0) {
-          dropdown.style.right = '0';
-        } else {
-          dropdown.style.right = '0';
-        }
-        
-        // Evitar que el evento se propague para evitar que el menú se cierre inmediatamente
-        event.stopPropagation();
-      }
-    });
-    
-    // Cerrar el desplegable cuando se hace clic fuera de él
-    window.addEventListener('click', function(event) {
-      if (!event.target.matches('#showColumnsBtn') && 
-          !event.target.closest('.columns-dropdown-content')) {
-        const dropdown = document.getElementById('columnsDropdown');
-        if (dropdown.classList.contains('show')) {
-          dropdown.classList.remove('show');
-        }
-      }
-    });
-    
-    // Función para mostrar todas las columnas ocultas
-    function mostrarTodasLasColumnas() {
-      console.log('🔍 Mostrando todas las columnas ocultas');
-      
-      if (!window.columnasOcultas || window.columnasOcultas.length === 0) {
-        return; // No hay nada que hacer
-      }
-      
-      // Hacer una copia del array porque toggleColumn modificará el original
-      const columnasParaMostrar = [...window.columnasOcultas];
-      const totalColumnas = columnasParaMostrar.length;
-      
-      // Mostrar cada columna
-      columnasParaMostrar.forEach(columnId => {
-        toggleColumn(columnId, false); // Pasar false para no cerrar el menú entre cada toggle
-      });
-      
-      // Cerrar el menú desplegable
-      document.getElementById('columnsDropdown').classList.remove('show');
-    }
-
     // ============================================================
     // Guardar nota editable de DatosPedidos
     // ============================================================
@@ -1936,6 +1815,51 @@
     }
 
     window.guardarOperario = guardarOperario;
+
+    // ============================================================
+    // Guardar campo genérico editable de DatosPedidos (Clinchado, Suelos, etc.)
+    // ============================================================
+    async function guardarCampoDP(input, numeroPedido, campo) {
+      const nuevoValor = input.value.trim();
+      const valorAnterior = input.getAttribute('data-original') || '';
+      
+      // No guardar si no ha cambiado
+      if (nuevoValor === valorAnterior) return;
+      
+      try {
+        const response = await fetch('/api/guardar-nota-pedido', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pedido: numeroPedido,
+            campo: campo,
+            valor: nuevoValor
+          })
+        });
+        
+        if (response.ok) {
+          input.setAttribute('data-original', nuevoValor);
+          input.style.borderColor = '#1fa971';
+          setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+          console.log(`✅ Campo ${campo} guardado para pedido ${numeroPedido}: ${nuevoValor || '(vacío)'}`);
+        } else {
+          const err = await response.json();
+          console.error(`❌ Error guardando ${campo}: ${err.message}`);
+          input.style.borderColor = '#e05252';
+          input.value = valorAnterior;
+          setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+        }
+      } catch (error) {
+        console.error(`❌ Error guardando ${campo}:`, error);
+        input.style.borderColor = '#e05252';
+        setTimeout(() => { input.style.borderColor = '#b3d6ee'; }, 1500);
+      }
+    }
+
+    window.guardarCampoDP = guardarCampoDP;
   </script>
   
   <!-- Scripts para el widget de usuario -->

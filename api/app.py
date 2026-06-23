@@ -3916,7 +3916,15 @@ def obtener_resumen_pedidos():
 
 @app.route('/api/guardar-nota-pedido', methods=['POST'])
 def guardar_nota_pedido():
-    """Guardar/actualizar Notas u Operario de un pedido en DatosPedidos"""
+    """Guardar/actualizar cualquier campo de un pedido en DatosPedidos.
+    Soporta tanto campos específicos (notas, operario) como campo genérico (campo + valor).
+    Campos permitidos: Notas, Operario, Clinchado, Suelos, Techos, Bajotecho, Especiales,
+                       EMB, TipoDecoracion, Modelo, FechaEntrega"""
+    CAMPOS_PERMITIDOS = [
+        'Notas', 'Operario', 'Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales',
+        'EMB', 'TipoDecoracion', 'Modelo', 'FechaEntrega'
+    ]
+    
     try:
         data = request.get_json()
         if not data:
@@ -3925,10 +3933,67 @@ def guardar_nota_pedido():
         pedido = str(data.get('pedido', '')).strip()
         notas = data.get('notas')
         operario = data.get('operario')
+        campo = data.get('campo')  # Nuevo: campo genérico
+        valor = data.get('valor')  # Nuevo: valor para el campo genérico
         
         if not pedido:
             return jsonify({'success': False, 'message': 'Número de pedido requerido'}), 400
         
+        # ── Modo genérico: actualizar cualquier campo permitido ──
+        if campo is not None:
+            if campo not in CAMPOS_PERMITIDOS:
+                return jsonify({
+                    'success': False, 
+                    'message': f'Campo "{campo}" no permitido. Permitidos: {", ".join(CAMPOS_PERMITIDOS)}'
+                }), 400
+            
+            # Normalizar: si el valor es string vacío, guardar como None (NULL en BD)
+            valor_final = valor if valor != '' else None
+            
+            with ConexionODBC('Digitalizacion') as conn:
+                if not conn:
+                    return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+                
+                cursor = conn.cursor()
+                
+                # Verificar si existe el pedido
+                cursor.execute("""
+                    SELECT COUNT(*) FROM [Digitalizacion].[CAB].[DatosPedidos]
+                    WHERE Pedido = ?
+                """, (pedido,))
+                existe = cursor.fetchone()[0] > 0
+                
+                if existe:
+                    cursor.execute(f"""
+                        UPDATE [Digitalizacion].[CAB].[DatosPedidos]
+                        SET [{campo}] = ?, FechaImport = SYSDATETIME()
+                        WHERE Pedido = ?
+                    """, (valor_final, pedido))
+                else:
+                    # Insertar nuevo registro con FechaEntrega por defecto
+                    try:
+                        anio_pedido = int(pedido) // 100000
+                        fecha_entrega_default = f"{anio_pedido}-01-01"
+                    except (ValueError, TypeError):
+                        fecha_entrega_default = None
+                    
+                    cursor.execute(f"""
+                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, [{campo}])
+                        VALUES (?, ?, ?)
+                    """, (pedido, fecha_entrega_default, valor_final))
+                
+                conn.commit()
+                print(f"✅ Campo '{campo}' actualizado para pedido {pedido}: {valor_final}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Campo {campo} guardado correctamente',
+                'pedido': pedido,
+                'campo': campo,
+                'valor': valor_final
+            })
+        
+        # ── Modo legacy: notas y operario (compatibilidad hacia atrás) ──
         with ConexionODBC('Digitalizacion') as conn:
             if not conn:
                 return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
