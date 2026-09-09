@@ -8,9 +8,13 @@ import io
 
 # Forzar UTF-8 en stdout/stderr para evitar UnicodeEncodeError con emojis en Windows (cp1252)
 if hasattr(sys.stdout, 'buffer'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer, encoding='utf-8', errors='replace', write_through=True
+    )
 if hasattr(sys.stderr, 'buffer'):
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(
+        sys.stderr.buffer, encoding='utf-8', errors='replace', write_through=True
+    )
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
@@ -3657,6 +3661,219 @@ def indicadores_operarios():
         }), 500
 
 
+@app.route('/api/indicadores-historico', methods=['GET'])
+def indicadores_historico():
+    """Resumen navegable Mes -> Semana -> Día -> Turno basado en TTG y jornada configurada."""
+    try:
+        nivel = request.args.get('nivel', 'mes').strip().lower()
+        niveles_validos = {'mes', 'semana', 'dia', 'turno', 'operario'}
+        if nivel not in niveles_validos:
+            return jsonify({'success': False, 'message': 'Nivel no válido'}), 400
+
+        desde = request.args.get('desde', '').strip()
+        hasta = request.args.get('hasta', '').strip()
+        mes = request.args.get('mes', '').strip()
+        semana = request.args.get('semana', '').strip()
+        anio = request.args.get('anio', '').strip()
+        fecha = request.args.get('fecha', '').strip()
+        turno_filtro = request.args.get('turno', '').strip()
+        operario_filtro = request.args.get('operario', '').strip()
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            condiciones = ["Fecha IS NOT NULL", "TTG IS NOT NULL"]
+            parametros = []
+
+            if desde:
+                condiciones.append('Fecha >= ?')
+                parametros.append(desde)
+            if hasta:
+                condiciones.append('Fecha <= ?')
+                parametros.append(hasta)
+            if mes:
+                condiciones.append("CONVERT(char(7), Fecha, 120) = ?")
+                parametros.append(mes)
+            if semana:
+                condiciones.append('DATEPART(ISO_WEEK, Fecha) = ?')
+                parametros.append(int(semana))
+            if anio:
+                condiciones.append('YEAR(Fecha) = ?')
+                parametros.append(int(anio))
+            if fecha:
+                condiciones.append('Fecha = ?')
+                parametros.append(fecha)
+            if turno_filtro:
+                condiciones.append('Turno = ?')
+                parametros.append(turno_filtro)
+            if operario_filtro:
+                condiciones.append('Operario = ?')
+                parametros.append(operario_filtro)
+
+            cursor.execute(f"""
+                SELECT Fecha, Turno, Operario,
+                       SUM(CAST(ISNULL(TTG, 0) AS FLOAT)) AS TTG,
+                       COUNT(*) AS Registros
+                FROM [Digitalizacion].[CAB].[TiempoTeorico]
+                WHERE {' AND '.join(condiciones)}
+                GROUP BY Fecha, Turno, Operario
+                ORDER BY Fecha, Turno, Operario
+            """, parametros)
+            base_rows = cursor.fetchall()
+
+            cursor.execute("""
+                SELECT Operario, Turno, Fecha, CAST(ISNULL(Capacidad, 0) AS FLOAT)
+                FROM [Digitalizacion].[CAB].[CapacidadesOperarios]
+            """)
+            capacidad_rows = cursor.fetchall()
+
+        capacidades = {}
+        jornadas = {}
+        for op, cap_turno, cap_fecha, capacidad in capacidad_rows:
+            op_key = str(op or '').strip()
+            turno_key = str(cap_turno or '').strip()
+            cap_value = float(capacidad or 0)
+            if turno_key == 'JORNADA' or str(cap_fecha) == '1999-01-01':
+                jornadas[op_key] = cap_value
+            else:
+                fecha_key = cap_fecha.isoformat() if hasattr(cap_fecha, 'isoformat') else str(cap_fecha)
+                capacidades[(op_key, turno_key, fecha_key)] = cap_value
+
+        grupos = {}
+        for fecha_row, turno_row, operario_row, ttg, registros in base_rows:
+            fecha_key = fecha_row.isoformat() if hasattr(fecha_row, 'isoformat') else str(fecha_row)
+            turno_key = str(turno_row or '').strip()
+            op_key = str(operario_row or '').strip()
+            if nivel == 'mes':
+                key = fecha_key[:7]
+                label = key
+            elif nivel == 'semana':
+                iso = fecha_row.isocalendar()
+                key = f"{iso.year}-S{iso.week:02d}"
+                label = f"Semana {iso.week:02d}/{iso.year}"
+            elif nivel == 'dia':
+                key = fecha_key
+                label = fecha_key
+            elif nivel == 'turno':
+                key = f"{fecha_key}|{turno_key}"
+                label = f"{fecha_key} · {turno_key}"
+            else:
+                key = op_key
+                label = f"Operario {op_key}"
+
+            grupo = grupos.setdefault(key, {
+                'key': key, 'label': label, 'nivel': nivel,
+                'tt_generado': 0.0, 'jornada_configurada': 0.0,
+                'registros': 0, 'fechas': set(), 'turnos': set(), 'operarios': set()
+            })
+            grupo['tt_generado'] += float(ttg or 0)
+            grupo['registros'] += int(registros or 0)
+            grupo['fechas'].add(fecha_key)
+            grupo['turnos'].add(turno_key)
+            grupo['operarios'].add(op_key)
+
+            capacidad = capacidades.get((op_key, turno_key, fecha_key), jornadas.get(op_key, 0.0))
+            grupo.setdefault('_capacidades', set()).add((op_key, turno_key, fecha_key, capacidad))
+
+        resultados = []
+        for grupo in grupos.values():
+            grupo['jornada_configurada'] = sum(item[3] for item in grupo.pop('_capacidades', set()))
+            jornada = grupo['jornada_configurada']
+            ttg = grupo['tt_generado']
+            grupo['diferencia'] = round(ttg - jornada, 2)
+            grupo['rendimiento'] = round((ttg / jornada) * 100, 1) if jornada else 0
+            grupo['fechas'] = sorted(grupo['fechas'])
+            grupo['turnos'] = sorted(grupo['turnos'])
+            grupo['operarios'] = sorted(op for op in grupo['operarios'] if op)
+            grupo['puede_bajar'] = nivel != 'operario'
+            resultados.append(grupo)
+
+        return jsonify({
+            'success': True,
+            'nivel': nivel,
+            'indicadores': resultados,
+            'total': len(resultados),
+            'fuente_ttg': 'CAB.TiempoTeorico.TTG',
+            'fuente_jornada': 'CAB.CapacidadesOperarios'
+        })
+    except Exception as e:
+        print(f"Error en indicadores históricos: {e}")
+        return jsonify({'success': False, 'message': f'Error interno del servidor: {str(e)}'}), 500
+
+
+@app.route('/api/indicadores-registros', methods=['GET'])
+def indicadores_registros():
+    """Detalle de registros TTG para el último nivel del informe."""
+    try:
+        fecha = request.args.get('fecha', '').strip()
+        turno = request.args.get('turno', '').strip()
+        operario = request.args.get('operario', '').strip()
+        desde = request.args.get('desde', '').strip()
+        hasta = request.args.get('hasta', '').strip()
+        mes = request.args.get('mes', '').strip()
+        semana = request.args.get('semana', '').strip()
+        anio = request.args.get('anio', '').strip()
+        if not operario and (not fecha or not turno):
+            return jsonify({'success': False, 'message': 'Debe indicar fecha y turno, o un operario'}), 400
+
+        condiciones = []
+        parametros = []
+        if fecha:
+            condiciones.append('Fecha = ?')
+            parametros.append(fecha)
+        if turno:
+            condiciones.append('Turno = ?')
+            parametros.append(turno)
+        if desde:
+            condiciones.append('Fecha >= ?')
+            parametros.append(desde)
+        if hasta:
+            condiciones.append('Fecha <= ?')
+            parametros.append(hasta)
+        if mes:
+            condiciones.append("CONVERT(char(7), Fecha, 120) = ?")
+            parametros.append(mes)
+        if semana:
+            condiciones.append('DATEPART(ISO_WEEK, Fecha) = ?')
+            parametros.append(int(semana))
+        if anio:
+            condiciones.append('YEAR(Fecha) = ?')
+            parametros.append(int(anio))
+        if operario:
+            condiciones.append('Operario = ?')
+            parametros.append(operario)
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            cursor.execute(f"""
+                SELECT ID, CODLINEA, GFH, ESTADO, Activo, Fecha, Turno,
+                       Realizacion, Operario, TTG, PUESTO, Nombre_Puesto
+                FROM [Digitalizacion].[CAB].[TiempoTeorico]
+                WHERE {' AND '.join(condiciones)}
+                ORDER BY ID
+            """, parametros)
+            rows = cursor.fetchall()
+
+        registros = []
+        for row in rows:
+            registros.append({
+                'id': row[0], 'codlinea': row[1], 'gfh': str(row[2]).strip() if row[2] else '',
+                'estado': str(row[3]).strip() if row[3] else '', 'activo': bool(row[4]),
+                'fecha': row[5].isoformat() if hasattr(row[5], 'isoformat') else str(row[5]),
+                'turno': str(row[6]).strip() if row[6] else '',
+                'realizacion': float(row[7] or 0), 'operario': str(row[8]).strip() if row[8] else '',
+                'ttg': float(row[9] or 0), 'puesto': str(row[10]).strip() if row[10] else '',
+                'nombre_puesto': str(row[11]).strip() if row[11] else ''
+            })
+        return jsonify({'success': True, 'registros': registros, 'total': len(registros), 'fecha': fecha, 'turno': turno, 'operario': operario})
+    except Exception as e:
+        print(f"Error en detalle de indicadores: {e}")
+        return jsonify({'success': False, 'message': f'Error interno del servidor: {str(e)}'}), 500
+
+
 @app.route('/api/resumen-pedidos', methods=['GET'])
 def obtener_resumen_pedidos():
     """Obtener resumen de pedidos agrupados por puesto para la pantalla de resumen"""
@@ -5024,12 +5241,12 @@ if __name__ == '__main__':
     
     ip_local = obtener_ip_local()
     
-    print("="*50)
-    print("INICIALIZANDO API...")
-    print("="*50)
-    print(f"  Local:   http://127.0.0.1:{port}")
-    print(f"  Red:     http://{ip_local}:{port}")
-    print("="*50)
+    print("="*50, flush=True)
+    print("INICIALIZANDO API...", flush=True)
+    print("="*50, flush=True)
+    print(f"  Local:   http://127.0.0.1:{port}", flush=True)
+    print(f"  Red:     http://{ip_local}:{port}", flush=True)
+    print("="*50, flush=True)
     
     import logging
     logging.basicConfig(

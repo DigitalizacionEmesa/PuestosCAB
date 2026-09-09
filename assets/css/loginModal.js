@@ -22,7 +22,7 @@ function loadLoginModalStyles() {
   
   const link = document.createElement('link');
   link.rel = 'stylesheet';
-  link.href = '/assets/loginModal.css';
+  link.href = '/assets/css/loginModal.css';
   document.head.appendChild(link);
   
   LOGIN_MODAL_CONFIG.STYLES_LOADED = true;
@@ -349,16 +349,182 @@ function logoutUser() {
 // Función para crear el widget de usuario
 function createUserWidget() {
   if (LOGIN_MODAL_CONFIG.USER_WIDGET_CREATED) return;
-  
-  const userWidget = document.createElement('div');
+
+  const existingWidget = document.getElementById('userSessionWidget');
+  const userWidget = existingWidget || document.createElement('div');
   userWidget.id = 'userSessionWidget';
-  userWidget.className = 'user-session-widget';
-  
-  // Insertar al principio del body
-  document.body.insertBefore(userWidget, document.body.firstChild);
+  userWidget.classList.add('user-session-widget');
+
+  const header = document.querySelector('body > .header, body > header.header, body > .app-header, body > header.app-header');
+  if (header) {
+    let host = header.querySelector('.header-right-section');
+    if (!host) {
+      host = document.createElement('div');
+      host.className = 'header-right-section';
+      header.appendChild(host);
+    }
+    const headerAction = header.querySelector('.edit-puesto-btn');
+    if (headerAction) host.appendChild(headerAction);
+    host.appendChild(userWidget);
+    ['position', 'top', 'right', 'bottom', 'left', 'inset', 'transform', 'z-index'].forEach((property) => {
+      userWidget.style.setProperty(property, property === 'position' ? 'static' : 'auto', 'important');
+    });
+    userWidget.style.setProperty('z-index', 'auto', 'important');
+  } else if (!existingWidget) {
+    document.body.insertBefore(userWidget, document.body.firstChild);
+  }
   
   LOGIN_MODAL_CONFIG.USER_WIDGET_CREATED = true;
   updateUserWidget();
+}
+
+function initLegacyCABBreadcrumb() {
+  const header = document.querySelector('body > .header, body > header.header');
+  if (!header || document.querySelector('.cab-breadcrumb-wrapper')) return;
+
+  const path = window.location.pathname.toLowerCase();
+  const isHome = path.endsWith('/puestoscab.html') || path === '/' || path.endsWith('/pantalla_principal_general.html');
+  const isConfig = path.includes('configuracion') || path.includes('crearpuesto') || path.includes('capacidadescab') || path.includes('adminmotivos') || path.includes('tiempospicking');
+  const label = document.title.split('|')[0].split('·')[0].trim() || 'CAB';
+  const nav = document.createElement('nav');
+  nav.className = 'cab-breadcrumb-wrapper';
+  nav.setAttribute('aria-label', 'Breadcrumb');
+  const container = document.createElement('div');
+  container.className = 'cab-breadcrumb-container';
+  const addItem = (text, href, current = false) => {
+    if (container.children.length) {
+      const sep = document.createElement('span');
+      sep.className = 'cab-breadcrumb-separator';
+      sep.textContent = '>';
+      container.appendChild(sep);
+    }
+    const item = document.createElement('span');
+    item.className = `cab-breadcrumb-item${current ? ' current' : ''}`;
+    if (href && !current) {
+      const link = document.createElement('a');
+      link.href = href;
+      link.textContent = text;
+      item.appendChild(link);
+    } else item.textContent = text;
+    container.appendChild(item);
+  };
+  if (isHome) addItem('Inicio', null, true);
+  else if (isConfig) { addItem('Inicio', '/templates/generales/PuestosCAB.html'); addItem('Configuración', null, true); }
+  else { addItem('Inicio', '/templates/generales/PuestosCAB.html'); addItem(label, null, true); }
+  nav.appendChild(container);
+  header.insertAdjacentElement('afterend', nav);
+}
+
+const CAB_HOME_URL = '/';
+const CAB_CONFIG_URL = '/templates/generales/ConfiguracionCAB.html';
+const CAB_PUESTOS_URL = '/templates/generales/ListaPuestosCAB.html';
+
+// La URL es la fuente de verdad del shell. La jerarquía no se acumula por clicks.
+const CAB_ROUTE_METADATA = [
+  { test: /^\/$/, title: 'PUESTOS CAB', crumbs: [{ label: 'Inicio' }] },
+  { test: /puestoscab\.html$/i, title: 'PUESTOS CAB', crumbs: [{ label: 'Inicio' }] },
+  { test: /listapuestoscab\.html$/i, title: 'PUESTOS CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos' }] },
+  { test: /puestocab\.html$/i, title: 'Puesto Cabinas', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Puesto Cabinas' }] },
+  { test: /configuracioncab\.html$/i, title: 'CONFIGURACIÓN CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración' }] },
+  { test: /crearpuesto\.html$/i, title: 'CREAR PUESTO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración', href: CAB_CONFIG_URL }, { label: 'Crear Puesto' }] },
+  { test: /capacidadescab\.html$/i, title: 'CAPACIDADES CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración', href: CAB_CONFIG_URL }, { label: 'Capacidades CAB' }] },
+  { test: /adminmotivosfaltante\.html$/i, title: 'ADMINISTRAR MOTIVOS DE FALTANTE', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración', href: CAB_CONFIG_URL }, { label: 'Administrar Motivos de Faltante' }] },
+  { test: /tiempospicking\.html$/i, title: 'TIEMPOS PICKING', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración', href: CAB_CONFIG_URL }, { label: 'Tiempos Picking' }] },
+  { test: /control\.html$/i, title: 'CONTROL - JEFE DE EQUIPO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Control - Jefe de Equipo' }] },
+  { test: /resumenpedidos\.html$/i, title: 'RESUMEN DE PEDIDOS CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Resumen de Pedidos CAB' }] },
+  { test: /datospedidos\.html$/i, title: 'IMPORTACIÓN DATOS PEDIDOS', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Importación Datos Pedidos' }] },
+  { test: /indicadores\.html$/i, title: 'INDICADORES CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Indicadores CAB' }] },
+  { test: /manual\.html$/i, title: 'MANUAL DE USUARIO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Manual de Usuario' }] }
+];
+
+function getCABRouteMetadata() {
+  const route = CAB_ROUTE_METADATA.find((item) => item.test.test(window.location.pathname));
+  if (!route) return null;
+
+  if (!/puestocab\.html$/i.test(window.location.pathname)) return route;
+
+  const puestoNames = {
+    CLINCAB1: 'Clinchado',
+    DECOCAB1: 'Decoración',
+    ESPECIALES: 'Especiales',
+    MONTCAB1: 'Suelos',
+    MONTCAB2: 'Techos',
+    MONTCAB3: 'Bajotecho'
+  };
+  const codigo = new URLSearchParams(window.location.search).get('puesto') || '';
+  const nombre = puestoNames[codigo.toUpperCase()] || codigo || 'Cabinas';
+  const label = `Puesto ${nombre}`;
+  return { ...route, title: label, crumbs: [...route.crumbs.slice(0, -1), { label }] };
+}
+
+function renderCABBreadcrumb(metadata) {
+  document.querySelector('.cab-breadcrumb-wrapper')?.remove();
+  document.querySelector('.breadcrumb-wrapper')?.remove();
+  const nav = document.createElement('nav');
+  nav.className = 'cab-breadcrumb-wrapper';
+  nav.setAttribute('aria-label', 'Breadcrumb');
+  const container = document.createElement('div');
+  container.className = 'cab-breadcrumb-container';
+
+  metadata.crumbs.forEach((crumb, index) => {
+    if (index > 0) {
+      const separator = document.createElement('span');
+      separator.className = 'cab-breadcrumb-separator';
+      separator.textContent = '>';
+      container.appendChild(separator);
+    }
+    const item = document.createElement('span');
+    item.className = `cab-breadcrumb-item${index === metadata.crumbs.length - 1 ? ' current' : ''}`;
+    if (crumb.href && index !== metadata.crumbs.length - 1) {
+      const link = document.createElement('a');
+      link.href = crumb.href;
+      link.textContent = crumb.label;
+      item.appendChild(link);
+    } else {
+      item.textContent = crumb.label;
+    }
+    container.appendChild(item);
+  });
+
+  nav.appendChild(container);
+  document.querySelector('body > header.app-header')?.insertAdjacentElement('afterend', nav);
+}
+
+function initCABShell() {
+  const metadata = getCABRouteMetadata();
+  const header = document.querySelector('body > .header, body > header.header, body > header.app-header');
+  if (!metadata || !header) return;
+
+  document.body.classList.add('cab-shell-page');
+
+  const widget = document.getElementById('userSessionWidget');
+  const editAction = header.querySelector('.edit-puesto-btn');
+  header.className = 'app-header';
+  header.setAttribute('role', 'banner');
+  header.innerHTML = '';
+  if (widget) widget.classList.add('user-session-widget', 'hosted');
+
+  const left = document.createElement('div');
+  left.className = 'Encabezado-left';
+  const logo = document.createElement('img');
+  logo.className = 'Encabezado-Logotipo';
+  logo.src = '/IMAGENES/Logo_EMESA.png';
+  logo.alt = 'EMESA';
+  left.appendChild(logo);
+
+  const heading = document.createElement('h1');
+  heading.className = 'title';
+  heading.id = 'headerTitle';
+  heading.textContent = metadata.title;
+
+  const right = document.createElement('div');
+  right.className = 'header-right-section';
+  if (editAction) right.appendChild(editAction);
+  if (widget) right.appendChild(widget);
+
+  header.append(left, heading, right);
+  document.title = `${metadata.title} | CAB`;
+  renderCABBreadcrumb(metadata);
 }
 
 // Función para actualizar el widget de usuario
@@ -369,6 +535,7 @@ function updateUserWidget() {
   const user = getCurrentUser();
   
   if (user && user.nombre) {
+    widget.classList.add('visible');
     widget.innerHTML = `
       <div class="user-info">
         <span class="user-icon">
@@ -386,6 +553,7 @@ function updateUserWidget() {
     `;
     widget.style.display = 'block';
   } else {
+    widget.classList.remove('visible');
     widget.style.display = 'none';
   }
 }
@@ -399,8 +567,8 @@ function createUserWidgetStyles() {
   styles.textContent = `
     .user-session-widget {
       position: fixed;
-      top: 7px;
-      right: 200px;
+      bottom: 15px;
+      right: 15px;
       z-index: 9999;
       background: linear-gradient(135deg, #0d40afff 0%, #063c68ff 100%);
       border-radius: 25px;
@@ -409,6 +577,23 @@ function createUserWidgetStyles() {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: none;
       animation: slideInFromRight 0.3s ease-out;
+    }
+
+    /* Widget integrado en el encabezado, igual que PE */
+    .user-session-widget.hosted {
+      position: static;
+      top: auto;
+      bottom: auto;
+      right: auto;
+      left: auto;
+      z-index: auto;
+      display: none;
+      padding: 6px 6px 6px 12px;
+      border-radius: 18px;
+      box-shadow: none;
+      animation: none;
+      background: rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(6px);
     }
     
     .user-info {
@@ -472,10 +657,10 @@ function createUserWidgetStyles() {
     
     /* Responsive para móviles */
     @media (max-width: 768px) {
-      .user-session-widget {
+      .user-session-widget:not(.hosted) {
         position: fixed;
-        top: 5px;
-        right: 5px;
+        bottom: 10px;
+        right: 10px;
         padding: 6px 12px;
       }
       
@@ -530,7 +715,8 @@ if (document.readyState === 'loading') {
     // Verificar si la página actual NO es la página de login
     if (!window.location.pathname.includes('Pantalla_login.html')) {
       // Crear estilos del widget
-      createUserWidgetStyles();
+    createUserWidgetStyles();
+      initCABShell();
       // Crear widget de usuario
       createUserWidget();
       // Iniciar verificación de sesión
@@ -542,6 +728,7 @@ if (document.readyState === 'loading') {
   if (!window.location.pathname.includes('Pantalla_login.html')) {
     // Crear estilos del widget
     createUserWidgetStyles();
+    initCABShell();
     // Crear widget de usuario
     createUserWidget();
     // Iniciar verificación de sesión

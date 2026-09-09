@@ -9,9 +9,9 @@
   <title>Puestos Cabinas</title>
 
   <!-- CSS principal del proyecto -->
-  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=20260908-cab-spa-shell-2">
   <!-- CSS para el widget de usuario -->
-  <link rel="stylesheet" href="/assets/css/loginModal.css">
+  <link rel="stylesheet" href="/assets/css/loginModal.css?v=20260908-cab-pe-widget">
   <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
   
   <!-- CSS de respaldo en caso de problemas de ruta -->
@@ -37,7 +37,7 @@
 
   <style>
     /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
-    #userSessionWidget {
+    #legacyUserSessionWidget {
       position: fixed !important;
       top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
       bottom: 15px !important;
@@ -51,7 +51,7 @@
     }
     
     /* Estilo adicional para la clase interna */
-    #userSessionWidget .user-info {
+    #legacyUserSessionWidget .user-info {
       display: flex !important;
       align-items: center !important;
       gap: 8px !important;
@@ -60,7 +60,7 @@
     
     /* Estilos responsive para el widget de usuario */
     @media (max-width: 768px) {
-      #userSessionWidget {
+      #legacyUserSessionWidget {
         bottom: 10px !important;
         right: 10px !important;
         transform: scale(0.9) !important;
@@ -69,7 +69,7 @@
     }
     
     @media (max-width: 480px) {
-      #userSessionWidget {
+      #legacyUserSessionWidget {
         bottom: 8px !important;
         right: 8px !important;
         transform: scale(0.85) !important;
@@ -114,28 +114,23 @@
 </head>
 <body>
   <!-- Cabecera -->
-  <header class="header">
-    <button class="back-icon" onclick="history.back()" aria-label="Volver">
-      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="15 18 9 12 15 6"></polyline>
-      </svg>
-    </button>
-    <button class="help-icon" onclick="goToManual()" aria-label="Manual de Usuario">
-      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-        <path d="M12 17h.01"></path>
-      </svg>
-    </button>
-    <div class="header-title">PUESTOS CAB</div>
-    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  <header class="app-header" role="banner">
+    <div class="Encabezado-left">
+      <img class="Encabezado-Logotipo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+    </div>
+    <h1 class="title">PUESTOS CAB</h1>
+    <div class="header-right-section">
+      <div id="userSessionWidget" class="user-session-widget hosted" aria-label="Sesión de usuario"></div>
+    </div>
   </header>
 
-  <!-- Widget de usuario -->
-  <div id="userSessionWidget" class="user-session-widget">
-    <!-- El widget se rellenará dinámicamente por loginModal.js -->
-  </div>
+  <nav class="breadcrumb-wrapper" aria-label="Breadcrumb">
+    <div class="breadcrumb-container">
+      <span class="breadcrumb-last">Inicio</span>
+    </div>
+  </nav>
 
+    <!-- El widget se rellenará dinámicamente por loginModal.js -->
   <!-- Container principal usando estilos globales -->
   <div class="container">
     <!-- Grid principal usando estilos de global-styles.css -->
@@ -158,11 +153,6 @@
   </div>
 
   <script>
-    // Forzar recarga de CSS
-    if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
-      window.location.reload(true);
-    }
-    
     // Verificar permisos del usuario al cargar la página
     document.addEventListener('DOMContentLoaded', async function() {
       try {
@@ -232,7 +222,7 @@
   </script>
   
   <!-- Scripts para el widget de usuario -->
-  <script src="/assets/css/loginModal.js"></script>
+  <script src="/assets/css/loginModal.js?v=20260908-cab-spa-shell-2"></script>
   
   <!-- Script para forzar posición del widget en esquina inferior derecha -->
   <script>
@@ -243,11 +233,6 @@
         const widget = document.getElementById('userSessionWidget');
         if (widget) {
           // Forzar posición mediante JavaScript
-          widget.style.position = 'fixed';
-          widget.style.top = 'auto';
-          widget.style.bottom = '15px';
-          widget.style.right = '15px';
-          widget.style.left = 'auto';
         }
       }, 500); // Esperar 500ms para asegurar que el widget ya se creó
     });

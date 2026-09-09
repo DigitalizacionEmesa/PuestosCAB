@@ -302,3 +302,109 @@
     border-color: #4a5568;
   }
 }
+
+/* Widget de usuario PE: unica definicion visual para CAB-V1 */
+.user-session-widget,
+#userSessionWidget {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 15px !important;
+  right: 15px !important;
+  left: auto !important;
+  z-index: 10001 !important;
+  max-width: 280px !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25) !important;
+  width: auto !important;
+  transform: none !important;
+  background: linear-gradient(135deg, #0d40afff 0%, #063c68ff 100%) !important;
+  border-radius: 25px !important;
+  padding: 10px 16px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  animation: slideInFromRight 0.3s ease-out !important;
+  display: none;
+  align-items: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.user-session-widget.hosted,
+#userSessionWidget.hosted {
+  position: static !important;
+  top: auto !important;
+  bottom: auto !important;
+  right: auto !important;
+  left: auto !important;
+  z-index: auto !important;
+  display: none;
+  padding: 6px 6px 6px 12px !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+  animation: none !important;
+  background: rgba(255,255,255,0.18) !important;
+  backdrop-filter: blur(6px) !important;
+  max-width: 320px !important;
+  min-height: auto !important;
+}
+
+.user-session-widget .user-info,
+#userSessionWidget .user-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.user-session-widget .user-name,
+#userSessionWidget .user-name {
+  max-width: 150px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-weight: 600 !important;
+}
+
+.user-session-widget .logout-btn,
+#userSessionWidget .logout-btn {
+  background: rgba(255,255,255,0.25) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: white !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  margin-left: auto !important;
+}
+
+.user-session-widget.hosted.visible,
+#userSessionWidget.hosted.visible {
+  display: flex !important;
+}
+
+/* Ajustes PE contra los estilos tipográficos globales de CAB */
+.user-session-widget.hosted,
+#userSessionWidget.hosted {
+  font-size: 16px !important;
+  line-height: normal !important;
+}
+
+.user-session-widget .user-icon,
+#userSessionWidget .user-icon {
+  font-size: 18px !important;
+  min-width: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.user-session-widget .user-name,
+#userSessionWidget .user-name {
+  max-width: 120px !important;
+}

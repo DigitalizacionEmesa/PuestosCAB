@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manual de Usuario - Sistema CAB</title>
+    <link rel="stylesheet" href="/assets/css/global-styles.css?v=20260908-cab-spa-shell-2">
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/css/loginModal.css">
+    <link rel="stylesheet" href="/assets/css/loginModal.css?v=20260908-cab-pe-widget">
     <style>
         /* Estilos específicos para el manual */
         .manual-container {
@@ -230,7 +231,7 @@
 
   <style>
     /* Estilos para el widget de usuario - posicionado en esquina inferior derecha */
-    #userSessionWidget {
+    #legacyUserSessionWidget {
       position: fixed !important;
       top: auto !important; /* Anula explícitamente el top definido en loginModal.js */
       bottom: 15px !important;
@@ -244,7 +245,7 @@
     }
     
     /* Estilo adicional para la clase interna */
-    #userSessionWidget .user-info {
+    #legacyUserSessionWidget .user-info {
       display: flex !important;
       align-items: center !important;
       gap: 8px !important;
@@ -253,7 +254,7 @@
     
     /* Estilos responsive para el widget de usuario */
     @media (max-width: 768px) {
-      #userSessionWidget {
+      #legacyUserSessionWidget {
         bottom: 10px !important;
         right: 10px !important;
         transform: scale(0.9) !important;
@@ -262,7 +263,7 @@
     }
     
     @media (max-width: 480px) {
-      #userSessionWidget {
+      #legacyUserSessionWidget {
         bottom: 8px !important;
         right: 8px !important;
         transform: scale(0.85) !important;
@@ -291,8 +292,24 @@
     </style>
 </head>
 <body>
+    <header class="app-header" role="banner">
+        <div class="Encabezado-left">
+            <img class="Encabezado-Logotipo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+        </div>
+        <h1 class="title">MANUAL DE USUARIO</h1>
+        <div class="header-right-section">
+            <div id="userSessionWidget" class="user-session-widget hosted" aria-label="Sesion de usuario"></div>
+        </div>
+    </header>
+    <nav class="breadcrumb-wrapper" aria-label="Breadcrumb">
+        <div class="breadcrumb-container">
+            <a class="breadcrumb-clickable" href="/">Inicio</a>
+            <span class="breadcrumb-separator">&gt;</span>
+            <span class="breadcrumb-last">Manual de Usuario</span>
+        </div>
+    </nav>
     <!-- Widget de usuario -->
-    <div id="userSessionWidget" class="user-session-widget">
+    <div id="manualUserInfoWidget" class="user-session-widget" hidden>
         <!-- El widget se rellenará dinámicamente por loginModal.js -->
     </div>
     
@@ -743,7 +760,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="/assets/css/loginModal.js"></script>
+    <script src="/assets/css/loginModal.js?v=20260908-cab-spa-shell-2"></script>
     <script>
         // Variables globales
         let currentUser = null;
@@ -931,11 +948,6 @@
                 const widget = document.getElementById('userSessionWidget');
                 if (widget) {
                     // Forzar posición mediante JavaScript - IDÉNTICO a PuestosCAB
-                    widget.style.position = 'fixed';
-                    widget.style.top = 'auto';
-                    widget.style.bottom = '15px';
-                    widget.style.right = '15px';
-                    widget.style.left = 'auto';
                 }
             }, 500); // Esperar 500ms para asegurar que el widget ya se creó - IDÉNTICO a PuestosCAB
         });

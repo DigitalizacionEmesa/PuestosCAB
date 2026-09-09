@@ -9,7 +9,7 @@
   <title>Indicadores CAB</title>
 
   <!-- CSS principal del proyecto -->
-  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=20260908-cab-fixed-breadcrumb">
   <!-- CSS para el widget de usuario -->
   <link rel="stylesheet" href="/assets/css/loginModal.css">
   <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
@@ -97,8 +97,10 @@
     .indicadores-container {
       background: var(--bg);
       color: var(--text);
-      margin: 20px auto;
-      max-width: 1200px;
+      margin: 0;
+      max-width: none;
+      width: 100%;
+      box-sizing: border-box;
       border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -139,7 +141,7 @@
     }
 
     .indicadores-main {
-      padding: 20px;
+      padding: 18px clamp(18px, 3vw, 48px) 36px;
       background: var(--bg);
     }
 
@@ -447,6 +449,57 @@
       transform: translateY(-1px);
     }
   </style>
+  <style>
+    .report-explorer { background:#f5f7fa; border:1px solid #cce7f6; border-radius:16px; padding:18px; margin:0 auto 18px; width:100%; max-width:none; box-sizing:border-box; min-width:0; box-shadow:0 8px 24px rgba(56,128,199,.10); }
+    .report-explorer-header { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+    .report-explorer-header h2 { margin:0; color:#4a7fb3; font-size:1.35rem; }
+    .report-explorer-header p { margin:4px 0 0; color:#64748b; font-size:.9rem; }
+    .report-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .report-back-btn, .report-toggle { border:1px solid #3880c7; border-radius:8px; background:#fff; color:#1e6bb8; padding:8px 14px; cursor:pointer; font-weight:600; }
+    .report-toggle { display:inline-flex; align-items:center; gap:8px; }
+    .report-toggle input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+    .report-toggle-track { width:36px; height:20px; border-radius:999px; background:#b7d8ef; position:relative; transition:.2s; }
+    .report-toggle-track::after { content:''; position:absolute; width:16px; height:16px; left:2px; top:2px; border-radius:50%; background:#fff; box-shadow:0 1px 3px #789; transition:.2s; }
+    .report-toggle input:checked + .report-toggle-track { background:#3880c7; }
+    .report-toggle input:checked + .report-toggle-track::after { transform:translateX(16px); }
+    .report-levels { display:flex; gap:8px; flex-wrap:wrap; margin:16px 0 10px; }
+    .report-level-btn { border:1px solid #b7d8ef; border-radius:999px; background:#fff; color:#4a7fb3; padding:7px 14px; cursor:pointer; }
+    .report-level-btn.active { background:#3880c7; color:#fff; border-color:#3880c7; }
+    .report-date-filters { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin:14px 0 10px; padding:12px; background:#fff; border:1px solid #cce7f6; border-radius:10px; }
+    .report-date-filter { display:flex; flex-direction:column; gap:4px; color:#4a7fb3; font-size:.82rem; font-weight:600; }
+    .report-date-filter input { width:150px; margin:0; padding:7px 9px; border:1px solid #b7d8ef; border-radius:7px; color:#334155; font:inherit; box-sizing:border-box; }
+    .report-date-filter input:focus { outline:none; border-color:#3880c7; box-shadow:0 0 0 2px rgba(56,128,199,.12); }
+    .report-date-btn { border:1px solid #3880c7; border-radius:7px; padding:7px 13px; background:#3880c7; color:#fff; cursor:pointer; font-weight:600; }
+    .report-date-btn.secondary { background:#fff; color:#1e6bb8; }
+    .report-date-btn:hover { filter:brightness(.97); }
+    .report-date-error { flex-basis:100%; color:#c0392b; font-size:.8rem; min-height:1em; }
+    .report-breadcrumb { color:#64748b; font-size:.88rem; margin:8px 0 12px; }
+    .report-breadcrumb button { border:0; background:none; color:#1e6bb8; cursor:pointer; padding:0; font-size:inherit; }
+    .report-table-wrap { width:100%; min-width:0; overflow-x:hidden; }
+    .report-table { width:100%; max-width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; background:#fff; border:1px solid #cce7f6; border-radius:10px; overflow:hidden; }
+    .report-table th { background:#3880c7; color:#fff; font-size:.82rem; padding:10px 12px; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+    .report-table td { border-bottom:1px solid #e4eef6; padding:10px 12px; color:#334155; font-size:.9rem; }
+    .report-table tr:last-child td { border-bottom:0; }
+    .report-row { cursor:pointer; transition:background .15s; }
+    .report-row:hover { background:#eef7fd; }
+    .report-period { color:#1e6bb8; font-weight:700; }
+    .report-positive { color:#1c8c50; font-weight:700; }
+    .report-negative { color:#d9534f; font-weight:700; }
+    .report-open { color:#1e6bb8; font-weight:700; white-space:nowrap; }
+    .report-empty { text-align:center; color:#64748b; padding:24px !important; }
+    .report-detail { display:none; }
+    .report-table-wrap { min-height:260px; }
+    .report-table th:not(:first-child), .report-table td:not(:first-child) { text-align:center; }
+    .report-table th:last-child, .report-table td:last-child { text-align:right; }
+    .shift-report[hidden] { display:none; }
+    .shift-report { animation:reportFade .18s ease-out; }
+    @keyframes reportFade { from { opacity:.2; transform:translateY(4px); } to { opacity:1; transform:none; } }
+    .report-detail h3 { margin:0 0 12px; color:#4a7fb3; }
+    .report-detail table { width:100%; border-collapse:collapse; font-size:.82rem; }
+    .report-detail th, .report-detail td { border-bottom:1px solid #e4eef6; padding:8px; text-align:left; white-space:nowrap; }
+    .report-detail th { color:#4a7fb3; }
+    @media (max-width:700px) { .report-explorer { padding:12px; } .report-table th, .report-table td { padding:8px; } .report-explorer-header h2 { font-size:1.1rem; } }
+  </style>
 </head>
 <body>
   <!-- Cabecera -->
@@ -472,6 +525,58 @@
 
   <!-- Contenedor principal de indicadores -->
   <div class="indicadores-container">
+    <section class="report-explorer" id="reportExplorer" aria-labelledby="reportExplorerTitle">
+      <div class="report-explorer-header">
+        <div>
+          <h2 id="reportExplorerTitle">Informe de rendimiento</h2>
+          <p id="reportExplorerSubtitle">TT generado frente a jornada configurada</p>
+          <label class="report-toggle" title="Mostrar u ocultar el rendimiento por turno">
+            <input type="checkbox" id="shiftReportToggle" aria-controls="reportBiContent shiftReport">
+            <span class="report-toggle-track" aria-hidden="true"></span>
+            <span>Rendimiento por turno</span>
+          </label>
+        </div>
+        <button type="button" class="report-back-btn" id="reportBackBtn" hidden>← Volver</button>
+      </div>
+      <div id="reportBiContent">
+      <div class="report-date-filters" role="search" aria-label="Filtrar informe por fechas">
+        <label class="report-date-filter" for="reportDateFrom">
+          Desde
+          <input type="date" id="reportDateFrom">
+        </label>
+        <label class="report-date-filter" for="reportDateTo">
+          Hasta
+          <input type="date" id="reportDateTo">
+        </label>
+        <button type="button" class="report-date-btn" id="reportDateApply">Aplicar</button>
+        <button type="button" class="report-date-btn secondary" id="reportDateClear">Limpiar</button>
+        <div class="report-date-error" id="reportDateError" role="alert" aria-live="polite"></div>
+      </div>
+      <div class="report-levels" id="reportLevels" aria-label="Nivel del informe"></div>
+      <div class="report-breadcrumb" id="reportTrail"></div>
+      <div class="report-table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Periodo</th>
+              <th>TT generado</th>
+              <th>Jornada configurada</th>
+              <th>Diferencia</th>
+              <th>Rendimiento</th>
+              <th>Registros</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="reportRows">
+            <tr><td colspan="7" class="report-empty">Cargando informe…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="report-detail" id="reportDetail" hidden></div>
+      </div>
+    </section>
+
+    <section class="shift-report" id="shiftReport" hidden>
     <div class="indicadores-header">
       <h1>Rendimiento del Turno</h1>
       <div class="meta">
@@ -581,6 +686,7 @@
       </div>
     </div>
   </div>
+  </section>
 
   <script>
     // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
@@ -1076,6 +1182,246 @@
         }
       }, 500); // Esperar 500ms para asegurar que el widget ya se creó
     });
+  </script>
+  <script>
+    // Explorador jerárquico: Mes -> Semana -> Día -> Turno -> Registros
+    const reportLevelOrder = ['mes', 'semana', 'dia', 'turno', 'operario'];
+    const reportLevelLabels = { mes: 'Mes', semana: 'Semana', dia: 'Día', turno: 'Turno', operario: 'Operario' };
+    const reportState = { stack: [{ nivel: 'mes', filtros: {}, label: 'Mes' }] };
+    const reportRows = document.getElementById('reportRows');
+    const reportTrail = document.getElementById('reportTrail');
+    const reportLevels = document.getElementById('reportLevels');
+    const reportDetail = document.getElementById('reportDetail');
+    const reportBackBtn = document.getElementById('reportBackBtn');
+    const reportHead = document.querySelector('.report-table thead');
+    const shiftReportToggle = document.getElementById('shiftReportToggle');
+    const reportBiContent = document.getElementById('reportBiContent');
+    const shiftReport = document.getElementById('shiftReport');
+    const reportDateFrom = document.getElementById('reportDateFrom');
+    const reportDateTo = document.getElementById('reportDateTo');
+    const reportDateApply = document.getElementById('reportDateApply');
+    const reportDateClear = document.getElementById('reportDateClear');
+    const reportDateError = document.getElementById('reportDateError');
+    const reportDateFilters = { desde: '', hasta: '' };
+    let reportRequestId = 0;
+    let reportDetailActive = false;
+
+    shiftReportToggle.addEventListener('change', () => {
+      const showShiftReport = shiftReportToggle.checked;
+      reportBiContent.hidden = showShiftReport;
+      shiftReport.hidden = !showShiftReport;
+    });
+
+    function reportResetToRoot() {
+      reportState.stack = [{ nivel: 'mes', filtros: {}, label: 'Mes' }];
+      reportDetailActive = false;
+      reportLevels.hidden = false;
+      reportDetail.hidden = true;
+    }
+
+    function reportApplyDateFilters() {
+      const desde = reportDateFrom.value;
+      const hasta = reportDateTo.value;
+      if (desde && hasta && desde > hasta) {
+        reportDateError.textContent = 'La fecha Desde no puede ser posterior a la fecha Hasta.';
+        return;
+      }
+      reportDateError.textContent = '';
+      reportDateFilters.desde = desde;
+      reportDateFilters.hasta = hasta;
+      reportResetToRoot();
+      reportLoadCurrent();
+    }
+
+    reportDateApply.addEventListener('click', reportApplyDateFilters);
+    reportDateClear.addEventListener('click', () => {
+      reportDateFrom.value = '';
+      reportDateTo.value = '';
+      reportDateFilters.desde = '';
+      reportDateFilters.hasta = '';
+      reportDateError.textContent = '';
+      reportResetToRoot();
+      reportLoadCurrent();
+    });
+
+    function reportFmt(value) {
+      return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(Number(value || 0));
+    }
+
+    function reportRenderLevels() {
+      reportLevels.innerHTML = reportLevelOrder.map(level => `
+        <button type="button" class="report-level-btn ${reportState.stack.length === 1 && reportState.stack[0].nivel === level ? 'active' : ''}" data-report-level="${level}">
+          ${reportLevelLabels[level]}
+        </button>
+      `).join('');
+      reportLevels.querySelectorAll('[data-report-level]').forEach(button => {
+        button.addEventListener('click', () => {
+          reportState.stack = [{ nivel: button.dataset.reportLevel, filtros: {}, label: reportLevelLabels[button.dataset.reportLevel] }];
+          reportDetailActive = false;
+          reportDetail.hidden = true;
+          reportLoadCurrent();
+        });
+      });
+    }
+
+    function reportRenderTrail() {
+      reportTrail.innerHTML = '';
+      reportState.stack.forEach((item, index) => {
+        if (index) reportTrail.append(' > ');
+        if (index < reportState.stack.length - 1) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = item.label;
+          button.addEventListener('click', () => {
+            reportState.stack = reportState.stack.slice(0, index + 1);
+            reportLoadCurrent();
+          });
+          reportTrail.appendChild(button);
+        } else {
+          reportTrail.append(item.label);
+        }
+      });
+      reportBackBtn.hidden = reportState.stack.length <= 1;
+    }
+
+    async function reportReadJson(response, endpoint) {
+      const contentType = response.headers.get('content-type') || '';
+      const body = await response.text();
+      if (!response.ok) {
+        console.error(`[Informe] ${endpoint} respondió HTTP ${response.status}`, body.slice(0, 300));
+        throw new Error(`La API del informe respondió HTTP ${response.status}`);
+      }
+      if (!contentType.toLowerCase().includes('application/json')) {
+        console.error(`[Informe] ${endpoint} no devolvió JSON`, contentType, body.slice(0, 300));
+        throw new Error('La API del informe no devolvió una respuesta JSON válida');
+      }
+      try {
+        return JSON.parse(body);
+      } catch (error) {
+        console.error(`[Informe] JSON inválido en ${endpoint}`, body.slice(0, 300), error);
+        throw new Error('La API del informe devolvió JSON inválido');
+      }
+    }
+
+    async function reportLoadCurrent() {
+      const current = reportState.stack[reportState.stack.length - 1];
+      const requestId = ++reportRequestId;
+      reportDetailActive = false;
+      reportRenderLevels();
+      reportRenderTrail();
+      reportDetail.hidden = true;
+      reportDetail.innerHTML = '';
+      reportLevels.hidden = false;
+      reportHead.innerHTML = '<tr><th>Periodo</th><th>TT generado</th><th>Jornada configurada</th><th>Diferencia</th><th>Rendimiento</th><th>Registros</th><th></th></tr>';
+      reportRows.innerHTML = '<tr><td colspan="7" class="report-empty">Cargando informe…</td></tr>';
+      const params = new URLSearchParams({ nivel: current.nivel, ...reportDateFilters, ...current.filtros });
+      try {
+        const endpoint = `/api/indicadores-historico?${params.toString()}`;
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+        const data = await reportReadJson(response, endpoint);
+        if (requestId !== reportRequestId) return;
+        if (!data.success) throw new Error(data.message || 'Error en la respuesta de la API');
+        if (!data.indicadores.length) {
+          reportRows.innerHTML = '<tr><td colspan="7" class="report-empty">No hay datos para este nivel.</td></tr>';
+          return;
+        }
+        reportRows.innerHTML = data.indicadores.map(row => {
+          const diffClass = row.diferencia >= 0 ? 'report-positive' : 'report-negative';
+          const next = row.puede_bajar ? 'Abrir' : 'Ver registros';
+          return `<tr class="report-row" data-report-key="${String(row.key).replace(/"/g, '&quot;')}">
+            <td class="report-period">${row.label}</td>
+            <td>${reportFmt(row.tt_generado)} min</td>
+            <td>${reportFmt(row.jornada_configurada)} min</td>
+            <td class="${diffClass}">${reportFmt(row.diferencia)} min</td>
+            <td>${reportFmt(row.rendimiento)}%</td>
+            <td>${reportFmt(row.registros)}</td>
+            <td class="report-open">${next} ›</td>
+          </tr>`;
+        }).join('');
+        reportRows.querySelectorAll('.report-row').forEach(row => row.addEventListener('click', () => reportOpenRow(row.dataset.reportKey)));
+      } catch (error) {
+        reportRows.innerHTML = `<tr><td colspan="7" class="report-empty">Error cargando informe: ${error.message}</td></tr>`;
+      }
+    }
+
+    function reportOpenRow(key) {
+      const current = reportState.stack[reportState.stack.length - 1];
+      if (current.nivel === 'operario') {
+        reportLoadDetails({ ...current.filtros, operario: key });
+        return;
+      }
+      if (current.nivel === 'turno') {
+        const [fecha, turno] = key.split('|');
+        reportState.stack.push({ nivel: 'operario', filtros: { ...current.filtros, fecha, turno }, label: key });
+        reportLoadCurrent();
+        return;
+      }
+      let nextFilters = {};
+      if (current.nivel === 'mes') nextFilters = { mes: key };
+      if (current.nivel === 'semana') {
+        const [anio, semana] = key.split('-S');
+        nextFilters = { anio, semana };
+      }
+      if (current.nivel === 'dia') nextFilters = { fecha: key };
+      reportState.stack.push({ nivel: reportLevelOrder[reportLevelOrder.indexOf(current.nivel) + 1], filtros: nextFilters, label: key });
+      reportLoadCurrent();
+    }
+
+    async function reportLoadDetails(filters) {
+      const params = new URLSearchParams({ ...reportDateFilters, ...filters });
+      const context = [filters.mes, filters.anio && `Año ${filters.anio}`, filters.semana && `Semana ${filters.semana}`, filters.fecha, filters.turno, filters.operario && `Operario ${filters.operario}`].filter(Boolean).join(' · ');
+      reportDetailActive = true;
+      reportBackBtn.hidden = false;
+      reportLevels.hidden = true;
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
+      reportRows.innerHTML = '<tr><td colspan="8" class="report-empty">Cargando registros...</td></tr>';
+      reportDetail.innerHTML = `<h3>Registros TTG${context ? ` · ${context}` : ''}</h3><p>Cargando registros…</p>`;
+      try {
+        const endpoint = `/api/indicadores-registros?${params.toString()}`;
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+        const data = await reportReadJson(response, endpoint);
+        if (!data.success) throw new Error(data.message || 'Error en la respuesta de la API');
+        const rows = data.registros.map(item => `<tr><td>${item.id}</td><td>${item.codlinea || ''}</td><td>${item.gfh}</td><td>${item.nombre_puesto || item.puesto}</td><td>${item.operario}</td><td>${item.estado}</td><td>${reportFmt(item.ttg)} min</td><td>${reportFmt(item.realizacion)}%</td></tr>`).join('');
+        reportDetail.innerHTML = `<h3>Registros TTG · ${fecha} · ${turno} (${data.total})</h3>
+          <table><thead><tr><th>ID</th><th>CODLINEA</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr></thead><tbody>${rows || '<tr><td colspan="8">No hay registros.</td></tr>'}</tbody></table>`;
+      } catch (error) {
+        reportDetail.innerHTML = `<h3>Registros TTG</h3><p>Error cargando registros: ${error.message}</p>`;
+      }
+    }
+
+    // Los registros ocupan la misma vista BI; no se anidan como sublistado.
+    reportLoadDetails = async function(filters) {
+      reportDetailActive = true;
+      reportBackBtn.hidden = false;
+      reportLevels.hidden = true;
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
+      reportRows.innerHTML = '<tr><td colspan="8" class="report-empty">Cargando registros...</td></tr>';
+      const params = new URLSearchParams({ ...reportDateFilters, ...filters });
+      try {
+        const endpoint = `/api/indicadores-registros?${params.toString()}`;
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
+        const data = await reportReadJson(response, endpoint);
+        if (!data.success) throw new Error(data.message || 'Error en la respuesta de la API');
+        const rows = data.registros.map(item => `<tr><td>${item.id}</td><td>${item.codlinea || ''}</td><td>${item.gfh || ''}</td><td>${item.nombre_puesto || item.puesto || ''}</td><td>${item.operario || ''}</td><td>${item.estado || ''}</td><td>${reportFmt(item.ttg)} min</td><td>${reportFmt(item.realizacion)}%</td></tr>`).join('');
+        reportRows.innerHTML = rows || '<tr><td colspan="8" class="report-empty">No hay registros.</td></tr>';
+      } catch (error) {
+        reportRows.innerHTML = `<tr><td colspan="8" class="report-empty">Error cargando registros: ${error.message}</td></tr>`;
+      }
+    };
+
+    reportBackBtn.addEventListener('click', () => {
+      if (reportDetailActive) {
+        reportDetailActive = false;
+        reportLevels.hidden = false;
+        reportLoadCurrent();
+        return;
+      }
+      if (reportState.stack.length > 1) {
+        reportState.stack.pop();
+        reportLoadCurrent();
+      }
+    });
+    reportLoadCurrent();
   </script>
 </body>
 </html>
