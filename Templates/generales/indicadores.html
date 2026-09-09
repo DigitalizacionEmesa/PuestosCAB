@@ -7,6 +7,11 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Indicadores CAB</title>
+  <script>
+    if (new URLSearchParams(window.location.search).get('embedded') === '1') {
+      document.documentElement.classList.add('cab-embedded-view');
+    }
+  </script>
 
   <!-- CSS principal del proyecto -->
   <link rel="stylesheet" href="/assets/css/global-styles.css?v=20260908-cab-fixed-breadcrumb">
@@ -456,6 +461,10 @@
     .report-explorer-header p { margin:4px 0 0; color:#64748b; font-size:.9rem; }
     .report-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .report-back-btn, .report-toggle { border:1px solid #3880c7; border-radius:8px; background:#fff; color:#1e6bb8; padding:8px 14px; cursor:pointer; font-weight:600; }
+    .report-view-switch { display:inline-flex; border:1px solid #b7d8ef; border-radius:8px; overflow:hidden; background:#fff; }
+    .report-view-btn { border:0; background:#fff; color:#1e6bb8; padding:8px 12px; cursor:pointer; font-weight:600; }
+    .report-view-btn + .report-view-btn { border-left:1px solid #b7d8ef; }
+    .report-view-btn.active { background:#3880c7; color:#fff; }
     .report-toggle { display:inline-flex; align-items:center; gap:8px; }
     .report-toggle input { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
     .report-toggle-track { width:36px; height:20px; border-radius:999px; background:#b7d8ef; position:relative; transition:.2s; }
@@ -489,6 +498,21 @@
     .report-empty { text-align:center; color:#64748b; padding:24px !important; }
     .report-detail { display:none; }
     .report-table-wrap { min-height:260px; }
+    .report-dashboard { display:grid; gap:16px; min-height:260px; }
+    .dashboard-kpis { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; }
+    .dashboard-kpi { background:#fff; border:1px solid #cce7f6; border-radius:10px; padding:14px; min-width:0; }
+    .dashboard-kpi-label { color:#64748b; font-size:.78rem; font-weight:600; }
+    .dashboard-kpi-value { color:#1e6bb8; font-size:1.25rem; font-weight:700; margin-top:5px; overflow-wrap:anywhere; }
+    .dashboard-chart { background:#fff; border:1px solid #cce7f6; border-radius:10px; padding:14px; }
+    .dashboard-chart h3 { margin:0 0 12px; color:#4a7fb3; font-size:1rem; }
+    .dashboard-bars { display:grid; gap:9px; }
+    .dashboard-bar-row { display:grid; grid-template-columns:minmax(100px, 1fr) minmax(120px, 3fr) 70px; align-items:center; gap:10px; cursor:pointer; }
+    .dashboard-bar-label { color:#334155; font-size:.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .dashboard-bar-track { height:16px; background:#e7f1f8; border-radius:999px; overflow:hidden; }
+    .dashboard-bar-fill { height:100%; border-radius:999px; background:#3880c7; min-width:2px; }
+    .dashboard-bar-value { color:#1e6bb8; font-size:.82rem; font-weight:700; text-align:right; }
+    .dashboard-empty { text-align:center; color:#64748b; padding:24px; }
+    @media (max-width:850px) { .dashboard-kpis { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
     .report-table th:not(:first-child), .report-table td:not(:first-child) { text-align:center; }
     .report-table th:last-child, .report-table td:last-child { text-align:right; }
     .shift-report[hidden] { display:none; }
@@ -530,6 +554,10 @@
         <div>
           <h2 id="reportExplorerTitle">Informe de rendimiento</h2>
           <p id="reportExplorerSubtitle">TT generado frente a jornada configurada</p>
+          <div class="report-view-switch" role="group" aria-label="Formato del informe">
+            <button type="button" class="report-view-btn active" id="reportTableViewBtn">Tabla</button>
+            <button type="button" class="report-view-btn" id="reportDashboardViewBtn">Dashboard</button>
+          </div>
           <label class="report-toggle" title="Mostrar u ocultar el rendimiento por turno">
             <input type="checkbox" id="shiftReportToggle" aria-controls="reportBiContent shiftReport">
             <span class="report-toggle-track" aria-hidden="true"></span>
@@ -572,6 +600,7 @@
           </tbody>
         </table>
       </div>
+      <div class="report-dashboard" id="reportDashboard" hidden aria-live="polite"></div>
       <div class="report-detail" id="reportDetail" hidden></div>
       </div>
     </section>
@@ -1192,6 +1221,10 @@
     const reportTrail = document.getElementById('reportTrail');
     const reportLevels = document.getElementById('reportLevels');
     const reportDetail = document.getElementById('reportDetail');
+    const reportDashboard = document.getElementById('reportDashboard');
+    const reportTableWrap = document.querySelector('.report-table-wrap');
+    const reportTableViewBtn = document.getElementById('reportTableViewBtn');
+    const reportDashboardViewBtn = document.getElementById('reportDashboardViewBtn');
     const reportBackBtn = document.getElementById('reportBackBtn');
     const reportHead = document.querySelector('.report-table thead');
     const shiftReportToggle = document.getElementById('shiftReportToggle');
@@ -1205,6 +1238,21 @@
     const reportDateFilters = { desde: '', hasta: '' };
     let reportRequestId = 0;
     let reportDetailActive = false;
+    let reportDisplayMode = 'table';
+
+    function reportSetDisplayMode(mode) {
+      reportDisplayMode = mode === 'dashboard' ? 'dashboard' : 'table';
+      const dashboardActive = reportDisplayMode === 'dashboard';
+      reportTableWrap.hidden = dashboardActive;
+      reportDashboard.hidden = !dashboardActive;
+      reportTableViewBtn.classList.toggle('active', !dashboardActive);
+      reportDashboardViewBtn.classList.toggle('active', dashboardActive);
+      reportTableViewBtn.setAttribute('aria-pressed', String(!dashboardActive));
+      reportDashboardViewBtn.setAttribute('aria-pressed', String(dashboardActive));
+    }
+
+    reportTableViewBtn.addEventListener('click', () => reportSetDisplayMode('table'));
+    reportDashboardViewBtn.addEventListener('click', () => reportSetDisplayMode('dashboard'));
 
     shiftReportToggle.addEventListener('change', () => {
       const showShiftReport = shiftReportToggle.checked;
@@ -1246,6 +1294,41 @@
 
     function reportFmt(value) {
       return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(Number(value || 0));
+    }
+
+    function reportRenderDashboard(rows) {
+      if (!rows.length) {
+        reportDashboard.innerHTML = '<div class="dashboard-empty">No hay datos para mostrar en el dashboard.</div>';
+        return;
+      }
+      const totalTtg = rows.reduce((sum, row) => sum + Number(row.tt_generado || 0), 0);
+      const totalJornada = rows.reduce((sum, row) => sum + Number(row.jornada_configurada || 0), 0);
+      const totalRegistros = rows.reduce((sum, row) => sum + Number(row.registros || 0), 0);
+      const rendimiento = totalJornada ? (totalTtg / totalJornada) * 100 : 0;
+      const maxRendimiento = Math.max(...rows.map(row => Number(row.rendimiento || 0)), 1);
+      const bars = rows.map(row => {
+        const width = Math.min((Number(row.rendimiento || 0) / maxRendimiento) * 100, 100);
+        const color = Number(row.rendimiento || 0) >= 100 ? '#1c8c50' : Number(row.rendimiento || 0) >= 85 ? '#e5a11b' : '#d9534f';
+        return `<div class="dashboard-bar-row" data-report-key="${String(row.key).replace(/"/g, '&quot;')}" title="Abrir ${row.label}">
+          <div class="dashboard-bar-label">${row.label}</div>
+          <div class="dashboard-bar-track"><div class="dashboard-bar-fill" style="width:${width}%;background:${color}"></div></div>
+          <div class="dashboard-bar-value">${reportFmt(row.rendimiento)}%</div>
+        </div>`;
+      }).join('');
+      reportDashboard.innerHTML = `
+        <div class="dashboard-kpis">
+          <div class="dashboard-kpi"><div class="dashboard-kpi-label">TT generado</div><div class="dashboard-kpi-value">${reportFmt(totalTtg)} min</div></div>
+          <div class="dashboard-kpi"><div class="dashboard-kpi-label">Jornada configurada</div><div class="dashboard-kpi-value">${reportFmt(totalJornada)} min</div></div>
+          <div class="dashboard-kpi"><div class="dashboard-kpi-label">Rendimiento medio</div><div class="dashboard-kpi-value">${reportFmt(rendimiento)}%</div></div>
+          <div class="dashboard-kpi"><div class="dashboard-kpi-label">Registros</div><div class="dashboard-kpi-value">${reportFmt(totalRegistros)}</div></div>
+        </div>
+        <div class="dashboard-chart">
+          <h3>Rendimiento por ${reportLevelLabels[reportState.stack[reportState.stack.length - 1].nivel].toLowerCase()}</h3>
+          <div class="dashboard-bars">${bars}</div>
+        </div>`;
+      reportDashboard.querySelectorAll('.dashboard-bar-row').forEach(row => {
+        row.addEventListener('click', () => reportOpenRow(row.dataset.reportKey));
+      });
     }
 
     function reportRenderLevels() {
@@ -1312,6 +1395,7 @@
       reportDetail.hidden = true;
       reportDetail.innerHTML = '';
       reportLevels.hidden = false;
+      reportRenderDashboard([]);
       reportHead.innerHTML = '<tr><th>Periodo</th><th>TT generado</th><th>Jornada configurada</th><th>Diferencia</th><th>Rendimiento</th><th>Registros</th><th></th></tr>';
       reportRows.innerHTML = '<tr><td colspan="7" class="report-empty">Cargando informe…</td></tr>';
       const params = new URLSearchParams({ nivel: current.nivel, ...reportDateFilters, ...current.filtros });
@@ -1323,8 +1407,10 @@
         if (!data.success) throw new Error(data.message || 'Error en la respuesta de la API');
         if (!data.indicadores.length) {
           reportRows.innerHTML = '<tr><td colspan="7" class="report-empty">No hay datos para este nivel.</td></tr>';
+          reportRenderDashboard([]);
           return;
         }
+        reportRenderDashboard(data.indicadores);
         reportRows.innerHTML = data.indicadores.map(row => {
           const diffClass = row.diferencia >= 0 ? 'report-positive' : 'report-negative';
           const next = row.puede_bajar ? 'Abrir' : 'Ver registros';
@@ -1394,6 +1480,8 @@
       reportDetailActive = true;
       reportBackBtn.hidden = false;
       reportLevels.hidden = true;
+      reportDashboard.hidden = true;
+      reportTableWrap.hidden = false;
       reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
       reportRows.innerHTML = '<tr><td colspan="8" class="report-empty">Cargando registros...</td></tr>';
       const params = new URLSearchParams({ ...reportDateFilters, ...filters });
@@ -1413,6 +1501,7 @@
       if (reportDetailActive) {
         reportDetailActive = false;
         reportLevels.hidden = false;
+        reportSetDisplayMode(reportDisplayMode);
         reportLoadCurrent();
         return;
       }

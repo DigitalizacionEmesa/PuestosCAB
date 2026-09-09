@@ -415,9 +415,9 @@ function initLegacyCABBreadcrumb() {
   header.insertAdjacentElement('afterend', nav);
 }
 
-const CAB_HOME_URL = '/';
-const CAB_CONFIG_URL = '/templates/generales/ConfiguracionCAB.html';
-const CAB_PUESTOS_URL = '/templates/generales/ListaPuestosCAB.html';
+const CAB_HOME_URL = '/templates/generales/PuestosCAB.html';
+const CAB_CONFIG_URL = '/templates/generales/PuestosCAB.html#view=configuracion';
+const CAB_PUESTOS_URL = '/templates/generales/PuestosCAB.html#view=lista';
 
 // La URL es la fuente de verdad del shell. La jerarquía no se acumula por clicks.
 const CAB_ROUTE_METADATA = [
@@ -453,7 +453,7 @@ function getCABRouteMetadata() {
   };
   const codigo = new URLSearchParams(window.location.search).get('puesto') || '';
   const nombre = puestoNames[codigo.toUpperCase()] || codigo || 'Cabinas';
-  const label = `Puesto ${nombre}`;
+  const label = nombre;
   return { ...route, title: label, crumbs: [...route.crumbs.slice(0, -1), { label }] };
 }
 

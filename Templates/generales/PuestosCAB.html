@@ -110,6 +110,29 @@
       max-width: 900px;
       margin: 20px auto 0 auto;
     }
+
+    /* Shell SPA de Puestos CAB */
+    body.cab-shell-page { overflow: hidden !important; }
+    .puestos-spa-view { width: 100%; }
+    .puestos-spa-view[hidden] { display: none !important; }
+    #puestosEmbeddedView {
+      width: 100%;
+      height: calc(100vh - 110px);
+      min-height: 0;
+      overflow: hidden;
+      background: #e6f2fb;
+    }
+    #puestosEmbeddedFrame {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 110px);
+      min-height: 0;
+      border: 0;
+      background: #e6f2fb;
+    }
+    @media (max-width: 700px) {
+      #puestosEmbeddedFrame { min-height: 0; }
+    }
   </style>
 </head>
 <body>
@@ -132,7 +155,7 @@
 
     <!-- El widget se rellenará dinámicamente por loginModal.js -->
   <!-- Container principal usando estilos globales -->
-  <div class="container">
+  <div id="puestosHomeView" class="container puestos-spa-view">
     <!-- Grid principal usando estilos de global-styles.css -->
     <div class="main-grid">
       <div class="card" onclick="goToKPI()">
@@ -151,6 +174,10 @@
       <!-- Espacio para futuras funcionalidades como Reportes, etc. -->
     </div>
   </div>
+
+  <main id="puestosEmbeddedView" class="puestos-spa-view" hidden aria-live="polite">
+    <iframe id="puestosEmbeddedFrame" title="Vista de Puestos CAB"></iframe>
+  </main>
 
   <script>
     // Verificar permisos del usuario al cargar la página
@@ -198,15 +225,244 @@
     });
     
     // Función para ir a la página de KPI (Lista de Puestos CAB)
+    const puestosViews = {
+      lista: { label: 'Puestos', title: 'PUESTOS CAB', path: '/templates/generales/ListaPuestosCAB.html' },
+      configuracion: { label: 'Configuraci\u00f3n', title: 'CONFIGURACI\u00d3N CAB', path: '/templates/generales/ConfiguracionCAB.html' },
+      crear: { label: 'Crear puesto', title: 'CREAR PUESTO', path: '/templates/generales/Crearpuesto.html' },
+      motivos: { label: 'Motivos de faltante', title: 'ADMINISTRAR MOTIVOS DE FALTANTE', path: '/templates/generales/AdminMotivosFaltante.html' },
+      puesto: { label: '', title: 'PUESTOS CAB', path: '/templates/generales/PuestoCAB.html' },
+      jefe: { label: 'Jefe de Equipo', title: 'CONTROL - JEFE DE EQUIPO', path: '/templates/generales/control.html' }
+    };
+    const puestosPuestoState = { codigo: '', nombre: '' };
+    const jefeSubviewLabels = {
+      reportes: 'Reportes', capacidades: 'Capacidad',
+      pedidos: 'Resumen de Pedidos', datosPedidos: 'Importaci\u00f3n Datos Pedidos'
+    };
+    const jefeSubviewPaths = {
+      reportes: '/templates/generales/indicadores.html',
+      capacidades: '/templates/generales/CapacidadesCAB.html',
+      pedidos: '/templates/generales/resumenpedidos.html',
+      datosPedidos: '/templates/generales/datospedidos.html'
+    };
+    let jefeSubview = '';
+
+    const puestosHomeView = document.getElementById('puestosHomeView');
+    const puestosEmbeddedView = document.getElementById('puestosEmbeddedView');
+    const puestosEmbeddedFrame = document.getElementById('puestosEmbeddedFrame');
+    const puestosHeaderTitle = document.querySelector('.title');
+
+    function getPuestosBreadcrumb() {
+      return document.querySelector('.breadcrumb-container, .cab-breadcrumb-container');
+    }
+
+    function puestosViewFromHash() {
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const key = hashParams.get('view');
+      if (key === 'puesto') {
+        puestosPuestoState.codigo = hashParams.get('puesto') || '';
+        puestosPuestoState.nombre = hashParams.get('nombre') || getPuestoNombre(puestosPuestoState.codigo);
+      }
+      if (key === 'jefe') jefeSubview = hashParams.get('subview') || '';
+      return key && puestosViews[key] ? key : null;
+    }
+
+    function getPuestoNombre(codigo) {
+      const nombres = {
+        CLINCAB1: 'Clinchado', DECOCAB1: 'Decoraci\u00f3n', ESPECIALES: 'Especiales',
+        MONTCAB1: 'Suelos', MONTCAB2: 'Techos', MONTCAB3: 'Bajotecho'
+      };
+      return nombres[String(codigo || '').toUpperCase()] || codigo || 'Puesto';
+    }
+
+    function puestosBreadcrumbItem(label, viewKey) {
+      const item = document.createElement(viewKey ? 'button' : 'span');
+      if (viewKey) {
+        item.type = 'button';
+        item.className = 'breadcrumb-clickable';
+        item.addEventListener('click', () => openPuestosView(viewKey === '__home__' ? null : viewKey));
+      } else {
+        item.className = 'breadcrumb-last';
+      }
+      item.textContent = label;
+      return item;
+    }
+
+    function renderPuestosBreadcrumb(viewKey) {
+      const puestosBreadcrumb = getPuestosBreadcrumb();
+      if (!puestosBreadcrumb) return;
+      puestosBreadcrumb.replaceChildren();
+      puestosBreadcrumb.appendChild(puestosBreadcrumbItem('Inicio', viewKey ? '__home__' : null));
+      if (!viewKey) return;
+
+      const separator = document.createElement('span');
+      separator.className = 'breadcrumb-separator';
+      separator.textContent = '>';
+      puestosBreadcrumb.append(separator);
+
+      if (viewKey === 'lista') {
+        puestosBreadcrumb.appendChild(puestosBreadcrumbItem('Puestos', null));
+        return;
+      }
+
+      if (viewKey === 'puesto') {
+        puestosBreadcrumb.appendChild(puestosBreadcrumbItem('Puestos', 'lista'));
+        const puestoSeparator = document.createElement('span');
+        puestoSeparator.className = 'breadcrumb-separator';
+        puestoSeparator.textContent = '>';
+        puestosBreadcrumb.append(puestoSeparator, puestosBreadcrumbItem(puestosPuestoState.nombre || getPuestoNombre(puestosPuestoState.codigo), null));
+        return;
+      }
+
+      if (viewKey === 'jefe') {
+        puestosBreadcrumb.appendChild(puestosBreadcrumbItem('Puestos', 'lista'));
+        const puestosSeparator = document.createElement('span');
+        puestosSeparator.className = 'breadcrumb-separator';
+        puestosSeparator.textContent = '>';
+        puestosBreadcrumb.append(puestosSeparator);
+        const jefe = document.createElement('button');
+        jefe.type = 'button';
+        jefe.className = 'breadcrumb-clickable';
+        jefe.textContent = 'Jefe de Equipo';
+        jefe.addEventListener('click', () => openPuestosView('jefe'));
+        puestosBreadcrumb.append(jefe);
+        if (jefeSubview) {
+          const subSeparator = document.createElement('span');
+          subSeparator.className = 'breadcrumb-separator';
+          subSeparator.textContent = '>';
+          puestosBreadcrumb.append(subSeparator, puestosBreadcrumbItem(jefeSubviewLabels[jefeSubview] || jefeSubview, null));
+        }
+        return;
+      }
+
+      const config = document.createElement('button');
+      config.type = 'button';
+      config.className = 'breadcrumb-clickable';
+      config.textContent = 'Configuraci\u00f3n';
+      config.addEventListener('click', () => openPuestosView('configuracion'));
+      puestosBreadcrumb.append(config);
+
+      if (viewKey !== 'configuracion') {
+        const nestedSeparator = document.createElement('span');
+        nestedSeparator.className = 'breadcrumb-separator';
+        nestedSeparator.textContent = '>';
+        puestosBreadcrumb.append(nestedSeparator, puestosBreadcrumbItem(puestosViews[viewKey].label, null));
+      }
+    }
+
+    function preparePuestosEmbeddedView() {
+      const embeddedDocument = puestosEmbeddedFrame.contentDocument;
+      const viewKey = puestosViewFromHash();
+      if (!embeddedDocument || !viewKey) return;
+      const embeddedStyle = embeddedDocument.createElement('style');
+      embeddedStyle.textContent = `
+        html, body { overflow-x: hidden !important; }
+        body { padding-top: 0 !important; }
+        body > .header, body > header.header, body > header.app-header,
+        body > .breadcrumb-wrapper, body > .cab-breadcrumb-wrapper,
+        body > nav[aria-label="Breadcrumb"], body > nav.control-breadcrumb-wrapper,
+        #userSessionWidget,
+        #legacyUserSessionWidget { display: none !important; }
+        ${viewKey === 'puesto' ? `
+          html, body { height: 100% !important; overflow: hidden !important; }
+          body > main { height: 100% !important; min-height: 0 !important; }
+          body > main .scrollable-content { min-height: 0 !important; overflow-y: auto !important; }
+        ` : ''}
+      `;
+      embeddedDocument.head.appendChild(embeddedStyle);
+      ['body > .header', 'body > header.header', 'body > header.app-header',
+        'body > .breadcrumb-wrapper', 'body > .cab-breadcrumb-wrapper',
+        'body > nav[aria-label="Breadcrumb"]', 'body > nav.control-breadcrumb-wrapper', '#userSessionWidget', '#legacyUserSessionWidget']
+        .flatMap(selector => [...embeddedDocument.querySelectorAll(selector)])
+        .forEach(element => element.style.setProperty('display', 'none', 'important'));
+      embeddedDocument.body.style.setProperty('padding-top', '0', 'important');
+
+      const homeButton = embeddedDocument.querySelector('.home-icon');
+      const backButton = embeddedDocument.querySelector('.back-icon');
+      if (homeButton) homeButton.onclick = () => window.parent.openPuestosView(null);
+      if (backButton) backButton.onclick = () => window.parent.openPuestosView(viewKey === 'crear' || viewKey === 'motivos' ? 'configuracion' : (viewKey === 'jefe' && jefeSubview ? 'jefe' : null));
+
+      const embeddedWindow = embeddedDocument.defaultView;
+      if (viewKey === 'configuracion') {
+        embeddedWindow.goToCrearPuesto = () => window.parent.openPuestosView('crear');
+        embeddedWindow.goToAdminFaltantes = () => window.parent.openPuestosView('motivos');
+        embeddedWindow.volverAtras = () => window.parent.openPuestosView(null);
+      }
+      if (viewKey === 'crear') {
+        const cancelButton = embeddedDocument.querySelector('.btn.cancelar');
+        if (cancelButton) cancelButton.onclick = () => window.parent.openPuestosView('configuracion');
+      }
+      if (viewKey === 'motivos') embeddedWindow.volverAtras = () => window.parent.openPuestosView('configuracion');
+      if (viewKey === 'lista' && !embeddedDocument.__puestosRouterBound) {
+        embeddedDocument.addEventListener('click', (event) => {
+          const card = event.target.closest?.('a.puesto-card[data-codigo]');
+          if (!card) return;
+          event.preventDefault();
+          event.stopPropagation();
+          if (card.dataset.codigo === 'JEFEEQUIPO') {
+            window.parent.openPuestosView('jefe');
+            return;
+          }
+          window.parent.openPuestosView('puesto', {
+            puestoCode: card.dataset.codigo,
+            puestoName: card.dataset.puesto || card.textContent.trim()
+          });
+        }, true);
+        embeddedDocument.__puestosRouterBound = true;
+      }
+      puestosEmbeddedFrame.title = viewKey === 'jefe' && jefeSubview
+        ? (jefeSubviewLabels[jefeSubview] || jefeSubview)
+        : puestosViews[viewKey].label;
+    }
+
+    function openPuestosView(viewKey, options = {}) {
+      const { replace = false } = options;
+      if (viewKey && !puestosViews[viewKey]) viewKey = null;
+      if (viewKey === 'jefe') jefeSubview = options.jefeView || '';
+      if (viewKey === 'puesto') {
+        puestosPuestoState.codigo = options.puestoCode || puestosPuestoState.codigo;
+        puestosPuestoState.nombre = options.puestoName || puestosPuestoState.nombre || getPuestoNombre(puestosPuestoState.codigo);
+        if (!puestosPuestoState.codigo) viewKey = 'lista';
+      }
+      const nextHash = viewKey === 'puesto'
+        ? `#view=puesto&puesto=${encodeURIComponent(puestosPuestoState.codigo)}&nombre=${encodeURIComponent(puestosPuestoState.nombre)}`
+        : (viewKey === 'jefe'
+          ? `#view=jefe${jefeSubview ? `&subview=${encodeURIComponent(jefeSubview)}` : ''}`
+          : (viewKey ? `#view=${encodeURIComponent(viewKey)}` : ''));
+      if (window.location.hash !== nextHash) {
+        if (replace) window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}${nextHash}`);
+        else window.history.pushState({}, '', `${window.location.pathname}${window.location.search}${nextHash}`);
+      }
+      renderPuestosBreadcrumb(viewKey);
+      puestosHeaderTitle.textContent = viewKey ? puestosViews[viewKey].title : 'PUESTOS CAB';
+      puestosHomeView.hidden = Boolean(viewKey);
+      puestosEmbeddedView.hidden = !viewKey;
+      if (!viewKey) {
+        puestosEmbeddedFrame.removeAttribute('src');
+        puestosEmbeddedFrame.title = 'Vista de Puestos CAB';
+        return;
+      }
+      const puestoQuery = viewKey === 'puesto' ? `&puesto=${encodeURIComponent(puestosPuestoState.codigo)}` : '';
+      const targetPath = viewKey === 'jefe' && jefeSubview
+        ? jefeSubviewPaths[jefeSubview]
+        : puestosViews[viewKey].path;
+      const targetSrc = `${targetPath}?embedded=1${puestoQuery}`;
+      if (puestosEmbeddedFrame.getAttribute('src') !== targetSrc) puestosEmbeddedFrame.src = targetSrc;
+      else preparePuestosEmbeddedView();
+    }
+
+    puestosEmbeddedFrame.addEventListener('load', preparePuestosEmbeddedView);
+    window.addEventListener('hashchange', () => openPuestosView(puestosViewFromHash(), { replace: true }));
+    window.addEventListener('popstate', () => openPuestosView(puestosViewFromHash(), { replace: true }));
+
     function goToKPI() {
       console.log('📊 Navegando a Lista de Puestos CAB...');
-      window.location.href = '/templates/generales/ListaPuestosCAB.html';
+      openPuestosView('lista');
     }
 
     // Función para ir a la página de Configuración
     function goToConfiguration() {
       console.log('⚙️ Navegando a Configuración CAB...');
-      window.location.href = '/templates/generales/ConfiguracionCAB.html';
+      openPuestosView('configuracion');
     }
 
     // Función para ir al Manual de Usuario
@@ -221,6 +477,12 @@
     });
   </script>
   
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => openPuestosView(puestosViewFromHash(), { replace: true }), 0);
+    });
+  </script>
+
   <!-- Scripts para el widget de usuario -->
   <script src="/assets/css/loginModal.js?v=20260908-cab-spa-shell-2"></script>
   

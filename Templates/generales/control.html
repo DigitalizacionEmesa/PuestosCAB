@@ -7,6 +7,11 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Control - Jefe de Equipo</title>
+  <script>
+    if (new URLSearchParams(window.location.search).get('embedded') === '1') {
+      document.documentElement.classList.add('cab-embedded-view');
+    }
+  </script>
 
   <!-- CSS principal del proyecto -->
   <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
@@ -129,6 +134,73 @@
       transform: translateY(-2px);
       transition: all 0.2s ease;
     }
+
+    /* Shell SPA de Control */
+    .control-breadcrumb-wrapper {
+      background: #d1e7dd;
+      border-bottom: 1px solid #c3e6de;
+      min-height: 42px;
+      box-sizing: border-box;
+    }
+
+    .control-breadcrumb {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 10px 20px;
+      box-sizing: border-box;
+      font: 15px/1.2 'Open Sans', 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+
+    .control-breadcrumb a,
+    .control-breadcrumb button {
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: #1e6bb8;
+      cursor: pointer;
+      font: inherit;
+      text-decoration: none;
+    }
+
+    .control-breadcrumb a:hover,
+    .control-breadcrumb button:hover { text-decoration: underline; }
+
+    .control-breadcrumb .separator {
+      margin: 0 14px;
+      color: #6b7d8f;
+      user-select: none;
+    }
+
+    .control-breadcrumb .current {
+      color: #1f2d3d;
+      font-weight: 600;
+    }
+
+    .control-spa-view { width: 100%; }
+    .control-spa-view[hidden] { display: none !important; }
+
+    #controlEmbeddedView {
+      width: 100%;
+      min-height: calc(100vh - 130px);
+      overflow: hidden;
+      background: #e6f2fb;
+    }
+
+    #controlEmbeddedFrame {
+      display: block;
+      width: 100%;
+      height: calc(100vh - 130px);
+      min-height: 700px;
+      border: 0;
+      background: #e6f2fb;
+    }
+
+    @media (max-width: 700px) {
+      .control-breadcrumb { padding: 9px 12px; font-size: 13px; }
+      #controlEmbeddedFrame { min-height: 650px; }
+    }
   </style>
 </head>
 <body>
@@ -152,29 +224,33 @@
     <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
   </header>
 
+  <nav class="control-breadcrumb-wrapper" aria-label="Breadcrumb">
+    <div id="controlBreadcrumb" class="control-breadcrumb"></div>
+  </nav>
+
   <!-- Widget de sesión de usuario -->
   <div id="userSessionWidget" class="user-session-widget"></div>
 
   <!-- Container principal usando estilos globales -->
-  <div class="container">
+  <div id="controlHomeView" class="container control-spa-view">
     <!-- Grid principal usando estilos de global-styles.css -->
     <div class="main-grid">
-      <div class="card control-card" onclick="goToReportes()">
+      <div class="card control-card" onclick="goToReportes()" role="button" tabindex="0">
         <div class="card-title">Reportes</div>
         <div class="card-icon-emoji">📊</div>
       </div>
 
-      <div class="card control-card" onclick="goToCapacidad()">
+      <div class="card control-card" onclick="goToCapacidad()" role="button" tabindex="0">
         <div class="card-title">Capacidad</div>
         <div class="card-icon-emoji">⚙️</div>
       </div>
 
-      <div class="card control-card" onclick="goToPedidos()">
+      <div class="card control-card" onclick="goToPedidos()" role="button" tabindex="0">
         <div class="card-title">Pedidos</div>
         <div class="card-icon-emoji">🔍</div>
       </div>
 
-      <div class="card control-card" onclick="goToDatosPedidos()">
+      <div class="card control-card" onclick="goToDatosPedidos()" role="button" tabindex="0">
         <div class="card-title">Importación Datos Pedidos</div>
         <div class="card-icon-emoji">📥</div>
       </div>
@@ -185,6 +261,10 @@
       <!-- Espacio para futuras funcionalidades -->
     </div>
   </div>
+
+  <main id="controlEmbeddedView" class="control-spa-view" hidden aria-live="polite">
+    <iframe id="controlEmbeddedFrame" title="Vista de Control"></iframe>
+  </main>
 
   <script>
     // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
@@ -245,32 +325,135 @@
     }
 
     // Función para ir a Reportes
+    const controlViews = {
+      reportes: { label: 'Indicadores CAB', title: 'INDICADORES CAB', path: '/templates/generales/indicadores.html' },
+      capacidades: { label: 'Capacidades CAB', title: 'CAPACIDADES CAB', path: '/templates/generales/CapacidadesCAB.html' },
+      pedidos: { label: 'Resumen de Pedidos', title: 'RESUMEN DE PEDIDOS CAB', path: '/templates/generales/resumenpedidos.html' },
+      datosPedidos: { label: 'Importaci\u00f3n Datos Pedidos', title: 'IMPORTACI\u00d3N DATOS PEDIDOS', path: '/templates/generales/datospedidos.html' }
+    };
+
+    const controlHomeView = document.getElementById('controlHomeView');
+    const controlEmbeddedView = document.getElementById('controlEmbeddedView');
+    const controlEmbeddedFrame = document.getElementById('controlEmbeddedFrame');
+    const controlBreadcrumb = document.getElementById('controlBreadcrumb');
+    const controlHeaderTitle = document.querySelector('.header-title');
+    const controlIsEmbedded = new URLSearchParams(window.location.search).get('embedded') === '1';
+
+    function controlViewFromHash() {
+      const hashKey = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('view');
+      const queryKey = controlIsEmbedded ? new URLSearchParams(window.location.search).get('view') : null;
+      const key = hashKey || queryKey;
+      return key && controlViews[key] ? key : null;
+    }
+
+    function renderControlBreadcrumb(viewKey) {
+      controlBreadcrumb.replaceChildren();
+      const home = document.createElement('button');
+      home.type = 'button';
+      home.textContent = 'Inicio';
+      home.addEventListener('click', () => openControlView(null));
+      controlBreadcrumb.appendChild(home);
+      if (viewKey) {
+        const separator = document.createElement('span');
+        separator.className = 'separator';
+        separator.textContent = '>';
+        controlBreadcrumb.append(separator);
+        const current = document.createElement('span');
+        current.className = 'current';
+        current.textContent = controlViews[viewKey].label;
+        controlBreadcrumb.append(current);
+      }
+    }
+
+    function prepareEmbeddedView() {
+      const embeddedDocument = controlEmbeddedFrame.contentDocument;
+      const viewKey = controlViewFromHash();
+      if (!embeddedDocument || !viewKey) return;
+      const embeddedStyle = embeddedDocument.createElement('style');
+      embeddedStyle.textContent = `
+        html, body { overflow-x: hidden !important; }
+        body { padding-top: 0 !important; }
+        body > .header, body > header.header, body > header.app-header,
+        body > .breadcrumb-wrapper, body > .cab-breadcrumb-wrapper,
+        body > nav[aria-label="Breadcrumb"], body > nav.control-breadcrumb-wrapper,
+        #userSessionWidget { display: none !important; }
+      `;
+      embeddedDocument.head.appendChild(embeddedStyle);
+      ['body > .header', 'body > header.header', 'body > header.app-header',
+        'body > .breadcrumb-wrapper', 'body > .cab-breadcrumb-wrapper',
+        'body > nav[aria-label="Breadcrumb"]', 'body > nav.control-breadcrumb-wrapper', '#userSessionWidget']
+        .flatMap(selector => [...embeddedDocument.querySelectorAll(selector)])
+        .forEach(element => element.style.setProperty('display', 'none', 'important'));
+      embeddedDocument.body.style.setProperty('padding-top', '0', 'important');
+      const homeButton = embeddedDocument.querySelector('.home-icon');
+      const backButton = embeddedDocument.querySelector('.back-icon');
+      if (homeButton) homeButton.onclick = () => window.parent.openControlView(null);
+      if (backButton) backButton.onclick = () => window.parent.openControlView(null);
+      controlEmbeddedFrame.title = controlViews[viewKey].label;
+    }
+
+    function openControlView(viewKey, options = {}) {
+      const { replace = false } = options;
+      if (viewKey && !controlViews[viewKey]) viewKey = null;
+      if (controlIsEmbedded && !options.local && window.parent !== window && typeof window.parent.openPuestosView === 'function') {
+        window.parent.openPuestosView('jefe', { jefeView: viewKey });
+        return;
+      }
+      const nextHash = viewKey ? `#view=${encodeURIComponent(viewKey)}` : '';
+      if (window.location.hash !== nextHash) {
+        if (replace) window.history.replaceState({}, '', `${window.location.pathname}${window.location.search}${nextHash}`);
+        else window.history.pushState({}, '', `${window.location.pathname}${window.location.search}${nextHash}`);
+      }
+      renderControlBreadcrumb(viewKey);
+      controlHeaderTitle.textContent = viewKey ? controlViews[viewKey].title : 'CONTROL - JEFE DE EQUIPO';
+      controlHomeView.hidden = Boolean(viewKey);
+      controlEmbeddedView.hidden = !viewKey;
+      if (!viewKey) {
+        controlEmbeddedFrame.removeAttribute('src');
+        controlEmbeddedFrame.title = 'Vista de Control';
+        return;
+      }
+      const targetSrc = `${controlViews[viewKey].path}?embedded=1`;
+      if (controlEmbeddedFrame.getAttribute('src') !== targetSrc) controlEmbeddedFrame.src = targetSrc;
+      else prepareEmbeddedView();
+    }
+
+    controlEmbeddedFrame.addEventListener('load', prepareEmbeddedView);
+    window.addEventListener('hashchange', () => openControlView(controlViewFromHash(), { replace: true }));
+    window.addEventListener('popstate', () => openControlView(controlViewFromHash(), { replace: true }));
+
     function goToReportes() {
       console.log('📊 Navegando a Indicadores/Reportes...');
-      window.location.href = '/templates/generales/indicadores.html';
+      openControlView('reportes');
     }
 
     // Función para ir a Capacidades
     function goToCapacidad() {
       console.log('⚙️ Navegando a Capacidades...');
-      window.location.href = '/templates/generales/CapacidadesCAB.html';
+      openControlView('capacidades');
     }
 
     // Función para ir a Pedidos
     function goToPedidos() {
       console.log(' Navegando a Pedidos...');
-      window.location.href = '/templates/generales/resumenpedidos.html';
+      openControlView('pedidos');
     }
 
     // Función para ir a Importación Datos Pedidos
     function goToDatosPedidos() {
       console.log('📥 Navegando a Importación Datos Pedidos...');
-      window.location.href = '/templates/generales/datospedidos.html';
+      openControlView('datosPedidos');
     }
 
     // Inicialización
     document.addEventListener('DOMContentLoaded', function() {
       console.log('🏭 Panel de Control de Jefe de Equipo cargado');
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      openControlView(controlViewFromHash(), { replace: true, local: controlIsEmbedded });
     });
   </script>
 

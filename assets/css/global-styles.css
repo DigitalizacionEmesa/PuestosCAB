@@ -772,6 +772,19 @@ body > header.header .help-icon {
 .cab-breadcrumb-item.current { color: #1f2d3d; font-weight: 700; }
 .cab-breadcrumb-separator { margin: 0 14px; color: #7c8a99; font-size: 14px; }
 
+/* Vistas cargadas dentro de una SPA: el shell propietario es el documento padre. */
+html.cab-embedded-view body { padding-top: 0 !important; }
+html.cab-embedded-view body > .header,
+html.cab-embedded-view body > header.header,
+html.cab-embedded-view body > header.app-header,
+html.cab-embedded-view body > .header-trigger,
+html.cab-embedded-view body > .breadcrumb-wrapper,
+html.cab-embedded-view body > .cab-breadcrumb-wrapper,
+html.cab-embedded-view body > .control-breadcrumb-wrapper,
+html.cab-embedded-view body > nav[aria-label="Breadcrumb"],
+html.cab-embedded-view body > #userSessionWidget,
+html.cab-embedded-view body > #legacyUserSessionWidget { display: none !important; }
+
 @media (max-width: 640px) {
   body > .header,
   body > header.header,

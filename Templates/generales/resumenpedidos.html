@@ -7,6 +7,11 @@
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
   <title>Resumen de Pedidos - CAB</title>
+  <script>
+    if (new URLSearchParams(window.location.search).get('embedded') === '1') {
+      document.documentElement.classList.add('cab-embedded-view');
+    }
+  </script>
 
   <!-- CSS principal del proyecto -->
   <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
