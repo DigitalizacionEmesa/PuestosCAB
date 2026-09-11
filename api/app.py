@@ -238,6 +238,11 @@ def servir_imagenes(nombre_archivo):
     if not os.path.exists(ruta_completa):
         return f"Archivo no encontrado: {nombre_archivo}", 404
     return send_from_directory(RUTA_IMAGENES, nombre_archivo)
+
+@app.route('/favicon.ico')
+def favicon():
+    """Evita el 404 del navegador usando el logo corporativo existente."""
+    return send_from_directory(RUTA_IMAGENES, 'Logo_EMESA.png', mimetype='image/png')
 # ====================================================================================
 # ENDPOINT DE LOGIN CON SOPORTE PARA CONTRASEÑAS ENCRIPTADAS
 # ====================================================================================
@@ -3669,23 +3674,207 @@ def indicadores_filtros():
             if not conn:
                 return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
             cursor = conn.cursor()
-            cursor.execute("""
+            desde = request.args.get('desde', '').strip()
+            hasta = request.args.get('hasta', '').strip()
+            condiciones = ['Fecha IS NOT NULL']
+            parametros = []
+            if desde: condiciones.append('Fecha >= ?'); parametros.append(desde)
+            if hasta: condiciones.append('Fecha <= ?'); parametros.append(hasta)
+            def add_context(column, names):
+                if names:
+                    condiciones.append(f"{column} IN ({','.join('?' for _ in names)})")
+                    parametros.extend(names)
+            add_context('Turno', request.args.getlist('turnos[]') or request.args.getlist('turno[]'))
+            add_context('Operario', request.args.getlist('operarios[]') or request.args.getlist('operario[]'))
+            add_context('GFH', request.args.getlist('gfh[]') or request.args.getlist('gfhs[]'))
+            add_context('ESTADO', request.args.getlist('estados[]') or request.args.getlist('estado[]'))
+            selected_puestos = request.args.getlist('puestos[]') or request.args.getlist('puesto[]')
+            if selected_puestos:
+                condiciones.append("COALESCE(NULLIF(LTRIM(RTRIM(Nombre_Puesto)), ''), LTRIM(RTRIM(PUESTO))) IN (" + ','.join('?' for _ in selected_puestos) + ')')
+                parametros.extend(selected_puestos)
+            where = ' AND '.join(condiciones)
+            cursor.execute(f"""
                 SELECT DISTINCT Operario
                 FROM [Digitalizacion].[CAB].[TiempoTeorico]
-                WHERE Operario IS NOT NULL AND LTRIM(RTRIM(Operario)) <> ''
+                WHERE {where} AND Operario IS NOT NULL AND LTRIM(RTRIM(Operario)) <> ''
                 ORDER BY Operario
-            """)
+            """, parametros)
             operarios = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None]
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT DISTINCT COALESCE(NULLIF(LTRIM(RTRIM(Nombre_Puesto)), ''), LTRIM(RTRIM(PUESTO))) AS puesto
                 FROM [Digitalizacion].[CAB].[TiempoTeorico]
-                WHERE PUESTO IS NOT NULL OR Nombre_Puesto IS NOT NULL
+                WHERE {where} AND (PUESTO IS NOT NULL OR Nombre_Puesto IS NOT NULL)
                 ORDER BY puesto
-            """)
+            """, parametros)
             puestos = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None and str(row[0]).strip()]
-        return jsonify({'success': True, 'operarios': operarios, 'puestos': puestos})
+            cursor.execute(f"SELECT DISTINCT LTRIM(RTRIM(GFH)) FROM [Digitalizacion].[CAB].[TiempoTeorico] WHERE {where} AND GFH IS NOT NULL AND LTRIM(RTRIM(GFH)) <> '' ORDER BY 1", parametros)
+            gfhs = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None]
+            cursor.execute(f"SELECT DISTINCT LTRIM(RTRIM(Turno)) FROM [Digitalizacion].[CAB].[TiempoTeorico] WHERE {where} AND Turno IS NOT NULL AND LTRIM(RTRIM(Turno)) <> '' ORDER BY 1", parametros)
+            turnos = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None]
+            cursor.execute(f"SELECT DISTINCT LTRIM(RTRIM(ESTADO)) FROM [Digitalizacion].[CAB].[TiempoTeorico] WHERE {where} AND ESTADO IS NOT NULL AND LTRIM(RTRIM(ESTADO)) <> '' ORDER BY 1", parametros)
+            estados = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None]
+        return jsonify({'success': True, 'operarios': operarios, 'puestos': puestos, 'gfh': gfhs, 'turnos': turnos, 'estados': estados})
     except Exception as e:
         print(f"Error obteniendo filtros de indicadores: {e}")
+        return jsonify({'success': False, 'message': f'Error interno del servidor: {str(e)}'}), 500
+
+
+# Dashboard V1 de eficiencia. Se mantiene separado del endpoint histórico para no
+# cambiar el contrato que todavía consume la pantalla antigua.
+_DASHBOARD_GROUPS = {
+    'operario': ('Operario', 'Operario'),
+    'puesto': ("COALESCE(NULLIF(LTRIM(RTRIM(Nombre_Puesto)), ''), LTRIM(RTRIM(PUESTO)))", 'Puesto'),
+    'gfh': ('GFH', 'GFH'),
+    'turno': ('Turno', 'Turno'),
+    'dia': ('CONVERT(char(10), Fecha, 23)', 'Día')
+}
+
+
+def _dashboard_values(name):
+    """Lee listas repetidas (?operarios[]=A&operarios[]=B) y listas CSV."""
+    values = request.args.getlist(name) or request.args.getlist(f'{name}[]')
+    if len(values) == 1 and ',' in values[0]:
+        values = values[0].split(',')
+    return [str(value).strip() for value in values if str(value).strip()]
+
+
+def _dashboard_date(value):
+    return value.isoformat() if hasattr(value, 'isoformat') else str(value or '')[:10]
+
+
+def _dashboard_label(group_by, key):
+    if group_by == 'dia':
+        return key
+    if group_by == 'gfh':
+        return f'Operación {key}'
+    return key or 'Sin asignar'
+
+
+@app.route('/api/indicadores-dashboard', methods=['GET'])
+def indicadores_dashboard():
+    """Datos agregados del dashboard, con capacidad deduplicada por operario-fecha-turno."""
+    try:
+        group_by = request.args.get('group_by', 'operario').strip().lower()
+        if group_by not in _DASHBOARD_GROUPS:
+            return jsonify({'success': False, 'message': 'group_by no válido'}), 400
+
+        desde = request.args.get('desde', '').strip()
+        hasta = request.args.get('hasta', '').strip()
+        turnos = _dashboard_values('turnos') or _dashboard_values('turno')
+        operarios = _dashboard_values('operarios') or _dashboard_values('operario')
+        puestos = _dashboard_values('puestos') or _dashboard_values('puesto')
+        gfhs = _dashboard_values('gfh') or _dashboard_values('gfhs')
+        estados = _dashboard_values('estados') or _dashboard_values('estado')
+
+        condiciones = ['tt.Fecha IS NOT NULL']
+        parametros = []
+        if desde:
+            condiciones.append('tt.Fecha >= ?'); parametros.append(desde)
+        if hasta:
+            condiciones.append('tt.Fecha <= ?'); parametros.append(hasta)
+
+        def add_in(column, values):
+            if values:
+                condiciones.append(f"{column} IN ({','.join('?' for _ in values)})")
+                parametros.extend(values)
+
+        add_in('tt.Turno', turnos)
+        add_in('tt.Operario', operarios)
+        if puestos:
+            condiciones.append("COALESCE(NULLIF(LTRIM(RTRIM(tt.Nombre_Puesto)), ''), LTRIM(RTRIM(tt.PUESTO))) IN (" + ','.join('?' for _ in puestos) + ')')
+            parametros.extend(puestos)
+        add_in('tt.GFH', gfhs)
+        add_in('tt.ESTADO', estados)
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            cursor.execute(f"""
+                SELECT tt.Fecha, tt.Turno, LTRIM(RTRIM(tt.Operario)),
+                       COALESCE(NULLIF(LTRIM(RTRIM(tt.Nombre_Puesto)), ''), LTRIM(RTRIM(tt.PUESTO))),
+                       LTRIM(RTRIM(tt.GFH)), tt.CODLINEA, tt.ESTADO,
+                       CAST(ISNULL(tt.TTG, 0) AS FLOAT)
+                FROM [Digitalizacion].[CAB].[TiempoTeorico] tt
+                WHERE {' AND '.join(condiciones)}
+            """, parametros)
+            rows = cursor.fetchall()
+            cursor.execute("""
+                SELECT LTRIM(RTRIM(Operario)), LTRIM(RTRIM(Turno)), Fecha,
+                       CAST(ISNULL(Capacidad, 0) AS FLOAT)
+                FROM [Digitalizacion].[CAB].[CapacidadesOperarios]
+            """)
+            capacity_rows = cursor.fetchall()
+
+        jornadas = {}
+        capacities = {}
+        for op, turno, fecha, value in capacity_rows:
+            op_key = str(op or '').strip()
+            turno_key = str(turno or '').strip()
+            cap = float(value or 0)
+            if turno_key.upper() == 'JORNADA' or _dashboard_date(fecha) == '1999-01-01':
+                jornadas[op_key] = cap
+            else:
+                capacities[(op_key, turno_key, _dashboard_date(fecha))] = cap
+
+        # Cada registro puede multiplicar TTG, pero la capacidad se incorpora una sola
+        # vez por la unidad lógica operario + fecha + turno.
+        groups = {}
+        capacity_units = {}
+        for fecha, turno, operario, puesto, gfh, codlinea, estado, ttg in rows:
+            date_key = _dashboard_date(fecha)
+            turno_key = str(turno or '').strip()
+            op_key = str(operario or '').strip()
+            puesto_key = str(puesto or '').strip()
+            gfh_key = str(gfh or '').strip()
+            group_key = {
+                'operario': op_key, 'puesto': puesto_key, 'gfh': gfh_key,
+                'turno': turno_key, 'dia': date_key
+            }[group_by]
+            item = groups.setdefault(group_key, {
+                'key': group_key, 'label': _dashboard_label(group_by, group_key),
+                'ttg': 0.0, 'registros': 0, 'operarios': set(), 'puestos': set(),
+                'gfhs': set(), 'codlineas': set(), 'estados': set(), 'fechas': set()
+            })
+            item['ttg'] += float(ttg or 0)
+            item['registros'] += 1
+            for field, value in [('operarios', op_key), ('puestos', puesto_key), ('gfhs', gfh_key), ('codlineas', str(codlinea or '').strip()), ('estados', str(estado or '').strip()), ('fechas', date_key)]:
+                if value: item[field].add(value)
+            cap = capacities.get((op_key, turno_key, date_key), jornadas.get(op_key, 0.0))
+            capacity_units.setdefault((op_key, turno_key, date_key), (cap, date_key, turno_key, op_key))
+
+        # Para operario/día/turno la capacidad se distribuye solo sobre grupos que
+        # realmente incluyen esa unidad; para puesto/GFH se omite deliberadamente.
+        if group_by in ('operario', 'dia', 'turno'):
+            for cap, date_key, turno_key, op_key in capacity_units.values():
+                key = {'operario': op_key, 'dia': date_key, 'turno': turno_key}[group_by]
+                if key in groups:
+                    groups[key]['capacidad'] = groups[key].get('capacidad', 0.0) + cap
+
+        result = []
+        for item in groups.values():
+            cap = float(item.get('capacidad', 0.0))
+            ttg = float(item['ttg'])
+            item['capacidad'] = round(cap, 2)
+            item['diferencia'] = round(ttg - cap, 2)
+            item['eficiencia'] = round(ttg / cap * 100, 1) if cap else None
+            item['operarios'] = len(item['operarios'])
+            item['puestos'] = len(item['puestos'])
+            item['operaciones'] = len(item['gfhs'])
+            item.pop('gfhs', None)
+            item['codlineas'] = len(item['codlineas'])
+            item['estados'] = sorted(item['estados'])
+            item['fechas'] = sorted(item['fechas'])
+            result.append(item)
+        result.sort(key=lambda item: (-item['ttg'], str(item['label'])))
+        total_ttg = sum(item['ttg'] for item in result)
+        total_cap = sum(item['capacidad'] for item in result) if group_by in ('operario', 'dia', 'turno') else 0
+        return jsonify({'success': True, 'group_by': group_by, 'rows': result,
+                        'summary': {'ttg': round(total_ttg, 2), 'capacidad': round(total_cap, 2),
+                                    'diferencia': round(total_ttg - total_cap, 2),
+                                    'eficiencia': round(total_ttg / total_cap * 100, 1) if total_cap else None}})
+    except Exception as e:
+        print(f"Error en dashboard de indicadores: {e}")
         return jsonify({'success': False, 'message': f'Error interno del servidor: {str(e)}'}), 500
 
 
@@ -3841,6 +4030,9 @@ def indicadores_registros():
         fecha = request.args.get('fecha', '').strip()
         turno = request.args.get('turno', '').strip()
         operario = request.args.get('operario', '').strip()
+        puesto = request.args.get('puesto', '').strip()
+        gfh = request.args.get('gfh', '').strip()
+        estados = request.args.getlist('estados[]') or request.args.getlist('estado[]')
         desde = request.args.get('desde', '').strip()
         hasta = request.args.get('hasta', '').strip()
         mes = request.args.get('mes', '').strip()
@@ -3875,6 +4067,15 @@ def indicadores_registros():
         if operario:
             condiciones.append('Operario = ?')
             parametros.append(operario)
+        if puesto:
+            condiciones.append("COALESCE(NULLIF(LTRIM(RTRIM(Nombre_Puesto)), ''), LTRIM(RTRIM(PUESTO))) = ?")
+            parametros.append(puesto)
+        if gfh:
+            condiciones.append('GFH = ?')
+            parametros.append(gfh)
+        if estados:
+            condiciones.append(f"ESTADO IN ({','.join('?' for _ in estados)})")
+            parametros.extend(estados)
 
         with ConexionODBC('Digitalizacion') as conn:
             if not conn:
@@ -5102,11 +5303,15 @@ def obtener_permisos_usuario():
             print(f"🔍 Resultado de la consulta: {resultado}")
             
             if resultado:
+                try:
+                    nivel_permisos = int(resultado[3] or 0)
+                except (TypeError, ValueError):
+                    nivel_permisos = 0
                 permisos_usuario = {
                     'Id_Usuario': resultado[0],
                     'Num_Operario': resultado[1],
                     'Nombre': resultado[2],
-                    'Nivel_Permisos': resultado[3],
+                    'Nivel_Permisos': nivel_permisos,
                     'Roles': resultado[4]
                 }
                 
@@ -5118,10 +5323,10 @@ def obtener_permisos_usuario():
                 return jsonify({
                     'success': True,
                     'usuario': permisos_usuario,
-                    'nivel_permisos': resultado[3],  # ⭐ AGREGAR ESTE CAMPO DIRECTO
-                    'puede_ver_configuracion': resultado[3] > 1,
-                    'puede_ver_jefe_equipo': resultado[3] > 1,
-                    'puede_acceder_pantallas_restringidas': resultado[3] > 1
+                    'nivel_permisos': nivel_permisos,
+                    'puede_ver_configuracion': nivel_permisos > 1,
+                    'puede_ver_jefe_equipo': nivel_permisos > 1,
+                    'puede_acceder_pantallas_restringidas': nivel_permisos > 1
                 })
             else:
                 print(f"❌ Usuario no encontrado en tabla Usuarios: {usuario_logueado}")
