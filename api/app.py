@@ -3661,6 +3661,34 @@ def indicadores_operarios():
         }), 500
 
 
+@app.route('/api/indicadores-filtros', methods=['GET'])
+def indicadores_filtros():
+    """Opciones de puesto y operario disponibles para el informe histórico."""
+    try:
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT DISTINCT Operario
+                FROM [Digitalizacion].[CAB].[TiempoTeorico]
+                WHERE Operario IS NOT NULL AND LTRIM(RTRIM(Operario)) <> ''
+                ORDER BY Operario
+            """)
+            operarios = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None]
+            cursor.execute("""
+                SELECT DISTINCT COALESCE(NULLIF(LTRIM(RTRIM(Nombre_Puesto)), ''), LTRIM(RTRIM(PUESTO))) AS puesto
+                FROM [Digitalizacion].[CAB].[TiempoTeorico]
+                WHERE PUESTO IS NOT NULL OR Nombre_Puesto IS NOT NULL
+                ORDER BY puesto
+            """)
+            puestos = [str(row[0]).strip() for row in cursor.fetchall() if row[0] is not None and str(row[0]).strip()]
+        return jsonify({'success': True, 'operarios': operarios, 'puestos': puestos})
+    except Exception as e:
+        print(f"Error obteniendo filtros de indicadores: {e}")
+        return jsonify({'success': False, 'message': f'Error interno del servidor: {str(e)}'}), 500
+
+
 @app.route('/api/indicadores-historico', methods=['GET'])
 def indicadores_historico():
     """Resumen navegable Mes -> Semana -> Día -> Turno basado en TTG y jornada configurada."""
@@ -3678,6 +3706,7 @@ def indicadores_historico():
         fecha = request.args.get('fecha', '').strip()
         turno_filtro = request.args.get('turno', '').strip()
         operario_filtro = request.args.get('operario', '').strip()
+        puesto_filtro = request.args.get('puesto', '').strip()
 
         with ConexionODBC('Digitalizacion') as conn:
             if not conn:
@@ -3710,6 +3739,9 @@ def indicadores_historico():
             if operario_filtro:
                 condiciones.append('Operario = ?')
                 parametros.append(operario_filtro)
+            if puesto_filtro:
+                condiciones.append('(PUESTO = ? OR Nombre_Puesto = ?)')
+                parametros.extend([puesto_filtro, puesto_filtro])
 
             cursor.execute(f"""
                 SELECT Fecha, Turno, Operario,
@@ -3849,9 +3881,17 @@ def indicadores_registros():
                 return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
             cursor = conn.cursor()
             cursor.execute(f"""
-                SELECT ID, CODLINEA, GFH, ESTADO, Activo, Fecha, Turno,
-                       Realizacion, Operario, TTG, PUESTO, Nombre_Puesto
-                FROM [Digitalizacion].[CAB].[TiempoTeorico]
+                SELECT tt.ID, tt.CODLINEA, tt.GFH, tt.ESTADO, tt.Activo, tt.Fecha, tt.Turno,
+                       tt.Realizacion, tt.Operario, tt.TTG, tt.PUESTO, tt.Nombre_Puesto,
+                       pieza.DESCRIPCIONPIEZA
+                FROM [Digitalizacion].[CAB].[TiempoTeorico] tt
+                OUTER APPLY (
+                    SELECT TOP 1 fpt.DESCRIPCIONPIEZA
+                    FROM [Digitalizacion].[CAB].[Fact_Procesos_Tiempos_Cabinas] fpt
+                    WHERE fpt.CODLINEA = tt.CODLINEA
+                      AND fpt.GFH = tt.GFH
+                    ORDER BY fpt.NumeroPedido
+                ) pieza
                 WHERE {' AND '.join(condiciones)}
                 ORDER BY ID
             """, parametros)
@@ -3866,7 +3906,8 @@ def indicadores_registros():
                 'turno': str(row[6]).strip() if row[6] else '',
                 'realizacion': float(row[7] or 0), 'operario': str(row[8]).strip() if row[8] else '',
                 'ttg': float(row[9] or 0), 'puesto': str(row[10]).strip() if row[10] else '',
-                'nombre_puesto': str(row[11]).strip() if row[11] else ''
+                'nombre_puesto': str(row[11]).strip() if row[11] else '',
+                'descripcion_pieza': str(row[12]).strip() if row[12] else ''
             })
         return jsonify({'success': True, 'registros': registros, 'total': len(registros), 'fecha': fecha, 'turno': turno, 'operario': operario})
     except Exception as e:

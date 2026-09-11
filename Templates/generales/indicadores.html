@@ -477,16 +477,35 @@
     .report-date-filters { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; margin:14px 0 10px; padding:12px; background:#fff; border:1px solid #cce7f6; border-radius:10px; }
     .report-date-filter { display:flex; flex-direction:column; gap:4px; color:#4a7fb3; font-size:.82rem; font-weight:600; }
     .report-date-filter input { width:150px; margin:0; padding:7px 9px; border:1px solid #b7d8ef; border-radius:7px; color:#334155; font:inherit; box-sizing:border-box; }
+    .report-date-filter select { width:180px; margin:0; padding:7px 9px; border:1px solid #b7d8ef; border-radius:7px; color:#334155; background:#fff; font:inherit; box-sizing:border-box; }
     .report-date-filter input:focus { outline:none; border-color:#3880c7; box-shadow:0 0 0 2px rgba(56,128,199,.12); }
     .report-date-btn { border:1px solid #3880c7; border-radius:7px; padding:7px 13px; background:#3880c7; color:#fff; cursor:pointer; font-weight:600; }
     .report-date-btn.secondary { background:#fff; color:#1e6bb8; }
     .report-date-btn:hover { filter:brightness(.97); }
+    .report-quick-filters { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-left:auto; }
+    .report-quick-btn { border:1px solid #b7d8ef; border-radius:7px; padding:7px 10px; background:#fff; color:#1e6bb8; cursor:pointer; font-size:.8rem; font-weight:600; }
+    .report-quick-btn:hover, .report-quick-btn.active { background:#eef7fd; border-color:#3880c7; }
     .report-date-error { flex-basis:100%; color:#c0392b; font-size:.8rem; min-height:1em; }
+    .report-context { color:#64748b; font-size:.82rem; margin:0 0 12px; }
+    .report-kpis { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px; margin-bottom:14px; }
+    .report-kpi { background:#fff; border:1px solid #cce7f6; border-radius:10px; padding:12px 14px; min-width:0; box-shadow:0 3px 10px rgba(56,128,199,.06); }
+    .report-kpi-label { color:#64748b; font-size:.75rem; font-weight:600; }
+    .report-kpi-value { color:#1f2d3d; font-size:1.18rem; font-weight:700; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .report-kpi-value.good { color:#1c8c50; }
+    .report-kpi-value.warn { color:#b97900; }
+    .report-kpi-value.bad { color:#d9534f; }
     .report-breadcrumb { color:#64748b; font-size:.88rem; margin:8px 0 12px; }
     .report-breadcrumb button { border:0; background:none; color:#1e6bb8; cursor:pointer; padding:0; font-size:inherit; }
     .report-table-wrap { width:100%; min-width:0; overflow-x:hidden; }
     .report-table { width:100%; max-width:100%; table-layout:fixed; border-collapse:separate; border-spacing:0; background:#fff; border:1px solid #cce7f6; border-radius:10px; overflow:hidden; }
     .report-table th { background:#3880c7; color:#fff; font-size:.82rem; padding:10px 12px; text-align:left; white-space:normal; overflow-wrap:anywhere; }
+    .report-table th[data-sort-index] { cursor:pointer; user-select:none; }
+    .report-table th[data-sort-index]::after { content:' ↕'; opacity:.65; font-size:.72rem; }
+    .report-table th[data-sort-index][aria-sort="ascending"]::after { content:' ↑'; opacity:1; }
+    .report-table th[data-sort-index][aria-sort="descending"]::after { content:' ↓'; opacity:1; }
+    .report-table thead .report-filter-row th { background:#f5f7fa; padding:6px; border-bottom:1px solid #cce7f6; }
+    .report-table .report-column-filter { width:100%; min-width:0; box-sizing:border-box; padding:6px 7px; border:1px solid #b7d8ef; border-radius:6px; color:#334155; background:#fff; font:inherit; font-size:.75rem; }
+    .report-table .report-column-filter:focus { outline:none; border-color:#3880c7; box-shadow:0 0 0 2px rgba(56,128,199,.12); }
     .report-table td { border-bottom:1px solid #e4eef6; padding:10px 12px; color:#334155; font-size:.9rem; }
     .report-table tr:last-child td { border-bottom:0; }
     .report-row { cursor:pointer; transition:background .15s; }
@@ -498,21 +517,34 @@
     .report-empty { text-align:center; color:#64748b; padding:24px !important; }
     .report-detail { display:none; }
     .report-table-wrap { min-height:260px; }
-    .report-dashboard { display:grid; gap:16px; min-height:260px; }
-    .dashboard-kpis { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; }
-    .dashboard-kpi { background:#fff; border:1px solid #cce7f6; border-radius:10px; padding:14px; min-width:0; }
-    .dashboard-kpi-label { color:#64748b; font-size:.78rem; font-weight:600; }
-    .dashboard-kpi-value { color:#1e6bb8; font-size:1.25rem; font-weight:700; margin-top:5px; overflow-wrap:anywhere; }
-    .dashboard-chart { background:#fff; border:1px solid #cce7f6; border-radius:10px; padding:14px; }
-    .dashboard-chart h3 { margin:0 0 12px; color:#4a7fb3; font-size:1rem; }
-    .dashboard-bars { display:grid; gap:9px; }
-    .dashboard-bar-row { display:grid; grid-template-columns:minmax(100px, 1fr) minmax(120px, 3fr) 70px; align-items:center; gap:10px; cursor:pointer; }
+    .report-dashboard { display:grid; grid-template-columns:minmax(0, 1.65fr) minmax(280px, .85fr); gap:14px; min-height:260px; }
+    .report-dashboard[hidden] { display:none !important; }
+    .dashboard-chart, .dashboard-attention { background:#fff; border:1px solid #cce7f6; border-radius:10px; padding:14px; min-width:0; }
+    .dashboard-chart h3, .dashboard-attention h3 { margin:0 0 5px; color:#4a7fb3; font-size:1rem; }
+    .dashboard-subtitle { color:#64748b; font-size:.78rem; margin-bottom:12px; }
+    .dashboard-legend { display:flex; gap:14px; color:#64748b; font-size:.76rem; margin-bottom:12px; flex-wrap:wrap; }
+    .dashboard-legend span::before { content:''; display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; background:#3880c7; }
+    .dashboard-legend span:nth-child(2)::before { background:#9bbbd4; }
+    .dashboard-bars { display:grid; gap:11px; }
+    .dashboard-bar-row { display:grid; grid-template-columns:minmax(90px, 1fr) minmax(150px, 3fr) 64px; align-items:center; gap:10px; cursor:pointer; padding:3px 0; border-radius:6px; }
+    .dashboard-bar-row:hover { background:#f2f8fc; }
     .dashboard-bar-label { color:#334155; font-size:.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .dashboard-bar-track { height:16px; background:#e7f1f8; border-radius:999px; overflow:hidden; }
-    .dashboard-bar-fill { height:100%; border-radius:999px; background:#3880c7; min-width:2px; }
+    .dashboard-bar-track { height:22px; background:#e7f1f8; border-radius:4px; overflow:hidden; position:relative; }
+    .dashboard-bar-fill { height:10px; border-radius:3px; background:#3880c7; min-width:2px; position:absolute; left:0; top:2px; }
+    .dashboard-bar-capacity { height:8px; border-radius:3px; background:#9bbbd4; min-width:2px; position:absolute; left:0; bottom:2px; }
     .dashboard-bar-value { color:#1e6bb8; font-size:.82rem; font-weight:700; text-align:right; }
+    .dashboard-attention-list { display:grid; gap:8px; }
+    .attention-item { display:grid; grid-template-columns:8px minmax(0,1fr) auto; gap:9px; align-items:center; border:1px solid #edf2f7; border-radius:8px; padding:9px; cursor:pointer; }
+    .attention-item:hover { background:#f8fbfd; border-color:#cce7f6; }
+    .attention-severity { width:8px; height:30px; border-radius:4px; background:#d9534f; }
+    .attention-severity.warn { background:#e5a11b; }
+    .attention-name { color:#334155; font-size:.82rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .attention-meta { color:#64748b; font-size:.73rem; margin-top:2px; }
+    .attention-value { color:#d9534f; font-size:.82rem; font-weight:700; text-align:right; }
+    .attention-ok { color:#1c8c50; background:#f0faf4; border:1px solid #ccebd9; border-radius:8px; padding:14px; font-size:.84rem; }
     .dashboard-empty { text-align:center; color:#64748b; padding:24px; }
-    @media (max-width:850px) { .dashboard-kpis { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    @media (max-width:1000px) { .report-kpis { grid-template-columns:repeat(3, minmax(0, 1fr)); } .report-dashboard { grid-template-columns:1fr; } }
+    @media (max-width:600px) { .report-kpis { grid-template-columns:repeat(2, minmax(0, 1fr)); } .report-quick-filters { margin-left:0; width:100%; } .dashboard-bar-row { grid-template-columns:80px minmax(120px,1fr) 55px; gap:6px; } }
     .report-table th:not(:first-child), .report-table td:not(:first-child) { text-align:center; }
     .report-table th:last-child, .report-table td:last-child { text-align:right; }
     .shift-report[hidden] { display:none; }
@@ -540,7 +572,7 @@
         <path d="M9 21v-6h6v6"></path>
       </svg>
     </button>
-    <div class="header-title">INDICADORES CAB</div>
+    <div class="header-title">REPORTES - JEFE DE EQUIPO</div>
     <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
   </header>
 
@@ -561,7 +593,7 @@
           <label class="report-toggle" title="Mostrar u ocultar el rendimiento por turno">
             <input type="checkbox" id="shiftReportToggle" aria-controls="reportBiContent shiftReport">
             <span class="report-toggle-track" aria-hidden="true"></span>
-            <span>Rendimiento por turno</span>
+            <span>Vista secundaria: rendimiento por turno</span>
           </label>
         </div>
         <button type="button" class="report-back-btn" id="reportBackBtn" hidden>← Volver</button>
@@ -576,10 +608,30 @@
           Hasta
           <input type="date" id="reportDateTo">
         </label>
+        <label class="report-date-filter" for="reportOperarioFilter">
+          Operario
+          <select id="reportOperarioFilter">
+            <option value="">Todos los operarios</option>
+          </select>
+        </label>
+        <label class="report-date-filter" for="reportPuestoFilter">
+          Puesto
+          <select id="reportPuestoFilter">
+            <option value="">Todos los puestos</option>
+          </select>
+        </label>
         <button type="button" class="report-date-btn" id="reportDateApply">Aplicar</button>
         <button type="button" class="report-date-btn secondary" id="reportDateClear">Limpiar</button>
+        <div class="report-quick-filters" aria-label="Periodos rápidos">
+          <button type="button" class="report-quick-btn" data-report-range="today">Hoy</button>
+          <button type="button" class="report-quick-btn" data-report-range="7">Últimos 7 días</button>
+          <button type="button" class="report-quick-btn" data-report-range="30">Últimos 30 días</button>
+          <button type="button" class="report-quick-btn" data-report-range="month">Mes actual</button>
+        </div>
         <div class="report-date-error" id="reportDateError" role="alert" aria-live="polite"></div>
       </div>
+      <div class="report-context" id="reportContext" aria-live="polite"></div>
+      <div class="report-kpis" id="reportKpis" aria-label="Indicadores ejecutivos"></div>
       <div class="report-levels" id="reportLevels" aria-label="Nivel del informe"></div>
       <div class="report-breadcrumb" id="reportTrail"></div>
       <div class="report-table-wrap">
@@ -1225,20 +1277,26 @@
     const reportTableWrap = document.querySelector('.report-table-wrap');
     const reportTableViewBtn = document.getElementById('reportTableViewBtn');
     const reportDashboardViewBtn = document.getElementById('reportDashboardViewBtn');
-    const reportBackBtn = document.getElementById('reportBackBtn');
     const reportHead = document.querySelector('.report-table thead');
     const shiftReportToggle = document.getElementById('shiftReportToggle');
     const reportBiContent = document.getElementById('reportBiContent');
     const shiftReport = document.getElementById('shiftReport');
     const reportDateFrom = document.getElementById('reportDateFrom');
     const reportDateTo = document.getElementById('reportDateTo');
+    const reportOperarioFilter = document.getElementById('reportOperarioFilter');
+    const reportPuestoFilter = document.getElementById('reportPuestoFilter');
     const reportDateApply = document.getElementById('reportDateApply');
     const reportDateClear = document.getElementById('reportDateClear');
     const reportDateError = document.getElementById('reportDateError');
-    const reportDateFilters = { desde: '', hasta: '' };
+    const reportDateQuickButtons = document.querySelectorAll('[data-report-range]');
+    const reportContext = document.getElementById('reportContext');
+    const reportKpis = document.getElementById('reportKpis');
+    const reportBackBtn = document.getElementById('reportBackBtn');
+    const reportDateFilters = { desde: '', hasta: '', operario: '', puesto: '' };
     let reportRequestId = 0;
     let reportDetailActive = false;
     let reportDisplayMode = 'table';
+    let reportCurrentRows = [];
 
     function reportSetDisplayMode(mode) {
       reportDisplayMode = mode === 'dashboard' ? 'dashboard' : 'table';
@@ -1263,6 +1321,7 @@
     function reportResetToRoot() {
       reportState.stack = [{ nivel: 'mes', filtros: {}, label: 'Mes' }];
       reportDetailActive = false;
+      reportCurrentRows = [];
       reportLevels.hidden = false;
       reportDetail.hidden = true;
     }
@@ -1277,6 +1336,9 @@
       reportDateError.textContent = '';
       reportDateFilters.desde = desde;
       reportDateFilters.hasta = hasta;
+      reportDateFilters.operario = reportOperarioFilter.value;
+      reportDateFilters.puesto = reportPuestoFilter.value;
+      reportDateQuickButtons.forEach(button => button.classList.remove('active'));
       reportResetToRoot();
       reportLoadCurrent();
     }
@@ -1287,13 +1349,156 @@
       reportDateTo.value = '';
       reportDateFilters.desde = '';
       reportDateFilters.hasta = '';
+      reportDateFilters.operario = '';
+      reportDateFilters.puesto = '';
+      reportOperarioFilter.value = '';
+      reportPuestoFilter.value = '';
       reportDateError.textContent = '';
+      reportDateQuickButtons.forEach(button => button.classList.remove('active'));
       reportResetToRoot();
       reportLoadCurrent();
     });
 
+    function reportDateString(date) {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function reportApplyQuickRange(range) {
+      const today = new Date();
+      const end = new Date(today);
+      const start = new Date(today);
+      if (range === 'today') {
+        // El inicio ya es hoy.
+      } else if (range === 'month') {
+        start.setDate(1);
+      } else {
+        start.setDate(start.getDate() - (Number(range) - 1));
+      }
+      reportDateFrom.value = reportDateString(start);
+      reportDateTo.value = reportDateString(end);
+      reportDateFilters.desde = reportDateFrom.value;
+      reportDateFilters.hasta = reportDateTo.value;
+      reportDateFilters.operario = reportOperarioFilter.value;
+      reportDateFilters.puesto = reportPuestoFilter.value;
+      reportDateError.textContent = '';
+      reportDateQuickButtons.forEach(button => button.classList.toggle('active', button.dataset.reportRange === range));
+      reportResetToRoot();
+      reportLoadCurrent();
+    }
+
+    reportDateQuickButtons.forEach(button => button.addEventListener('click', () => reportApplyQuickRange(button.dataset.reportRange)));
+
+    async function reportLoadFilterOptions() {
+      try {
+        const response = await fetch('/api/indicadores-filtros', { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || 'No se pudieron cargar los filtros');
+        reportOperarioFilter.innerHTML = '<option value="">Todos los operarios</option>';
+        data.operarios.forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          reportOperarioFilter.appendChild(option);
+        });
+        reportPuestoFilter.innerHTML = '<option value="">Todos los puestos</option>';
+        data.puestos.forEach(value => {
+          const option = document.createElement('option');
+          option.value = value;
+          option.textContent = value;
+          reportPuestoFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.warn('[Informe] No se pudieron cargar las opciones de Operario/Puesto:', error);
+      }
+    }
+
     function reportFmt(value) {
       return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(Number(value || 0));
+    }
+
+    function reportInstallTableTools() {
+      const headerRow = reportHead.querySelector('tr');
+      const body = reportRows;
+      if (!headerRow || !body) return;
+      reportHead.querySelector('.report-filter-row')?.remove();
+      const filterRow = document.createElement('tr');
+      filterRow.className = 'report-filter-row';
+      const filters = [];
+      [...headerRow.cells].forEach((headerCell, index) => {
+        headerCell.dataset.sortIndex = String(index);
+        headerCell.setAttribute('aria-sort', 'none');
+        headerCell.title = 'Pulsar para ordenar';
+        const filterCell = document.createElement('th');
+        const input = document.createElement('input');
+        input.type = 'search';
+        input.className = 'report-column-filter';
+        input.placeholder = 'Filtrar...';
+        input.setAttribute('aria-label', `Filtrar ${headerCell.textContent.trim()}`);
+        filterCell.appendChild(input);
+        filterRow.appendChild(filterCell);
+        filters.push(input);
+        input.addEventListener('input', () => {
+          [...body.rows].forEach(row => {
+            const visible = filters.every((currentFilter, filterIndex) => {
+              const value = currentFilter.value.trim().toLocaleLowerCase();
+              return !value || (row.cells[filterIndex]?.textContent || '').toLocaleLowerCase().includes(value);
+            });
+            row.hidden = !visible;
+          });
+        });
+        headerCell.addEventListener('click', () => {
+          if (document.activeElement === input) return;
+          const direction = headerCell.getAttribute('aria-sort') === 'ascending' ? 'descending' : 'ascending';
+          [...headerRow.cells].forEach(cell => cell.setAttribute('aria-sort', 'none'));
+          headerCell.setAttribute('aria-sort', direction);
+          const rows = [...body.rows];
+          rows.sort((left, right) => {
+            const leftText = left.cells[index]?.textContent.trim() || '';
+            const rightText = right.cells[index]?.textContent.trim() || '';
+            const leftNumber = Number(leftText.replace(/\s/g, '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, ''));
+            const rightNumber = Number(rightText.replace(/\s/g, '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, ''));
+            const bothNumbers = leftText !== '' && rightText !== '' && Number.isFinite(leftNumber) && Number.isFinite(rightNumber);
+            const comparison = bothNumbers
+              ? leftNumber - rightNumber
+              : leftText.localeCompare(rightText, 'es', { sensitivity: 'base', numeric: true });
+            return direction === 'ascending' ? comparison : -comparison;
+          });
+          rows.forEach(row => body.appendChild(row));
+        });
+      });
+      reportHead.appendChild(filterRow);
+    }
+
+    function reportRenderExecutiveSummary(rows) {
+      if (!rows.length) {
+        reportContext.textContent = 'Sin datos para el periodo seleccionado';
+        reportKpis.innerHTML = '';
+        return;
+      }
+      const totalTtg = rows.reduce((sum, row) => sum + Number(row.tt_generado || 0), 0);
+      const totalJornada = rows.reduce((sum, row) => sum + Number(row.jornada_configurada || 0), 0);
+      const totalRegistros = rows.reduce((sum, row) => sum + Number(row.registros || 0), 0);
+      const diferencia = totalTtg - totalJornada;
+      const rendimiento = totalJornada ? (totalTtg / totalJornada) * 100 : 0;
+      const performanceClass = rendimiento >= 100 ? 'good' : rendimiento >= 85 ? 'warn' : 'bad';
+      const range = reportDateFilters.desde || reportDateFilters.hasta
+        ? `${reportDateFilters.desde || 'inicio'} → ${reportDateFilters.hasta || 'hoy'}`
+        : 'Todo el histórico disponible';
+      const selectedFilters = [
+        reportDateFilters.operario && `Operario: ${reportDateFilters.operario}`,
+        reportDateFilters.puesto && `Puesto: ${reportDateFilters.puesto}`
+      ].filter(Boolean).join(' · ');
+      reportContext.textContent = `${range} · Nivel: ${reportLevelLabels[reportState.stack[reportState.stack.length - 1].nivel]}${selectedFilters ? ` · ${selectedFilters}` : ''}`;
+      reportKpis.innerHTML = `
+        <div class="report-kpi"><div class="report-kpi-label">TT generado</div><div class="report-kpi-value">${reportFmt(totalTtg)} min</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Jornada configurada</div><div class="report-kpi-value">${reportFmt(totalJornada)} min</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Rendimiento</div><div class="report-kpi-value ${performanceClass}">${reportFmt(rendimiento)}%</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Desviación</div><div class="report-kpi-value ${diferencia >= 0 ? 'good' : 'bad'}">${diferencia >= 0 ? '+' : ''}${reportFmt(diferencia)} min</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Registros</div><div class="report-kpi-value">${reportFmt(totalRegistros)}</div></div>`;
     }
 
     function reportRenderDashboard(rows) {
@@ -1301,39 +1506,48 @@
         reportDashboard.innerHTML = '<div class="dashboard-empty">No hay datos para mostrar en el dashboard.</div>';
         return;
       }
-      const totalTtg = rows.reduce((sum, row) => sum + Number(row.tt_generado || 0), 0);
-      const totalJornada = rows.reduce((sum, row) => sum + Number(row.jornada_configurada || 0), 0);
-      const totalRegistros = rows.reduce((sum, row) => sum + Number(row.registros || 0), 0);
-      const rendimiento = totalJornada ? (totalTtg / totalJornada) * 100 : 0;
-      const maxRendimiento = Math.max(...rows.map(row => Number(row.rendimiento || 0)), 1);
+      const maxComparable = Math.max(...rows.map(row => Math.max(Number(row.tt_generado || 0), Number(row.jornada_configurada || 0))), 1);
       const bars = rows.map(row => {
-        const width = Math.min((Number(row.rendimiento || 0) / maxRendimiento) * 100, 100);
-        const color = Number(row.rendimiento || 0) >= 100 ? '#1c8c50' : Number(row.rendimiento || 0) >= 85 ? '#e5a11b' : '#d9534f';
-        return `<div class="dashboard-bar-row" data-report-key="${String(row.key).replace(/"/g, '&quot;')}" title="Abrir ${row.label}">
-          <div class="dashboard-bar-label">${row.label}</div>
-          <div class="dashboard-bar-track"><div class="dashboard-bar-fill" style="width:${width}%;background:${color}"></div></div>
+        const rowLabel = reportRowLabel(row);
+        const ttgWidth = Math.min((Number(row.tt_generado || 0) / maxComparable) * 100, 100);
+        const capacityWidth = Math.min((Number(row.jornada_configurada || 0) / maxComparable) * 100, 100);
+        return `<div class="dashboard-bar-row" data-report-key="${String(row.key).replace(/"/g, '&quot;')}" title="Abrir ${rowLabel}">
+          <div class="dashboard-bar-label">${rowLabel}</div>
+          <div class="dashboard-bar-track" aria-label="${rowLabel}: ${reportFmt(row.tt_generado)} frente a ${reportFmt(row.jornada_configurada)} minutos">
+            <div class="dashboard-bar-fill" style="width:${ttgWidth}%"></div>
+            <div class="dashboard-bar-capacity" style="width:${capacityWidth}%"></div>
+          </div>
           <div class="dashboard-bar-value">${reportFmt(row.rendimiento)}%</div>
         </div>`;
       }).join('');
+      const attentionRows = [...rows].sort((a, b) => Number(a.rendimiento || 0) - Number(b.rendimiento || 0)).slice(0, 5);
+      const attention = Number(attentionRows[0]?.rendimiento || 0) >= 100
+        ? '<div class="attention-ok">Todos los elementos del contexto están en rendimiento objetivo.</div>'
+        : `<div class="dashboard-attention-list">${attentionRows.map(row => {
+          const severityClass = Number(row.rendimiento || 0) >= 85 ? 'warn' : '';
+          const rowLabel = reportRowLabel(row);
+          return `<div class="attention-item" data-report-key="${String(row.key).replace(/"/g, '&quot;')}" title="Abrir ${rowLabel}">
+            <span class="attention-severity ${severityClass}" aria-hidden="true"></span>
+            <div><div class="attention-name">${rowLabel}</div><div class="attention-meta">Desviación: ${row.diferencia >= 0 ? '+' : ''}${reportFmt(row.diferencia)} min</div></div>
+            <div class="attention-value">${reportFmt(row.rendimiento)}%</div>
+          </div>`;
+        }).join('')}</div>`;
       reportDashboard.innerHTML = `
-        <div class="dashboard-kpis">
-          <div class="dashboard-kpi"><div class="dashboard-kpi-label">TT generado</div><div class="dashboard-kpi-value">${reportFmt(totalTtg)} min</div></div>
-          <div class="dashboard-kpi"><div class="dashboard-kpi-label">Jornada configurada</div><div class="dashboard-kpi-value">${reportFmt(totalJornada)} min</div></div>
-          <div class="dashboard-kpi"><div class="dashboard-kpi-label">Rendimiento medio</div><div class="dashboard-kpi-value">${reportFmt(rendimiento)}%</div></div>
-          <div class="dashboard-kpi"><div class="dashboard-kpi-label">Registros</div><div class="dashboard-kpi-value">${reportFmt(totalRegistros)}</div></div>
-        </div>
         <div class="dashboard-chart">
-          <h3>Rendimiento por ${reportLevelLabels[reportState.stack[reportState.stack.length - 1].nivel].toLowerCase()}</h3>
+          <h3>TT generado frente a jornada configurada</h3>
+          <div class="dashboard-subtitle">Comparación por ${reportLevelLabels[reportState.stack[reportState.stack.length - 1].nivel].toLowerCase()}. Pulsa una fila para profundizar.</div>
+          <div class="dashboard-legend"><span>TT generado</span><span>Jornada configurada</span></div>
           <div class="dashboard-bars">${bars}</div>
-        </div>`;
-      reportDashboard.querySelectorAll('.dashboard-bar-row').forEach(row => {
+        </div>
+        <div class="dashboard-attention"><h3>Requiere atención</h3><div class="dashboard-subtitle">Elementos con menor rendimiento del contexto actual</div>${attention}</div>`;
+      reportDashboard.querySelectorAll('[data-report-key]').forEach(row => {
         row.addEventListener('click', () => reportOpenRow(row.dataset.reportKey));
       });
     }
 
     function reportRenderLevels() {
       reportLevels.innerHTML = reportLevelOrder.map(level => `
-        <button type="button" class="report-level-btn ${reportState.stack.length === 1 && reportState.stack[0].nivel === level ? 'active' : ''}" data-report-level="${level}">
+        <button type="button" class="report-level-btn ${reportState.stack[reportState.stack.length - 1].nivel === level ? 'active' : ''}" data-report-level="${level}" aria-current="${reportState.stack[reportState.stack.length - 1].nivel === level ? 'true' : 'false'}">
           ${reportLevelLabels[level]}
         </button>
       `).join('');
@@ -1349,6 +1563,7 @@
 
     function reportRenderTrail() {
       reportTrail.innerHTML = '';
+      reportBackBtn.hidden = reportState.stack.length <= 1;
       reportState.stack.forEach((item, index) => {
         if (index) reportTrail.append(' > ');
         if (index < reportState.stack.length - 1) {
@@ -1364,7 +1579,6 @@
           reportTrail.append(item.label);
         }
       });
-      reportBackBtn.hidden = reportState.stack.length <= 1;
     }
 
     async function reportReadJson(response, endpoint) {
@@ -1390,11 +1604,13 @@
       const current = reportState.stack[reportState.stack.length - 1];
       const requestId = ++reportRequestId;
       reportDetailActive = false;
+      reportCurrentRows = [];
       reportRenderLevels();
       reportRenderTrail();
       reportDetail.hidden = true;
       reportDetail.innerHTML = '';
       reportLevels.hidden = false;
+      reportRenderExecutiveSummary([]);
       reportRenderDashboard([]);
       reportHead.innerHTML = '<tr><th>Periodo</th><th>TT generado</th><th>Jornada configurada</th><th>Diferencia</th><th>Rendimiento</th><th>Registros</th><th></th></tr>';
       reportRows.innerHTML = '<tr><td colspan="7" class="report-empty">Cargando informe…</td></tr>';
@@ -1406,10 +1622,14 @@
         if (requestId !== reportRequestId) return;
         if (!data.success) throw new Error(data.message || 'Error en la respuesta de la API');
         if (!data.indicadores.length) {
+          reportCurrentRows = [];
           reportRows.innerHTML = '<tr><td colspan="7" class="report-empty">No hay datos para este nivel.</td></tr>';
+          reportRenderExecutiveSummary([]);
           reportRenderDashboard([]);
           return;
         }
+        reportCurrentRows = data.indicadores;
+        reportRenderExecutiveSummary(data.indicadores);
         reportRenderDashboard(data.indicadores);
         reportRows.innerHTML = data.indicadores.map(row => {
           const diffClass = row.diferencia >= 0 ? 'report-positive' : 'report-negative';
@@ -1425,42 +1645,78 @@
           </tr>`;
         }).join('');
         reportRows.querySelectorAll('.report-row').forEach(row => row.addEventListener('click', () => reportOpenRow(row.dataset.reportKey)));
+        reportInstallTableTools();
       } catch (error) {
         reportRows.innerHTML = `<tr><td colspan="7" class="report-empty">Error cargando informe: ${error.message}</td></tr>`;
       }
     }
 
+    function reportMonthLabel(key) {
+      const [year, month] = String(key).split('-').map(Number);
+      if (!year || !month) return key;
+      return new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(year, month - 1, 1));
+    }
+
+    function reportRowLabel(row) {
+      if (row.nivel === 'mes') return reportMonthLabel(row.key);
+      if (row.nivel === 'dia') return reportDayLabel(row.key);
+      if (row.nivel === 'turno') return reportShiftLabel(row.key);
+      return row.label || row.key;
+    }
+
+    function reportDayLabel(key) {
+      const date = new Date(`${key}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? key : new Intl.DateTimeFormat('es-ES').format(date);
+    }
+
+    function reportShiftLabel(key) {
+      const [fecha, turno] = String(key).split('|');
+      const names = { TM: 'Mañana', TT: 'Tarde', TN: 'Noche' };
+      return `${reportDayLabel(fecha)} · ${names[turno] || turno}`;
+    }
+
     function reportOpenRow(key) {
       const current = reportState.stack[reportState.stack.length - 1];
       if (current.nivel === 'operario') {
-        reportLoadDetails({ ...current.filtros, operario: key });
+        const row = reportCurrentRows.find(item => String(item.key) === String(key));
+        const detailFilters = { ...current.filtros, operario: key };
+        reportState.stack.push({
+          nivel: 'registros',
+          filtros: detailFilters,
+          operario: key,
+          label: row?.label || `Operario ${key}`
+        });
+        reportLoadDetails(detailFilters);
         return;
       }
       if (current.nivel === 'turno') {
         const [fecha, turno] = key.split('|');
-        reportState.stack.push({ nivel: 'operario', filtros: { ...current.filtros, fecha, turno }, label: key });
+        reportState.stack.push({ nivel: 'operario', filtros: { ...current.filtros, fecha, turno }, label: `Operario · ${reportShiftLabel(key)}` });
         reportLoadCurrent();
         return;
       }
       let nextFilters = {};
-      if (current.nivel === 'mes') nextFilters = { mes: key };
+      let nextLabel = key;
+      if (current.nivel === 'mes') { nextFilters = { mes: key }; nextLabel = reportMonthLabel(key); }
       if (current.nivel === 'semana') {
         const [anio, semana] = key.split('-S');
         nextFilters = { anio, semana };
+        nextLabel = `Semana ${semana} · ${anio}`;
       }
-      if (current.nivel === 'dia') nextFilters = { fecha: key };
-      reportState.stack.push({ nivel: reportLevelOrder[reportLevelOrder.indexOf(current.nivel) + 1], filtros: nextFilters, label: key });
+      if (current.nivel === 'dia') { nextFilters = { fecha: key }; nextLabel = reportDayLabel(key); }
+      reportState.stack.push({ nivel: reportLevelOrder[reportLevelOrder.indexOf(current.nivel) + 1], filtros: nextFilters, label: nextLabel });
       reportLoadCurrent();
     }
 
+    /* Implementación anterior de detalle eliminada; se conserva una única versión más abajo.
     async function reportLoadDetails(filters) {
       const params = new URLSearchParams({ ...reportDateFilters, ...filters });
       const context = [filters.mes, filters.anio && `Año ${filters.anio}`, filters.semana && `Semana ${filters.semana}`, filters.fecha, filters.turno, filters.operario && `Operario ${filters.operario}`].filter(Boolean).join(' · ');
       reportDetailActive = true;
-      reportBackBtn.hidden = false;
       reportLevels.hidden = true;
-      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
-      reportRows.innerHTML = '<tr><td colspan="8" class="report-empty">Cargando registros...</td></tr>';
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>DescripciÃ³n pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>RealizaciÃ³n</th></tr>';
+      reportRows.innerHTML = '<tr><td colspan="9" class="report-empty">Cargando registros...</td></tr>';
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>DescripciÃ³n pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>RealizaciÃ³n</th></tr>';
       reportDetail.innerHTML = `<h3>Registros TTG${context ? ` · ${context}` : ''}</h3><p>Cargando registros…</p>`;
       try {
         const endpoint = `/api/indicadores-registros?${params.toString()}`;
@@ -1475,41 +1731,43 @@
       }
     }
 
+    }
+    */
+
+    reportBackBtn.addEventListener('click', () => {
+      if (reportState.stack.length <= 1) return;
+      reportState.stack.pop();
+      reportLoadCurrent();
+    });
+
     // Los registros ocupan la misma vista BI; no se anidan como sublistado.
     reportLoadDetails = async function(filters) {
       reportDetailActive = true;
-      reportBackBtn.hidden = false;
+      reportRenderTrail();
       reportLevels.hidden = true;
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>Descripción pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
       reportDashboard.hidden = true;
       reportTableWrap.hidden = false;
-      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
-      reportRows.innerHTML = '<tr><td colspan="8" class="report-empty">Cargando registros...</td></tr>';
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>Descripción pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>Descripción pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>Descripción pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
+      reportRows.innerHTML = '<tr><td colspan="9" class="report-empty">Cargando registros...</td></tr>';
+      reportHead.innerHTML = '<tr><th>ID</th><th>CODLINEA</th><th>Descripción pieza</th><th>GFH</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TT generado</th><th>Realización</th></tr>';
       const params = new URLSearchParams({ ...reportDateFilters, ...filters });
       try {
         const endpoint = `/api/indicadores-registros?${params.toString()}`;
         const response = await fetch(endpoint, { headers: { Accept: 'application/json' } });
         const data = await reportReadJson(response, endpoint);
         if (!data.success) throw new Error(data.message || 'Error en la respuesta de la API');
-        const rows = data.registros.map(item => `<tr><td>${item.id}</td><td>${item.codlinea || ''}</td><td>${item.gfh || ''}</td><td>${item.nombre_puesto || item.puesto || ''}</td><td>${item.operario || ''}</td><td>${item.estado || ''}</td><td>${reportFmt(item.ttg)} min</td><td>${reportFmt(item.realizacion)}%</td></tr>`).join('');
-        reportRows.innerHTML = rows || '<tr><td colspan="8" class="report-empty">No hay registros.</td></tr>';
+        const rows = data.registros.map(item => `<tr><td>${item.id}</td><td>${item.codlinea || ''}</td><td>${item.descripcion_pieza || ''}</td><td>${item.gfh || ''}</td><td>${item.nombre_puesto || item.puesto || ''}</td><td>${item.operario || ''}</td><td>${item.estado || ''}</td><td>${reportFmt(item.ttg)} min</td><td>${reportFmt(item.realizacion)}%</td></tr>`).join('');
+        reportRows.innerHTML = rows || '<tr><td colspan="9" class="report-empty">No hay registros.</td></tr>';
+        reportInstallTableTools();
       } catch (error) {
-        reportRows.innerHTML = `<tr><td colspan="8" class="report-empty">Error cargando registros: ${error.message}</td></tr>`;
+        reportRows.innerHTML = `<tr><td colspan="9" class="report-empty">Error cargando registros: ${error.message}</td></tr>`;
       }
     };
 
-    reportBackBtn.addEventListener('click', () => {
-      if (reportDetailActive) {
-        reportDetailActive = false;
-        reportLevels.hidden = false;
-        reportSetDisplayMode(reportDisplayMode);
-        reportLoadCurrent();
-        return;
-      }
-      if (reportState.stack.length > 1) {
-        reportState.stack.pop();
-        reportLoadCurrent();
-      }
-    });
+    reportLoadFilterOptions();
     reportLoadCurrent();
   </script>
 </body>

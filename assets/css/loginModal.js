@@ -433,7 +433,7 @@ const CAB_ROUTE_METADATA = [
   { test: /control\.html$/i, title: 'CONTROL - JEFE DE EQUIPO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Control - Jefe de Equipo' }] },
   { test: /resumenpedidos\.html$/i, title: 'RESUMEN DE PEDIDOS CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Resumen de Pedidos CAB' }] },
   { test: /datospedidos\.html$/i, title: 'IMPORTACIÓN DATOS PEDIDOS', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Importación Datos Pedidos' }] },
-  { test: /indicadores\.html$/i, title: 'INDICADORES CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Indicadores CAB' }] },
+  { test: /indicadores\.html$/i, title: 'REPORTES - JEFE DE EQUIPO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Jefe de Equipo', href: '/templates/generales/PuestosCAB.html#view=jefe' }, { label: 'Reportes' }] },
   { test: /manual\.html$/i, title: 'MANUAL DE USUARIO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Manual de Usuario' }] }
 ];
 
@@ -515,7 +515,15 @@ function initCABShell() {
   const heading = document.createElement('h1');
   heading.className = 'title';
   heading.id = 'headerTitle';
-  heading.textContent = metadata.title;
+  const cabHash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const embeddedPuestosSubview = /puestoscab\.html$/i.test(window.location.pathname) && cabHash.get('view') === 'jefe' ? cabHash.get('subview') : '';
+  const shellTitleBySubview = {
+    reportes: 'REPORTES - JEFE DE EQUIPO',
+    capacidades: 'CAPACIDADES CAB',
+    pedidos: 'RESUMEN DE PEDIDOS CAB',
+    datosPedidos: 'IMPORTACIÃ“N DATOS PEDIDOS'
+  };
+  heading.textContent = shellTitleBySubview[embeddedPuestosSubview] || metadata.title;
 
   const right = document.createElement('div');
   right.className = 'header-right-section';

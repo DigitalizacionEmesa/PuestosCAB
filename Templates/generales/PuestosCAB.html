@@ -238,6 +238,12 @@
       reportes: 'Reportes', capacidades: 'Capacidad',
       pedidos: 'Resumen de Pedidos', datosPedidos: 'Importaci\u00f3n Datos Pedidos'
     };
+    const jefeSubviewTitles = {
+      reportes: 'REPORTES - JEFE DE EQUIPO',
+      capacidades: 'CAPACIDADES CAB',
+      pedidos: 'RESUMEN DE PEDIDOS CAB',
+      datosPedidos: 'IMPORTACI\u00d3N DATOS PEDIDOS'
+    };
     const jefeSubviewPaths = {
       reportes: '/templates/generales/indicadores.html',
       capacidades: '/templates/generales/CapacidadesCAB.html',
@@ -249,7 +255,10 @@
     const puestosHomeView = document.getElementById('puestosHomeView');
     const puestosEmbeddedView = document.getElementById('puestosEmbeddedView');
     const puestosEmbeddedFrame = document.getElementById('puestosEmbeddedFrame');
-    const puestosHeaderTitle = document.querySelector('.title');
+    function updatePuestosHeaderTitle(title) {
+      const headerTitle = document.querySelector('.title');
+      if (headerTitle) headerTitle.textContent = title;
+    }
 
     function getPuestosBreadcrumb() {
       return document.querySelector('.breadcrumb-container, .cab-breadcrumb-container');
@@ -433,7 +442,9 @@
         else window.history.pushState({}, '', `${window.location.pathname}${window.location.search}${nextHash}`);
       }
       renderPuestosBreadcrumb(viewKey);
-      puestosHeaderTitle.textContent = viewKey ? puestosViews[viewKey].title : 'PUESTOS CAB';
+      updatePuestosHeaderTitle(viewKey === 'jefe' && jefeSubview
+        ? (jefeSubviewTitles[jefeSubview] || puestosViews[viewKey].title)
+        : (viewKey ? puestosViews[viewKey].title : 'PUESTOS CAB'));
       puestosHomeView.hidden = Boolean(viewKey);
       puestosEmbeddedView.hidden = !viewKey;
       if (!viewKey) {
