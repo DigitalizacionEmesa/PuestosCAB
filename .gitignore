@@ -27,3 +27,6 @@ Thumbs.db
 # Logs
 *.log
 debug-logs/
+
+# Entorno / secretos
+.env
