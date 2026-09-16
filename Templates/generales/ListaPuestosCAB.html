@@ -244,6 +244,8 @@
             console.log('🔍 INICIANDO VERIFICACIÓN DE PERMISOS EN ListaPuestosCAB.html...');
             const permisosResponse = await fetch('/api/obtener-permisos-usuario', {
               method: 'GET',
+              credentials: 'include',
+              cache: 'no-store',
               headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
@@ -353,6 +355,8 @@
           console.log('🔍 INICIANDO VERIFICACIÓN DE PERMISOS EN MODO RESPALDO...');
           const permisosResponse = await fetch('/api/obtener-permisos-usuario', {
             method: 'GET',
+            credentials: 'include',
+            cache: 'no-store',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'

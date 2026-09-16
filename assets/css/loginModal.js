@@ -96,6 +96,31 @@ function checkUserSession() {
   }
 }
 
+// localStorage solo sirve para pintar el widget; la autorizaciÃ³n real depende
+// de la sesiÃ³n Flask del servidor.
+async function syncServerSession() {
+  try {
+    const response = await fetch('/api/verify_session', {
+      method: 'GET',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' }
+    });
+    const data = await response.json();
+    if (response.ok && data.success && data.authenticated && data.user?.id) {
+      localStorage.setItem('usuarioSGA', JSON.stringify(data.user));
+      updateUserWidget();
+      return data.user;
+    }
+    localStorage.removeItem('usuarioSGA');
+    updateUserWidget();
+    return null;
+  } catch (error) {
+    console.error('Error sincronizando sesiÃ³n con el servidor:', error);
+    return checkUserSession() ? getCurrentUser() : null;
+  }
+}
+
 // Función para mostrar el modal de login
 function showLoginModal() {
   if (loginModalState.isOpen) return;
@@ -272,20 +297,20 @@ function redirectToLoginPage() {
 }
 
 // Función para verificar automáticamente la sesión
-function startSessionCheck() {
+async function startSessionCheck() {
   // Detener verificación previa si existe
   if (loginModalState.checkInterval) {
     clearInterval(loginModalState.checkInterval);
   }
   
   // Verificación inicial
-  if (!checkUserSession()) {
-    showLoginModal();
-  }
+  const serverUser = await syncServerSession();
+  if (!serverUser) showLoginModal();
   
   // Verificación periódica
-  loginModalState.checkInterval = setInterval(() => {
-    if (!checkUserSession() && !loginModalState.isOpen) {
+  loginModalState.checkInterval = setInterval(async () => {
+    const serverUser = await syncServerSession();
+    if (!serverUser && !loginModalState.isOpen) {
       showLoginModal();
     }
   }, LOGIN_MODAL_CONFIG.AUTO_CHECK_INTERVAL);
@@ -323,13 +348,25 @@ function getCurrentUser() {
 }
 
 // Función para cerrar sesión
-function logoutUser() {
+async function logoutUser() {
   try {
+    const response = await fetch('/api/logout', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || !data?.success) {
+      throw new Error(data?.message || 'No se pudo cerrar la sesion en el servidor');
+    }
     // Limpiar localStorage
     localStorage.removeItem('usuarioSGA');
     
     // Detener verificación automática
-    stopSessionCheck();
     
     // Actualizar widget de usuario si existe
     updateUserWidget();
@@ -338,7 +375,8 @@ function logoutUser() {
     alert('Sesión cerrada correctamente');
     
     // Redireccionar a la página de PuestosCAB (mismo destino que el botón Home)
-    window.location.href = '/templates/generales/PuestosCAB.html';
+    showLoginModal();
+    window.dispatchEvent(new CustomEvent('userLoggedOut'));
     
   } catch (error) {
     console.error('Error al cerrar sesión:', error);

@@ -130,6 +130,13 @@ RUTA_IMAGENES = r"\\EMEBIDWH\DIgitalizacion\CAB - V1\IMAGENES"
 # ====================================================================================
 # CLASE DE CONEXIÓN ODBC
 # ====================================================================================
+# Resolver los recursos desde el clon que contiene este archivo, no desde una
+# ruta UNC compartida. Estas rutas prevalecen sobre las definidas arriba.
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+RUTA_PANTALLAS = os.path.join(BASE_DIR, 'Templates')
+RUTA_ASSETS = os.path.join(BASE_DIR, 'assets')
+RUTA_IMAGENES = os.path.join(BASE_DIR, 'IMAGENES')
+
 class ConexionODBC:
     def __init__(self, database=None, servidor='EMEBIDWH'):
         # Usa un driver más actual
@@ -339,10 +346,32 @@ def verify_session():
     """Verificar sesión actual"""
     try:
         if 'user_id' in session and 'user_data' in session:
+            # Refrescar los datos desde la BD: el nivel puede cambiar mientras
+            # la sesiÃ³n sigue abierta y no debe quedarse congelado en la cookie.
+            user_data = session['user_data']
+            with ConexionODBC('Digitalizacion') as conn:
+                if conn:
+                    cursor = conn.cursor()
+                    cursor.execute("""
+                        SELECT Id_Usuario, Num_Operario, Nombre, Nivel_Permisos, Roles
+                        FROM General.Usuarios
+                        WHERE Id_Usuario = ?
+                    """, (session['user_id'],))
+                    result = cursor.fetchone()
+                    if result:
+                        user_data = {
+                            'id': result[0],
+                            'num_operario': result[1],
+                            'nombre': result[2],
+                            'nivel': int(result[3] or 0),
+                            'rol': result[4]
+                        }
+                        session['user_data'] = user_data
+
             return jsonify({
                 'success': True,
                 'authenticated': True,
-                'user': session['user_data']
+                'user': user_data
             })
        
         return jsonify({
@@ -362,6 +391,7 @@ def verify_session():
 @app.route('/LOGIN_MODULE/<path:nombre_archivo>')
 def servir_login_module(nombre_archivo):
     ruta_login = r"\\EMEBIDWH\DIgitalizacion\CAB - V1\LOGIN_MODULE"
+    ruta_login = os.path.join(BASE_DIR, 'LOGIN_MODULE')
     ruta_completa = os.path.join(ruta_login, nombre_archivo)
     if not os.path.exists(ruta_completa):
         return f"Archivo no encontrado: {nombre_archivo}", 404
