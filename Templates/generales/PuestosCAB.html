@@ -186,6 +186,7 @@
         console.log('🔍 INICIANDO VERIFICACIÓN DE PERMISOS EN PuestosCAB.html...');
         const response = await fetch('/api/obtener-permisos-usuario', {
           method: 'GET',
+          credentials: 'include',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'

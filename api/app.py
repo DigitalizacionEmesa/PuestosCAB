@@ -519,10 +519,10 @@ def obtener_usuario_sesion():
         else:
             # Si no hay sesión activa, devolver un valor por defecto
             print("⚠️ No hay sesión activa, devolviendo 'Sistema'")
-            return 'Sistema'
+            return None
     except Exception as e:
         print(f"💥 Error obteniendo usuario de sesión: {e}")
-        return 'Sistema'
+        return None
 
 # ====================================================================================
 # ENDPOINTS PARA MOTIVOS DE FALTANTE
