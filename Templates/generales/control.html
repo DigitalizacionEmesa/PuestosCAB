@@ -29,7 +29,7 @@
     }
     
     body { 
-      background: #e6f2fb !important; 
+      background: #f4f6f8 !important;
       font-family: 'Open Sans', Arial, sans-serif !important; 
     }
     .header { 
@@ -39,19 +39,20 @@
       display: flex !important; 
       align-items: center !important; 
     }
-    .card { 
-      background: #cbe7fa !important; 
-      border: 2px solid #b3d6ee !important; 
-      border-radius: 12px !important; 
-      min-height: 120px !important; 
+    .card {
+      background: #cbe7fa !important;
+      border: 1px solid #b3d6ee !important;
+      border-radius: 10px !important;
+      min-height: 0 !important;
     }
   </style>
 
   <style>
     /* Personalizaciones específicas para Control */
     .card-icon-emoji {
-      font-size: 120px;
-      margin-bottom: 15px;
+      order: 1;
+      font-size: 32px;
+      margin: 0 0 7px;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
     }
     
@@ -96,42 +97,105 @@
       }
     }
     
-    /* Ajustes para las tarjetas principales */
-    .main-grid .card {
-      min-height: 320px;
+    /* Menú principal en dos filas compactas, con el patrón visual de CHASIS. */
+    #controlHomeView.container {
+      width: 100%;
+      max-width: none;
+      height: calc(100vh - 126px);
+      min-height: 0;
+      box-sizing: border-box;
+      margin: 0;
+      padding: clamp(12px, 2vh, 20px) 24px;
+      overflow: hidden;
+      display: block;
+      background: #f4f6f8;
+    }
+
+    html:has(#controlHomeView:not([hidden])),
+    body:has(#controlHomeView:not([hidden])) {
+      overflow: hidden;
+    }
+
+    #controlHomeView .main-grid {
+      width: min(100%, 978px);
+      height: auto;
+      max-width: 978px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(2, 210px);
+      gap: 18px 21px;
+    }
+
+    #controlHomeView .main-grid .card {
+      min-height: 0 !important;
+      height: 210px !important;
+      box-sizing: border-box;
+      padding: 18px 15px;
       justify-content: center;
-      text-align: center; /* Centrar todo el contenido de las tarjetas */
+      text-align: center;
       cursor: pointer;
     }
     
-    .main-grid .card-title {
-      font-size: 2rem;
-      margin-bottom: 20px;
+    #controlHomeView .main-grid .card-title {
+      order: 2;
+      font-size: 22.5px;
+      line-height: 1.2;
+      margin: 0;
       text-align: center; /* Centrar específicamente los títulos */
       width: 100%; /* Asegurar que ocupe todo el ancho */
+      color: #214795;
     }
 
-    /* Ajustar el grid para que se vea mejor */
-    .main-grid {
-      max-width: 900px;
-      margin: 20px auto 0 auto;
+    #controlHomeView .card-description {
+      order: 3;
+      margin-top: 9px;
+      color: #60758a;
+      font-size: 15px;
+      line-height: 1.3;
+      text-align: center;
     }
 
-    /* Estilo especial para indicar que es control de jefe */
+    #controlHomeView .card-icon-emoji {
+      order: 1;
+      font-size: 48px;
+      line-height: 1;
+      margin: 0 0 10.5px;
+    }
+
+    @media (max-width: 760px) {
+      #controlHomeView.container { height: calc(100vh - 126px); padding: 12px; }
+      #controlHomeView .main-grid {
+        width: min(100%, 750px);
+        max-width: 750px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(3, clamp(150px, 26vh, 188px));
+        gap: 15px;
+      }
+      #controlHomeView .main-grid .card { height: clamp(150px, 26vh, 188px); padding: 12px; }
+      #controlHomeView .main-grid .card-title { font-size: clamp(18px, 3vw, 22.5px); }
+      #controlHomeView .card-description { font-size: 12px; }
+      #controlHomeView .card-icon-emoji { font-size: 45px; margin-bottom: 9px; }
+    }
+
+    /* Tarjetas y cabecera en la línea visual azul de CHASIS. */
     .control-header {
-      background: linear-gradient(135deg, #ff8c33, #ffb366) !important;
+      background: linear-gradient(135deg, #3f78e0, #214795) !important;
       color: #fff !important;
     }
 
     .control-card {
-      background: #fff5e6 !important;
-      border: 2px solid #ff8c33 !important;
-      color: #cc4400 !important;
+      background: #cbe7fa !important;
+      border: 1px solid #b3d6ee !important;
+      color: #214795 !important;
+      box-shadow: 0 5px 16px rgba(41, 94, 145, 0.10);
     }
 
     .control-card:hover {
-      background: #ffebcc !important;
+      background: #bfe2f8 !important;
+      border-color: #9fcbea !important;
       transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(41, 94, 145, 0.15);
       transition: all 0.2s ease;
     }
 
@@ -238,21 +302,31 @@
       <div class="card control-card" onclick="goToReportes()" role="button" tabindex="0">
         <div class="card-title">Reportes</div>
         <div class="card-icon-emoji">📊</div>
+        <div class="card-description">Consulta de eficiencia y producción</div>
       </div>
 
       <div class="card control-card" onclick="goToCapacidad()" role="button" tabindex="0">
         <div class="card-title">Capacidad</div>
         <div class="card-icon-emoji">⚙️</div>
+        <div class="card-description">Configuración de capacidad por turno</div>
       </div>
 
       <div class="card control-card" onclick="goToPedidos()" role="button" tabindex="0">
         <div class="card-title">Pedidos</div>
         <div class="card-icon-emoji">🔍</div>
+        <div class="card-description">Consulta del resumen de pedidos</div>
+      </div>
+
+      <div class="card control-card" onclick="goToFaltantes()" role="button" tabindex="0">
+        <div class="card-title">Faltantes</div>
+        <div class="card-icon-emoji">⚠️</div>
+        <div class="card-description">Faltantes vigentes e históricos</div>
       </div>
 
       <div class="card control-card" onclick="goToDatosPedidos()" role="button" tabindex="0">
         <div class="card-title">Importación Datos Pedidos</div>
         <div class="card-icon-emoji">📥</div>
+        <div class="card-description">Carga de datos de pedidos</div>
       </div>
     </div>
 
@@ -329,6 +403,7 @@
       reportes: { label: 'Indicadores CAB', title: 'INDICADORES CAB', path: '/templates/generales/indicadores.html' },
       capacidades: { label: 'Capacidades CAB', title: 'CAPACIDADES CAB', path: '/templates/generales/CapacidadesCAB.html' },
       pedidos: { label: 'Resumen de Pedidos', title: 'RESUMEN DE PEDIDOS CAB', path: '/templates/generales/resumenpedidos.html' },
+      faltantes: { label: 'Faltantes', title: 'FALTANTES CAB', path: '/templates/generales/faltantes.html' },
       datosPedidos: { label: 'Importaci\u00f3n Datos Pedidos', title: 'IMPORTACI\u00d3N DATOS PEDIDOS', path: '/templates/generales/datospedidos.html' }
     };
 
@@ -437,6 +512,10 @@
     function goToPedidos() {
       console.log(' Navegando a Pedidos...');
       openControlView('pedidos');
+    }
+
+    function goToFaltantes() {
+      openControlView('faltantes');
     }
 
     // Función para ir a Importación Datos Pedidos

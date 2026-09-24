@@ -25,6 +25,7 @@ import socket
 from flask_cors import CORS, cross_origin
 from datetime import datetime
 import hashlib
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 # ====================================================================================
 # FUNCIONES DE ENCRIPTACIÓN DE CONTRASEÑAS CON WERKZEUG
@@ -3709,7 +3710,9 @@ def indicadores_filtros():
             condiciones = ['Fecha IS NOT NULL']
             parametros = []
             if desde: condiciones.append('Fecha >= ?'); parametros.append(desde)
-            if hasta: condiciones.append('Fecha <= ?'); parametros.append(hasta)
+            if hasta:
+                condiciones.append('Fecha < DATEADD(day, 1, CAST(? AS date))')
+                parametros.append(hasta)
             def add_context(column, names):
                 if names:
                     condiciones.append(f"{column} IN ({','.join('?' for _ in names)})")
@@ -3801,7 +3804,7 @@ def indicadores_dashboard():
         if desde:
             condiciones.append('tt.Fecha >= ?'); parametros.append(desde)
         if hasta:
-            condiciones.append('tt.Fecha <= ?'); parametros.append(hasta)
+            condiciones.append('tt.Fecha < DATEADD(day, 1, CAST(? AS date))'); parametros.append(hasta)
 
         def add_in(column, values):
             if values:
@@ -4068,14 +4071,14 @@ def indicadores_registros():
         mes = request.args.get('mes', '').strip()
         semana = request.args.get('semana', '').strip()
         anio = request.args.get('anio', '').strip()
-        if not operario and (not fecha or not turno):
-            return jsonify({'success': False, 'message': 'Debe indicar fecha y turno, o un operario'}), 400
+        if not operario and not (desde and hasta) and not (fecha and turno):
+            return jsonify({'success': False, 'message': 'Debe indicar un periodo o fecha y turno, o un operario'}), 400
 
         condiciones = []
         parametros = []
         if fecha:
-            condiciones.append('Fecha = ?')
-            parametros.append(fecha)
+            condiciones.append('Fecha >= CAST(? AS date) AND Fecha < DATEADD(day, 1, CAST(? AS date))')
+            parametros.extend([fecha, fecha])
         if turno:
             condiciones.append('Turno = ?')
             parametros.append(turno)
@@ -4083,7 +4086,7 @@ def indicadores_registros():
             condiciones.append('Fecha >= ?')
             parametros.append(desde)
         if hasta:
-            condiciones.append('Fecha <= ?')
+            condiciones.append('Fecha < DATEADD(day, 1, CAST(? AS date))')
             parametros.append(hasta)
         if mes:
             condiciones.append("CONVERT(char(7), Fecha, 120) = ?")
@@ -4146,6 +4149,104 @@ def indicadores_registros():
         return jsonify({'success': False, 'message': f'Error interno del servidor: {str(e)}'}), 500
 
 
+@app.route('/api/indicadores-pdf', methods=['POST'])
+def indicadores_pdf():
+    """Genera y descarga el informe fijo: resumen por operario y registros finales."""
+    try:
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.lib.units import mm
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from xml.sax.saxutils import escape
+        from flask import Response
+
+        payload = request.get_json(silent=True) or {}
+        operators = payload.get('operators') or []
+        records_by_operator = payload.get('records_by_operator') or []
+        date_from = str(payload.get('desde') or '')
+        date_to = str(payload.get('hasta') or '')
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=landscape(A4),
+            rightMargin=12 * mm,
+            leftMargin=12 * mm,
+            topMargin=13 * mm,
+            bottomMargin=13 * mm,
+            title='Informe de eficiencia'
+        )
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle('ReportTitle', parent=styles['Title'], fontName='Helvetica-Bold', fontSize=17, leading=21, textColor=colors.HexColor('#315f8c'), spaceAfter=5)
+        subtitle_style = ParagraphStyle('ReportSubtitle', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=12, leading=15, textColor=colors.HexColor('#315f8c'), spaceBefore=9, spaceAfter=5)
+        body_style = ParagraphStyle('ReportBody', parent=styles['BodyText'], fontName='Helvetica', fontSize=8.5, leading=11, textColor=colors.HexColor('#334155'))
+        cell_style = ParagraphStyle('ReportCell', parent=body_style, fontSize=7.5, leading=9)
+        header_style = ParagraphStyle('ReportHeader', parent=body_style, fontName='Helvetica-Bold', fontSize=7.5, leading=9, textColor=colors.white)
+        story = [Paragraph('Informe de eficiencia', title_style), Paragraph(f'Periodo: {escape(date_from)} a {escape(date_to)}', body_style), Spacer(1, 5)]
+
+        def p(value, style=cell_style):
+            return Paragraph(escape(str(value if value is not None else '')), style)
+
+        def make_table(headers, rows, widths):
+            data = [[p(header, header_style) for header in headers]] + [[p(value) for value in row] for row in rows]
+            table = Table(data, colWidths=widths, repeatRows=1, hAlign='LEFT')
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#3880c7')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('GRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#8fb4d6')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#eaf2fb')]),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEFTPADDING', (0, 0), (-1, -1), 5),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+            ]))
+            return table
+
+        summary_rows = []
+        for item in operators:
+            summary_rows.append([
+                item.get('label', item.get('operario', '')),
+                f"{float(item.get('ttg') or 0):.1f} min",
+                f"{float(item.get('capacidad') or 0):.1f} min",
+                '—' if item.get('eficiencia') is None else f"{float(item.get('eficiencia') or 0):.1f} %",
+                item.get('operaciones', 0), item.get('registros', 0)
+            ])
+        story.append(Paragraph('Resumen por operario', subtitle_style))
+        story.append(make_table(['Operario', 'TTG', 'Capacidad', 'Eficiencia', 'Operaciones', 'Registros'], summary_rows, [35*mm, 28*mm, 30*mm, 28*mm, 28*mm, 25*mm]))
+
+        for index, item in enumerate(records_by_operator):
+            if index or summary_rows:
+                story.append(PageBreak())
+            operator_label = item.get('operator', '')
+            story.append(Paragraph(f"Operario {escape(str(operator_label))} - registros realizados", subtitle_style))
+            record_rows = []
+            for record in item.get('records') or []:
+                record_rows.append([
+                    record.get('codlinea', ''), record.get('descripcion_pieza', ''), str(record.get('fecha', ''))[:10],
+                    record.get('turno', ''), record.get('nombre_puesto') or record.get('puesto', ''), record.get('operario', ''),
+                    record.get('estado', ''), f"{float(record.get('ttg') or 0):.1f} min", f"{float(record.get('realizacion') or 0):.1f} %"
+                ])
+            if not record_rows:
+                record_rows = [['Sin registros', '', '', '', '', '', '', '', '']]
+            story.append(make_table(['CODLINEA', 'Descripción de pieza', 'Fecha', 'Turno', 'Puesto', 'Operario', 'Estado', 'TTG', 'Realización'], record_rows, [27*mm, 43*mm, 25*mm, 18*mm, 28*mm, 24*mm, 23*mm, 22*mm, 25*mm]))
+
+        def footer(canvas, document):
+            canvas.saveState()
+            canvas.setFont('Helvetica', 7)
+            canvas.setFillColor(colors.HexColor('#64748b'))
+            canvas.drawString(12 * mm, 7 * mm, 'EMESA - Informe de eficiencia')
+            canvas.drawRightString(285 * mm, 7 * mm, f'Página {document.page}')
+            canvas.restoreState()
+
+        doc.build(story, onFirstPage=footer, onLaterPages=footer)
+        filename = f"informe_eficiencia_{date_from or 'periodo'}_{date_to or ''}.pdf"
+        return Response(buffer.getvalue(), mimetype='application/pdf', headers={'Content-Disposition': f'attachment; filename="{filename}"'})
+    except Exception as e:
+        print(f"Error generando PDF de indicadores: {e}")
+        return jsonify({'success': False, 'message': f'Error generando PDF: {str(e)}'}), 500
+
+
 @app.route('/api/resumen-pedidos', methods=['GET'])
 def obtener_resumen_pedidos():
     """Obtener resumen de pedidos agrupados por puesto para la pantalla de resumen"""
@@ -4196,7 +4297,8 @@ def obtener_resumen_pedidos():
                         fpt.DESCRIPCIONPIEZA,
                         fpt.CODLINEA,
                         fpt.GFH,
-                        duc.ESTADO
+                        duc.ESTADO,
+                        duc.Faltante
                     FROM [Digitalizacion].[CAB].[Fact_Procesos_Tiempos_Cabinas] fpt
                     INNER JOIN [Digitalizacion].[CAB].[Puestos] p 
                         ON fpt.PUESTO = p.Codigo_Puesto
@@ -4250,6 +4352,7 @@ def obtener_resumen_pedidos():
                     codlinea = row[3]
                     gfh = row[4]
                     estado = row[5]
+                    texto_faltante = row[6] or ''
                     
                     # Debug: Mostrar información sobre cada registro
                     print(f"Procesando: Pedido={numero_pedido}, Puesto={nombre_puesto}, "
@@ -4270,6 +4373,7 @@ def obtener_resumen_pedidos():
                     pedidos_dict[numero_pedido]['puestos_data'][nombre_puesto].append({
                         'descripcion': descripcion_pieza,
                         'estado': estado,
+                        'motivo_faltante': texto_faltante,
                         'debug_info': {
                             'codlinea': codlinea,
                             'gfh': gfh
@@ -4397,6 +4501,60 @@ def obtener_resumen_pedidos():
             'success': False,
             'message': f'Error del servidor: {str(e)}'
         }), 500
+
+
+# ====================================================================================
+# FALTANTES ACTIVOS DE TODOS LOS PUESTOS (JEFE DE EQUIPO)
+# ====================================================================================
+
+@app.route('/api/faltantes', methods=['GET'])
+def obtener_faltantes():
+    """Devuelve faltantes vigentes o su histórico completo, sin limitar por año/semana."""
+    try:
+        modo = request.args.get('modo', 'vigentes').strip().lower()
+        if modo not in {'vigentes', 'historico'}:
+            return jsonify({'success': False, 'message': 'Modo de consulta no válido'}), 400
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            sql = """
+                WITH estado_actual AS (
+                    SELECT ID, CODLINEA, GFH, ESTADO, Activo,
+                           ROW_NUMBER() OVER (PARTITION BY CODLINEA, GFH ORDER BY ID DESC) AS rn
+                    FROM [Digitalizacion].[CAB].[DatosUserCAB]
+                )
+                SELECT d.ID, f.NumeroPedido, f.[Año], f.NumSemana, f.CodigoPieza, f.DESCRIPCIONPIEZA, f.MODELO,
+                       f.TIEMPO_TOTAL, f.CODLINEA, f.GFH, p.Nombre_Puesto,
+                       d.Operario, d.Realizacion, d.Fecha, d.ESTADO, d.Faltante,
+                       CASE WHEN d.ID = ea.ID AND d.Activo = 1 AND ea.ESTADO = 'Faltante'
+                            THEN 1 ELSE 0 END AS Vigente
+                FROM [Digitalizacion].[CAB].[DatosUserCAB] d
+                INNER JOIN [Digitalizacion].[CAB].[Fact_Procesos_Tiempos_Cabinas] f
+                    ON d.CODLINEA = f.CODLINEA AND d.GFH = f.GFH
+                INNER JOIN [Digitalizacion].[CAB].[Puestos] p ON f.PUESTO = p.Codigo_Puesto
+                INNER JOIN estado_actual ea ON ea.CODLINEA = d.CODLINEA
+                    AND ea.GFH = d.GFH AND ea.rn = 1
+                WHERE d.ESTADO = 'Faltante'
+                  AND d.Fecha >= ?
+            """
+            if modo == 'vigentes':
+                sql += " AND d.ID = ea.ID AND d.Activo = 1 AND ea.ESTADO = 'Faltante'"
+            sql += " ORDER BY p.Nombre_Puesto, f.NumeroPedido, f.CODLINEA, f.GFH"
+            cursor.execute(sql, ('2026-09-21',))
+            faltantes = [{
+                'id': r[0], 'numeroPedido': r[1], 'ano': r[2], 'semana': r[3],
+                'codigoPieza': r[4], 'descripcion': r[5], 'modelo': r[6],
+                'tiempoTotal': r[7], 'codlinea': r[8], 'gfh': r[9],
+                'puesto': r[10], 'operario': r[11], 'progreso': r[12] or 0,
+                'fecha': r[13].isoformat() if hasattr(r[13], 'isoformat') else str(r[13] or ''),
+                'estado': r[14], 'motivo': r[15] or '', 'vigente': bool(r[16])
+            } for r in cursor.fetchall()]
+            return jsonify({'success': True, 'faltantes': faltantes, 'total': len(faltantes), 'modo': modo})
+    except Exception as e:
+        print(f"Error obteniendo faltantes: {e}")
+        return jsonify({'success': False, 'message': f'Error del servidor: {str(e)}'}), 500
 
 
 # ====================================================================================
@@ -4608,9 +4766,30 @@ def importar_datos_pedidos():
                             fecha_entrega = f"{a}-{m}-{d}"
                     emb = fila.get('EMB')
                     tipo_decoracion = fila.get('TipoDecoracion')
+                    if tipo_decoracion is not None and str(tipo_decoracion).strip() != '':
+                        tipo_texto = str(tipo_decoracion).strip().replace('\u00a0', '').replace(' ', '')
+                        # Acepta coma o punto decimal; si aparecen ambos, el último es el separador decimal.
+                        if ',' in tipo_texto and '.' in tipo_texto:
+                            separador_decimal = ',' if tipo_texto.rfind(',') > tipo_texto.rfind('.') else '.'
+                            separador_miles = '.' if separador_decimal == ',' else ','
+                            tipo_texto = tipo_texto.replace(separador_miles, '').replace(separador_decimal, '.')
+                        else:
+                            tipo_texto = tipo_texto.replace(',', '.')
+                        try:
+                            tipo_decoracion = Decimal(tipo_texto).quantize(Decimal('0.000001'), rounding=ROUND_HALF_UP)
+                        except InvalidOperation:
+                            errores.append(f"Fila {i+1}: TipoDecoracion {tipo_decoracion} no es un decimal válido")
+                            continue
+                    else:
+                        tipo_decoracion = None
                     notas = fila.get('Notas')
                     operario = fila.get('Operario')
                     modelo = fila.get('Modelo')
+
+                    # DatosPedidos no contiene la columna Operario; no perder ese dato silenciosamente.
+                    if operario is not None and str(operario).strip():
+                        errores.append(f"Fila {i+1}: la tabla DatosPedidos no tiene columna Operario; ese valor no se puede importar")
+                        continue
                     
                     # Validar campos obligatorios
                     if not pedido or not fecha_entrega:
@@ -4643,16 +4822,14 @@ def importar_datos_pedidos():
                                 EMB = ?,
                                 TipoDecoracion = ?,
                                 Notas = ?,
-                                Operario = ?,
                                 Modelo = ?,
                                 FechaImport = SYSDATETIME()
                             WHERE Pedido = ?
                         """, (
                             fecha_entrega,
                             emb if emb else None,
-                            int(tipo_decoracion) if tipo_decoracion else None,
+                            tipo_decoracion,
                             notas if notas else None,
-                            operario if operario else None,
                             modelo if modelo else None,
                             pedido_int
                         ))
@@ -4662,15 +4839,14 @@ def importar_datos_pedidos():
                         # INSERT
                         cursor.execute("""
                             INSERT INTO [Digitalizacion].[CAB].[DatosPedidos]
-                            (Pedido, FechaEntrega, EMB, TipoDecoracion, Notas, Operario, Modelo)
-                            VALUES (?, ?, ?, ?, ?, ?, ?)
+                            (Pedido, FechaEntrega, EMB, TipoDecoracion, Notas, Modelo)
+                            VALUES (?, ?, ?, ?, ?, ?)
                         """, (
                             pedido_int,
                             fecha_entrega,
                             emb if emb else None,
-                            int(tipo_decoracion) if tipo_decoracion else None,
+                            tipo_decoracion,
                             notas if notas else None,
-                            operario if operario else None,
                             modelo if modelo else None
                         ))
                         insertadas += 1

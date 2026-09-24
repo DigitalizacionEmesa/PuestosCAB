@@ -459,6 +459,10 @@
     .report-explorer-header { display:flex; justify-content:space-between; align-items:center; gap:16px; }
     .report-explorer-header h2 { margin:0; color:#4a7fb3; font-size:1.35rem; }
     .report-explorer-header p { margin:4px 0 0; color:#64748b; font-size:.9rem; }
+    .report-export-btn { border:1px solid #3880c7; border-radius:8px; background:#3880c7; color:#fff; padding:8px 14px; cursor:pointer; font-weight:600; white-space:nowrap; }
+    .report-export-actions { display:flex; align-items:center; gap:8px; margin-left:auto; }
+    .report-export-btn:hover { background:#2f70b0; }
+    .report-export-btn:focus-visible { outline:3px solid rgba(56,128,199,.25); outline-offset:2px; }
     .report-actions { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .report-back-btn, .report-toggle { border:1px solid #3880c7; border-radius:8px; background:#fff; color:#1e6bb8; padding:8px 14px; cursor:pointer; font-weight:600; }
     .report-view-switch { display:inline-flex; border:1px solid #b7d8ef; border-radius:8px; overflow:hidden; background:#fff; }
@@ -588,9 +592,47 @@
     .report-trend-item b,.report-trend-item em { display:block; position:absolute; left:0; height:8px; border-radius:4px; }
     .report-trend-item b { top:1px; background:#3880c7; }.report-trend-item em { bottom:1px; background:#8fb9d9; }
     .report-status { min-height:1.2em; color:#64748b; font-size:.85rem; padding:8px 0; }
+    .report-pdf-appendix { display:none; }
+    .report-pdf-table { width:100%; border-collapse:collapse; margin:8px 0 18px; font-size:11px; }
+    .report-pdf-table th { background:#3880c7; color:#fff; padding:6px 8px; text-align:left; }
+    .report-pdf-table td { border-bottom:1px solid #dbe7f0; padding:5px 8px; color:#334155; }
+    .report-pdf-subtitle { color:#315f8c; margin:18px 0 5px; font-size:14px; }
     @media (max-width:1100px) { .report-v2-filters { grid-template-columns:repeat(3,minmax(0,1fr)); } }
     @media (max-width:760px) { .report-v2-filters { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @media (max-width:480px) { .report-v2-filters { grid-template-columns:1fr; } .report-multi-menu { max-width:calc(100vw - 32px); } }
+
+    @media print {
+      @page { size: A4 landscape; margin: 12mm; }
+      html, body { background: #fff !important; }
+      body > header,
+      body > #userSessionWidget,
+      .shift-report,
+      #reportExportPdf,
+      #reportExportXls,
+      #reportBackBtn,
+      #reportDateApply,
+      .report-quick-filters,
+      .report-date-error,
+      .report-multi-menu,
+      .report-status { display: none !important; }
+      .indicadores-container { padding: 0 !important; margin: 0 !important; }
+      .report-explorer { max-width: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; box-shadow: none !important; background: #fff !important; }
+      .report-explorer-header { margin-bottom: 10px; }
+      .report-explorer-header p { color: #475569 !important; }
+      .report-date-filters { padding: 0 0 8px !important; border: 0 !important; background: #fff !important; }
+      .report-v2-filters { margin: 8px 0 10px !important; }
+      .report-multi summary { border-color: #d8e8f4 !important; }
+      .report-multi summary::after { display: none; }
+      .report-explorer-tools select { appearance: none; border: 0; padding-left: 0; font-weight: 700; }
+      .report-table-wrap { display:none !important; }
+      .report-table { page-break-inside: auto; }
+      .report-table tr { page-break-inside: avoid; page-break-after: auto; }
+      .report-table th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .report-kpi, .report-trend-panel { break-inside: avoid; box-shadow: none !important; }
+      .report-pdf-appendix { display:block !important; break-before:page; }
+      .report-pdf-operator { break-inside:avoid; }
+      .report-pdf-table th { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    }
   </style>
 </head>
 <body>
@@ -641,6 +683,7 @@
       <div class="report-trend-panel"><div class="report-section-title">Evolución de eficiencia</div><div id="reportTrend" class="report-trend" aria-live="polite"></div></div>
       <div class="report-explorer-tools"><label>Analizar por <select id="reportGroupBy"><option value="operario">Operario</option><option value="puesto">Puesto</option><option value="gfh">Operación</option><option value="turno">Turno</option><option value="dia">Día</option></select></label><div class="report-breadcrumb" id="reportTrail"></div></div>
       <div class="report-table-wrap"><table class="report-table"><thead id="reportHead"></thead><tbody id="reportRows"><tr><td class="report-empty">Cargando informe…</td></tr></tbody></table></div>
+      <section class="report-pdf-appendix" id="reportPdfAppendix" aria-label="Desglose ampliado del informe"></section>
       <div class="report-status" id="reportStatus" role="status" aria-live="polite"></div>
     </section>
 
@@ -1763,6 +1806,7 @@
     // Dashboard de eficiencia V1: estado único, filtros dependientes y drill-down.
     (() => {
       const $ = id => document.getElementById(id);
+      let topGroup = 'operario';
       const state = { desde: '', hasta: '', filters: { turnos: [], operarios: [], puestos: [], gfh: [], estados: [] }, groupBy: 'operario', stack: [], rows: [], request: 0, controller: null, openFilter: null };
       const labels = { operario: 'Operario', puesto: 'Puesto', gfh: 'Operación', turno: 'Turno', dia: 'Día' };
       const fmt = value => new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(Number(value || 0));
@@ -1770,6 +1814,168 @@
       const dateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const pct = value => value == null ? '—' : `${fmt(value)} %`;
       const effectiveFilters = () => Object.fromEntries(Object.entries(state.filters).filter(([, values]) => values.length));
+      const reportExportButton = document.createElement('button');
+      reportExportButton.type = 'button';
+      reportExportButton.className = 'report-export-btn';
+      reportExportButton.id = 'reportExportPdf';
+      reportExportButton.textContent = 'Exportar PDF';
+      reportExportButton.setAttribute('aria-label', 'Exportar informe de eficiencia a PDF');
+      reportExportButton.addEventListener('click', () => window.exportReportPdf());
+      const reportExportActions = document.createElement('div');
+      reportExportActions.className = 'report-export-actions';
+      reportExportActions.appendChild(reportExportButton);
+      const reportExportXlsButton = document.createElement('button');
+      reportExportXlsButton.type = 'button';
+      reportExportXlsButton.className = 'report-export-btn';
+      reportExportXlsButton.id = 'reportExportXls';
+      reportExportXlsButton.textContent = 'Exportar XLS';
+      reportExportXlsButton.setAttribute('aria-label', 'Exportar informe de eficiencia a Excel');
+      reportExportXlsButton.addEventListener('click', () => window.exportReportXls());
+      reportExportActions.appendChild(reportExportXlsButton);
+      document.querySelector('.report-explorer-header')?.appendChild(reportExportActions);
+      $('reportGroupBy').querySelector('option[value="gfh"]')?.remove();
+      function exportFilters() {
+        // La exportación es un informe fijo: no depende del drill-down abierto
+        // en pantalla, solo de los filtros generales seleccionados.
+        return Object.fromEntries(Object.entries(effectiveFilters()).map(([key, values]) => [key, [...values]]));
+      }
+      function exportQuery(group, extra = {}) {
+        const params = new URLSearchParams({ group_by: group, desde: state.desde, hasta: state.hasta, ...extra });
+        Object.entries(exportFilters()).forEach(([key, values]) => values.forEach(value => params.append(`${key}[]`, value)));
+        return params;
+      }
+      function exportTable(headers, rows) {
+        return `<table class="report-pdf-table"><thead><tr>${headers.map(header => `<th>${esc(header)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map(row => `<tr>${row.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${headers.length}">Sin datos en el periodo seleccionado.</td></tr>`}</tbody></table>`;
+      }
+      async function buildPdfAppendix() {
+        const operatorData = await dashboardJson(await fetch(`/api/indicadores-dashboard?${exportQuery('operario')}`), 'Resumen por operario');
+        const operators = operatorData.rows || [];
+        const filters = exportFilters();
+        const recordResults = await Promise.all(operators.map(async operator => {
+          const params = new URLSearchParams({ desde: state.desde, hasta: state.hasta, operario: operator.key });
+          const data = await dashboardJson(await fetch(`/api/indicadores-registros?${params}`), `Registros de ${operator.label}`);
+          const records = (data.registros || []).filter(record => {
+            const matches = (key, value) => !filters[key]?.length || filters[key].includes(String(value ?? '').trim());
+            return matches('turnos', record.turno)
+              && matches('puestos', record.nombre_puesto || record.puesto)
+              && matches('gfh', record.gfh)
+              && matches('estados', record.estado);
+          });
+          return { operator, records };
+        }));
+        return {
+          desde: state.desde,
+          hasta: state.hasta,
+          operators,
+          records_by_operator: recordResults.map(({ operator, records }) => ({ operator: operator.label, records }))
+        };
+      }
+      window.exportReportPdf = async function() {
+        const previousTitle = document.title;
+        const from = $('reportDateFrom')?.value || state.desde || '';
+        const to = $('reportDateTo')?.value || state.hasta || '';
+        const button = $('reportExportPdf');
+        try {
+          if (button) { button.disabled = true; button.textContent = 'Preparando PDF...'; }
+          const payload = await buildPdfAppendix();
+          const response = await fetch('/api/indicadores-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/pdf' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 220));
+          }
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `informe_eficiencia_${from || 'periodo'}_${to || ''}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          document.title = previousTitle;
+          if (button) { button.disabled = false; button.textContent = 'Exportar PDF'; }
+        } catch (error) {
+          $('reportStatus').textContent = `No se pudo preparar el PDF: ${error.message}`;
+          if (button) { button.disabled = false; button.textContent = 'Exportar PDF'; }
+        }
+      };
+      const xlsEscape = value => String(value ?? '')
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+      const xlsRow = values => `<Row>${values.map(value => `<Cell><Data ss:Type="String">${xlsEscape(value)}</Data></Cell>`).join('')}</Row>`;
+      function xlsSheet(name, rows) {
+        const columnCount = Math.max(1, ...rows.map(row => row.length));
+        return `<Worksheet ss:Name="${xlsEscape(name)}"><Table ss:ExpandedColumnCount="${columnCount}" ss:ExpandedRowCount="${Math.max(1, rows.length)}">${rows.map(xlsRow).join('')}</Table><WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions></Worksheet>`;
+      }
+      function xlsFirstLevelRows() {
+        const group = state.groupBy;
+        const total = state.rows.reduce((sum, row) => sum + Number(row.ttg || 0), 0);
+        const headers = group === 'operario'
+          ? ['Operario', 'TTG', 'Capacidad', 'Eficiencia', 'Diferencia', 'Puestos']
+          : group === 'puesto'
+            ? ['Puesto', 'TTG', '% TTG total', 'Operarios', 'Operaciones', 'Registros']
+            : group === 'turno' || group === 'dia'
+              ? ['Periodo', 'TTG', 'Capacidad', 'Eficiencia', 'Diferencia', 'Registros']
+              : ['Operación / GFH', 'TTG', '% TTG total', 'Puestos', 'Operarios', 'CODLINEA'];
+        const rows = state.rows.map(row => {
+          const share = total ? (Number(row.ttg || 0) / total * 100) : 0;
+          if (group === 'operario') return [row.label, `${fmt(row.ttg)} min`, `${fmt(row.capacidad)} min`, pct(row.eficiencia), `${row.diferencia >= 0 ? '+' : ''}${fmt(row.diferencia)} min`, row.puestos];
+          if (group === 'puesto') return [row.label, `${fmt(row.ttg)} min`, `${fmt(share)} %`, row.operarios, row.operaciones, row.registros];
+          if (group === 'turno' || group === 'dia') return [row.label, `${fmt(row.ttg)} min`, `${fmt(row.capacidad)} min`, pct(row.eficiencia), `${row.diferencia >= 0 ? '+' : ''}${fmt(row.diferencia)} min`, row.registros];
+          return [row.label, `${fmt(row.ttg)} min`, `${fmt(share)} %`, row.puestos, row.operarios, row.codlineas];
+        });
+        return [headers, ...rows];
+      }
+      window.exportReportXls = async function() {
+        const button = $('reportExportXls');
+        try {
+          if (button) { button.disabled = true; button.textContent = 'Preparando XLS...'; }
+          const detailParams = new URLSearchParams({ desde: state.desde, hasta: state.hasta });
+          const detailData = await dashboardJson(await fetch(`/api/indicadores-registros?${detailParams}`), 'Detalle para XLS');
+          const filters = effectiveFilters();
+          const matches = (key, value) => !filters[key]?.length || filters[key].includes(String(value ?? '').trim());
+          const records = (detailData.registros || []).filter(record => matches('turnos', record.turno)
+            && matches('operarios', record.operario)
+            && matches('puestos', record.nombre_puesto || record.puesto)
+            && matches('gfh', record.gfh)
+            && matches('estados', record.estado));
+          const periodRows = [
+            ['Informe de eficiencia CAB'],
+            ['Desde', state.desde || 'Sin límite'],
+            ['Hasta', state.hasta || 'Sin límite'],
+            ['Analizar por', labels[state.groupBy]],
+            ['Turnos', (filters.turnos || []).join(', ') || 'Todos'],
+            ['Operarios', (filters.operarios || []).join(', ') || 'Todos'],
+            ['Puestos', (filters.puestos || []).join(', ') || 'Todos'],
+            ['Operaciones / GFH', (filters.gfh || []).join(', ') || 'Todas'],
+            ['Estados', (filters.estados || []).join(', ') || 'Todos']
+          ];
+          const detailRows = [['CODLINEA', 'Descripción de pieza', 'Fecha', 'Turno', 'Puesto', 'Operario', 'Estado', 'TTG', 'Realización'], ...records.map(record => [
+            record.codlinea, record.descripcion_pieza, String(record.fecha || '').slice(0, 10), record.turno,
+            record.nombre_puesto || record.puesto, record.operario, record.estado, `${fmt(record.ttg)} min`, `${fmt(record.realizacion)} %`
+          ])];
+          const workbook = `<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">${xlsSheet('Periodo', periodRows)}${xlsSheet('Resumen', xlsFirstLevelRows())}${xlsSheet('Detalle', detailRows)}</Workbook>`;
+          const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `informe_eficiencia_${state.desde || 'periodo'}_${state.hasta || ''}.xls`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (error) {
+          $('reportStatus').textContent = `No se pudo preparar el XLS: ${error.message}`;
+        } finally {
+          if (button) { button.disabled = false; button.textContent = 'Exportar XLS'; }
+        }
+      };
       async function dashboardJson(response, url) {
         const body = await response.text();
         const contentType = response.headers.get('content-type') || '';
@@ -1783,7 +1989,7 @@
       function setDefaultWeek() { const today = new Date(); const monday = new Date(today); const day = monday.getDay() || 7; monday.setDate(monday.getDate() - day + 1); state.desde = dateStr(monday); state.hasta = dateStr(today); $('reportDateFrom').value = state.desde; $('reportDateTo').value = state.hasta; }
       function range(name) { const today = new Date(), start = new Date(today), end = new Date(today); const day = today.getDay() || 7;
         if (name === 'week') start.setDate(today.getDate()-day+1); else if (name === 'previous-week') { start.setDate(today.getDate()-day-6); end.setDate(today.getDate()-day); } else if (name === 'month') start.setDate(1); else if (name === 'today') {} else return;
-        state.desde = dateStr(start); state.hasta = dateStr(end); $('reportDateFrom').value=state.desde; $('reportDateTo').value=state.hasta; load(); }
+        state.desde = dateStr(start); state.hasta = dateStr(end); $('reportDateFrom').value=state.desde; $('reportDateTo').value=state.hasta; loadOptions(); load(); }
       function query(group, extra={}) { const params = new URLSearchParams({ group_by: group, desde: state.desde, hasta: state.hasta, ...extra }); Object.entries(effectiveFilters()).forEach(([key, values]) => values.forEach(value => params.append(`${key}[]`, value))); return params; }
 
       function renderFilterBar(options) {
@@ -1803,16 +2009,41 @@
       function renderTrend(rows) { const trend = $('reportTrend'); const max=Math.max(...rows.map(r=>Math.max(r.ttg||0,r.capacidad||0)),1); trend.innerHTML=rows.length ? rows.map(r=>`<button type="button" class="report-trend-item" data-day="${esc(r.key)}"><span>${esc(r.label)}</span><i><b style="width:${(r.ttg/max)*100}%"></b><em style="width:${(r.capacidad/max)*100}%"></em></i><strong>${pct(r.eficiencia)}</strong></button>`).join('') : '<div class="report-empty">Sin datos en el periodo.</div>'; trend.querySelectorAll('[data-day]').forEach(b=>b.addEventListener('click',()=>{ state.desde=b.dataset.day; state.hasta=b.dataset.day; $('reportDateFrom').value=state.desde; $('reportDateTo').value=state.hasta; state.stack=[]; load(); })); }
       function renderBreadcrumb() { $('reportTrail').innerHTML = state.stack.length ? `<button type="button" data-crumb="root">Semana actual</button> <span>›</span> `+state.stack.map((item,i)=>i<state.stack.length-1?`<button type="button" data-crumb="${i}">${esc(item.label)}</button>`:esc(item.label)).join(' <span>›</span> ') : 'Semana actual'; $('reportTrail').querySelectorAll('[data-crumb]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.crumb==='root'){state.stack=[];state.groupBy='operario';$('reportGroupBy').value='operario';}else{state.stack=state.stack.slice(0,Number(b.dataset.crumb)+1);state.groupBy=state.stack[state.stack.length-1]?.groupBy||'operario';$('reportGroupBy').value=state.groupBy;}load();})); $('reportBackBtn').hidden=!state.stack.length; }
       function headers(group) { const base = group==='operario' ? ['Operario','TTG','Capacidad','Eficiencia','Δ','Puestos'] : group==='puesto' ? ['Puesto','TTG','% TTG total','Operarios','Operaciones','Registros'] : group==='gfh' ? ['Operación / GFH','TTG','% TTG total','Puestos','Operarios','CODLINEA'] : ['Periodo','TTG','Capacidad','Eficiencia','Δ','Registros']; $('reportHead').innerHTML=`<tr>${base.map(h=>`<th>${h}</th>`).join('')}<th></th></tr>`; }
-      function openRow(row) {
+      async function loadRecordsForTopLevel(row) {
         if (!row) return;
-        if (state.groupBy === 'operario') { state.stack.push({ groupBy:'operario', label:row.label, filter:'operarios', value:row.key }); state.groupBy='puesto'; $('reportGroupBy').value='puesto'; load(); return; }
-        if (state.groupBy === 'puesto') { state.stack.push({ groupBy:'puesto', label:row.label, filter:'puestos', value:row.key }); state.groupBy='gfh'; $('reportGroupBy').value='gfh'; load(); return; }
-        if (state.groupBy === 'gfh') { loadRecords(row.key); return; }
+        const group = state.groupBy;
+        const params = new URLSearchParams({ desde: state.desde, hasta: state.hasta });
+        if (group === 'operario') params.set('operario', row.key);
+        if (group === 'puesto') params.set('puesto', row.key);
+        if (group === 'dia') params.set('fecha', row.key);
+        if (group === 'turno') params.set('turno', row.key);
+        try {
+          const response = await fetch(`/api/indicadores-registros?${params}`);
+          const data = await response.json();
+          if (!data.success) throw new Error(data.message || 'Error de API');
+          const filters = effectiveFilters();
+          const matches = (key, value) => !filters[key]?.length || filters[key].includes(String(value ?? '').trim());
+          const records = (data.registros || []).filter(record => matches('turnos', record.turno)
+            && matches('operarios', record.operario)
+            && matches('puestos', record.nombre_puesto || record.puesto)
+            && matches('gfh', record.gfh)
+            && matches('estados', record.estado));
+          state.stack = [{ groupBy: group, label: row.label, value: row.key }];
+          renderBreadcrumb();
+          $('reportHead').innerHTML = '<tr><th>CODLINEA</th><th>Descripción de pieza</th><th>Fecha</th><th>Turno</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TTG</th><th>Realización</th></tr>';
+          $('reportRows').innerHTML = records.map(record => `<tr><td>${esc(record.codlinea)}</td><td>${esc(record.descripcion_pieza)}</td><td>${esc(String(record.fecha || '').slice(0, 10))}</td><td>${esc(record.turno)}</td><td>${esc(record.nombre_puesto || record.puesto)}</td><td>${esc(record.operario)}</td><td>${esc(record.estado)}</td><td>${fmt(record.ttg)} min</td><td>${fmt(record.realizacion)} %</td></tr>`).join('') || '<tr><td colspan="9" class="report-empty">No hay registros para este nivel.</td></tr>';
+          $('reportStatus').textContent = `${records.length} registros`;
+        } catch (error) {
+          $('reportStatus').textContent = `Error cargando registros: ${error.message}`;
+        }
       }
+      function openRow(row) { loadRecordsForTopLevel(row); }
       async function loadRecords(gfh) { const filters={...effectiveFilters()}; const context=state.stack.map(i=>[i.filter,i.value]); context.push(['gfh',gfh]); const p=new URLSearchParams({desde:state.desde,hasta:state.hasta}); context.forEach(([k,v])=>p.append(k.replace(/s$/,''),v)); try { const r=await fetch(`/api/indicadores-registros?${p}`); const data=await r.json(); if(!data.success)throw new Error(data.message||'Error de API'); $('reportHead').innerHTML='<tr><th>CODLINEA</th><th>Descripción de pieza</th><th>Fecha</th><th>Turno</th><th>Puesto</th><th>Operario</th><th>Estado</th><th>TTG</th><th>Realización</th></tr>'; $('reportRows').innerHTML=(data.registros||[]).map(x=>`<tr><td>${esc(x.codlinea)}</td><td>${esc(x.descripcion_pieza)}</td><td>${esc(x.fecha)}</td><td>${esc(x.turno)}</td><td>${esc(x.nombre_puesto||x.puesto)}</td><td>${esc(x.operario)}</td><td>${esc(x.estado)}</td><td>${fmt(x.ttg)} min</td><td>${fmt(x.realizacion)} %</td></tr>`).join('')||'<tr><td colspan="9" class="report-empty">No hay registros.</td></tr>'; $('reportStatus').textContent=`${data.total||0} registros`; } catch(e) { $('reportStatus').textContent=`Error cargando registros: ${e.message}`; } }
       function renderRows(rows) { headers(state.groupBy); const total=rows.reduce((s,r)=>s+Number(r.ttg||0),0); $('reportRows').innerHTML=rows.length?rows.map(r=>{ const share=total?(r.ttg/total*100):0; const cells=state.groupBy==='operario'?[r.label,`${fmt(r.ttg)} min`,`${fmt(r.capacidad)} min`,pct(r.eficiencia),`${r.diferencia>=0?'+':''}${fmt(r.diferencia)} min`,r.puestos]:state.groupBy==='puesto'?[r.label,`${fmt(r.ttg)} min`,`${fmt(share)} %`,r.operarios,r.operaciones,r.registros]:state.groupBy==='gfh'?[r.label,`${fmt(r.ttg)} min`,`${fmt(share)} %`,r.puestos,r.operarios,r.codlineas]:[r.label,`${fmt(r.ttg)} min`,`${fmt(r.capacidad)} min`,pct(r.eficiencia),`${r.diferencia>=0?'+':''}${fmt(r.diferencia)} min`,r.registros]; return `<tr class="report-row" data-key="${esc(r.key)}">${cells.map(c=>`<td>${c}</td>`).join('')}<td class="report-open">${state.groupBy==='operario'?'Abrir ›':''}</td></tr>`; }).join(''):`<tr><td colspan="8" class="report-empty">No hay datos para este análisis.</td></tr>`; $('reportRows').querySelectorAll('.report-row').forEach(tr=>tr.addEventListener('click',()=>openRow(rows.find(r=>String(r.key)===tr.dataset.key)))); }
       async function load() { const request=++state.request; if(state.controller) state.controller.abort(); state.controller=new AbortController(); $('reportStatus').textContent='Cargando…'; renderBreadcrumb(); try { const current=state.stack[state.stack.length-1]; const filters={...effectiveFilters()}; if(current) filters[current.filter]=[...(filters[current.filter]||[]),current.value]; const p=new URLSearchParams({group_by:state.groupBy,desde:state.desde,hasta:state.hasta}); Object.entries(filters).forEach(([k,vs])=>vs.forEach(v=>p.append(`${k}[]`,v))); const mainUrl=`/api/indicadores-dashboard?${p}`; const trendUrl=`/api/indicadores-dashboard?${query('dia', current ? {[current.filter]:current.value}: {})}`; const [mainResp,trendResp]=await Promise.all([fetch(mainUrl,{signal:state.controller.signal}),fetch(trendUrl,{signal:state.controller.signal})]); const data=await dashboardJson(mainResp,mainUrl), trend=await dashboardJson(trendResp,trendUrl); if(request!==state.request)return; if(!data.success)throw new Error(data.message||'Error de API'); state.rows=data.rows||[]; renderSummary(data.summary||{}); renderRows(state.rows); renderTrend(trend.rows||[]); $('reportContext').textContent=`${state.desde} → ${state.hasta} · Analizando por ${labels[state.groupBy]}`; $('reportStatus').textContent=''; } catch(e) { if(e.name==='AbortError')return; $('reportStatus').textContent=`Error cargando Reportes: ${e.message}`; $('reportRows').innerHTML='<tr><td class="report-empty">No se pudo cargar el informe.</td></tr>'; } }
       $('reportGroupBy').addEventListener('change',e=>{state.groupBy=e.target.value;state.stack=[];load();}); $('reportBackBtn').addEventListener('click',()=>{state.stack.pop();state.groupBy=state.stack[state.stack.length-1]?.groupBy||'operario';$('reportGroupBy').value=state.groupBy;load();}); $('reportDateApply').addEventListener('click',()=>{if(state.desde&&state.hasta&&state.desde>state.hasta){$('reportDateError').textContent='Desde no puede ser posterior a Hasta.';return;} $('reportDateError').textContent='';state.stack=[];loadOptions();load();});
+      $('reportGroupBy').addEventListener('change', () => { topGroup = state.groupBy; });
+      $('reportBackBtn').addEventListener('click', () => { if (!state.stack.length) { state.groupBy = topGroup; $('reportGroupBy').value = topGroup; load(); } });
       $('reportDateFrom').addEventListener('change',e=>state.desde=e.target.value); $('reportDateTo').addEventListener('change',e=>state.hasta=e.target.value); document.querySelectorAll('[data-report-range]').forEach(b=>b.addEventListener('click',()=>b.dataset.reportRange==='custom'?load():range(b.dataset.reportRange))); setDefaultWeek(); loadOptions(); load();
     })();
   </script>

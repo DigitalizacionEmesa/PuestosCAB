@@ -18,6 +18,7 @@
   <!-- CSS para el widget de usuario -->
   <link rel="stylesheet" href="/assets/css/loginModal.css">
   <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/SelectorMultiple.css?v=1.0">
   
   <!-- CSS específico para la página de resumen -->
   <style>
@@ -64,6 +65,14 @@
     
     /* Variables de colores como en indicadores.html */
     :root{
+      --font-base: 'Segoe UI', 'Inter', 'Roboto', Arial, sans-serif;
+      --color-border-suave: rgba(90, 122, 185, 0.25);
+      --color-primary-100: rgb(232, 240, 255);
+      --color-primary-700: rgb(33, 71, 149);
+      --color-primary-800: rgb(27, 60, 124);
+      --color-primary-900: rgb(20, 45, 91);
+      --color-secondary-100: rgb(255, 255, 230);
+      --color-success: #38c96b;
       --bg:#e6f2fb;               /* Mismo fondo que las otras pantallas */
       --card:#ffffff;             /* Tarjetas blancas */
       --card-secondary:#f8fbff;   /* Tarjetas secundarias azul muy claro */
@@ -84,6 +93,12 @@
       text-align: center !important;
     }
     
+    .filtro-grupo .selector-multiple { min-width: 220px; }
+    .filtro-grupo .selector-boton { min-height: 36px; }
+    .filtro-grupo .selector-panel { position: static; width: 100%; min-width: 220px; margin-top: 4px; box-sizing: border-box; }
+    .filtro-grupo .selector-multiple.selector-abierto { display: block; }
+    .filtro-grupo .selector-buscar { box-sizing: border-box; min-height: 32px; }
+
     body { 
       background: var(--bg) !important; 
       font-family: 'Open Sans', Arial, sans-serif !important; 
@@ -457,7 +472,7 @@
       max-width: 1200px;
       padding: 16px;
       transition: all 0.3s ease;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .filtros-panel.colapsado {
@@ -465,10 +480,11 @@
       padding: 0 16px;
       margin: 0 auto;
       opacity: 0;
+      overflow: hidden;
     }
 
     .filtros-panel.expandido {
-      max-height: 300px;
+      max-height: 1000px;
       opacity: 1;
     }
 
@@ -537,13 +553,72 @@
 
     /* Toggle de expandir/colapsar - Estilo PuestoCAB */
     .filtros-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center !important;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
       text-align: center;
       margin: 6px auto 6px auto;
       max-width: 1200px;
       padding: 0 10px;
     }
 
+    #btnLimpiarSeleccionFiltros {
+      display: none;
+      order: 2;
+      margin-left: 0;
+      width: auto !important;
+      min-width: 0 !important;
+      height: 32px !important;
+      padding: 0 11px !important;
+      box-sizing: border-box;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px;
+      text-align: center;
+      border: 1px solid rgba(33, 71, 149, 0.28);
+      border-radius: 999px;
+      background: linear-gradient(145deg, #ffffff, #e8f2ff) !important;
+      color: #3478b9 !important;
+      font-size: 0;
+      line-height: 1;
+      cursor: pointer;
+      vertical-align: middle;
+      box-shadow: 0 2px 7px rgba(33, 71, 149, 0.16);
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+
+    #btnLimpiarSeleccionFiltros::before {
+      content: '\00D7';
+      display: block;
+      flex: 0 0 auto;
+      font: 600 16px/1 'Segoe UI', Arial, sans-serif;
+    }
+
+    #btnLimpiarSeleccionFiltros::after {
+      content: 'Limpiar';
+      display: block;
+      flex: 0 0 auto;
+      font: 600 12px/1 'Segoe UI', Arial, sans-serif;
+      letter-spacing: 0.01em;
+    }
+
+    #btnLimpiarSeleccionFiltros:hover {
+      color: #b42332;
+      border-color: rgba(180, 35, 50, 0.35);
+      background: linear-gradient(145deg, #fff, #fff0f1) !important;
+      box-shadow: 0 4px 10px rgba(180, 35, 50, 0.16);
+      transform: translateY(-1px);
+    }
+
+    #btnLimpiarSeleccionFiltros:active { transform: translateY(0) scale(0.96); }
+    #btnLimpiarSeleccionFiltros:focus-visible { outline: 3px solid rgba(56, 128, 199, 0.28); outline-offset: 2px; }
+    #btnAplicarFiltros, #btnLimpiarFiltros { display: none !important; }
+
     .toggle-filtros {
+      order: 1;
       cursor: pointer;
       color: var(--text);
       font-weight: 700;
@@ -561,6 +636,16 @@
       background: #c7d9ff;
       transform: translateY(-1px);
       filter: brightness(0.98);
+    }
+
+    @media (max-width: 640px) {
+      /* La hoja global deja 5px de margen al body; recuperar el ancho visible completo. */
+      .filtros-toggle {
+        width: calc(100% + 10px);
+        max-width: none;
+        margin-left: -5px;
+        margin-right: -5px;
+      }
     }
 
     /* Fijar el thead completo (cabeceras + filtros) al hacer scroll */
@@ -811,6 +896,7 @@
   <main>
     <!-- Toggle de expandir/colapsar filtros -->
     <div class="filtros-toggle">
+      <button type="button" id="btnLimpiarSeleccionFiltros" title="Limpiar filtros" aria-label="Limpiar filtros">×</button>
       <span class="toggle-filtros" id="toggleFiltros">▼ Expandir filtros</span>
     </div>
     
@@ -819,16 +905,14 @@
       <div class="filtros-container">
         <div class="filtro-grupo">
           <label>Año:</label>
-          <select id="filtroAno" multiple size="4">
-            <option value="">Cargando años...</option>
-          </select>
+          <div id="filtroAno" class="selector-multiple" data-campo="ano"><button type="button" class="selector-boton" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por anio"><span class="selector-resumen">Todos los años</span><span class="selector-clear-icon" aria-hidden="true"></span><span class="selector-icono" aria-hidden="true"></span></button><div class="selector-panel" role="listbox" aria-multiselectable="true" hidden><ul class="selector-opciones"></ul></div>
+          </div>
         </div>
         
         <div class="filtro-grupo">
           <label>Nº Sem.:</label>
-          <select id="filtroSemana" multiple size="4">
-            <option value="">Cargando semanas...</option>
-          </select>
+          <div id="filtroSemana" class="selector-multiple" data-campo="semana"><button type="button" class="selector-boton" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por semana"><span class="selector-resumen">Todas las semanas</span><span class="selector-clear-icon" aria-hidden="true"></span><span class="selector-icono" aria-hidden="true"></span></button><div class="selector-panel" role="listbox" aria-multiselectable="true" hidden><ul class="selector-opciones"></ul></div>
+          </div>
         </div>
         
         <div class="filtro-grupo">
@@ -942,6 +1026,9 @@
     // Referencias DOM
     const $filtrosPanel = document.getElementById('filtrosPanel');
     const $toggleFiltros = document.getElementById('toggleFiltros');
+    let filtroAnoSelector;
+    let filtroSemanaSelector;
+    let seleccionFiltrosPendiente = false;
     const $filtroAno = document.getElementById('filtroAno');
     const $filtroSemana = document.getElementById('filtroSemana');
     const $btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
@@ -955,6 +1042,24 @@
     const $filtrosAplicados = document.getElementById('filtrosAplicados');
     const $filtrosTexto = document.getElementById('filtrosTexto');
     const $btnModificarFiltros = document.getElementById('btnModificarFiltros');
+    const $btnLimpiarSeleccionFiltros = document.getElementById('btnLimpiarSeleccionFiltros');
+
+    function actualizarBotonLimpiarSeleccion() {
+      const haySeleccion = filtroAnoSelector?.getSelected().length > 0 || filtroSemanaSelector?.getSelected().length > 0;
+      $btnLimpiarSeleccionFiltros.style.display = haySeleccion ? 'inline-flex' : 'none';
+    }
+
+    function aplicarFiltrosAlCerrarSelector(event) {
+      if (!seleccionFiltrosPendiente) return;
+      if ($filtroAno.contains(event.target) || $filtroSemana.contains(event.target)) return;
+
+      const anos = filtroAnoSelector.getSelected();
+      const semanas = filtroSemanaSelector.getSelected();
+      if (anos.length === 0 || semanas.length === 0) return;
+
+      seleccionFiltrosPendiente = false;
+      aplicarFiltros();
+    }
 
     // Función para mostrar/ocultar el panel de filtros
     function toggleFiltrosPanel() {
@@ -992,14 +1097,8 @@
         console.log('Respuesta de la API años:', data);
 
         if (data.success && data.anos) {
-          $filtroAno.innerHTML = '';
+          filtroAnoSelector.setOptions(data.anos.map(ano => ({ value: String(ano), label: String(ano) })));
           
-          data.anos.forEach(ano => {
-            const option = document.createElement('option');
-            option.value = ano;
-            option.textContent = ano;
-            $filtroAno.appendChild(option);
-          });
           
           console.log(`${data.total} años cargados correctamente`);
         } else {
@@ -1010,11 +1109,7 @@
         console.error('Error cargando años:', error);
         
         // Cargar opciones de respaldo estáticas
-        $filtroAno.innerHTML = `
-          <option value="2024">2024</option>
-          <option value="2023">2023</option>
-          <option value="2022">2022</option>
-        `;
+        filtroAnoSelector.setOptions(['2024', '2023', '2022'].map(ano => ({ value: ano, label: ano })));
       }
     }
 
@@ -1039,14 +1134,8 @@
         console.log('Respuesta de la API semanas:', data);
 
         if (data.success && data.semanas) {
-          $filtroSemana.innerHTML = '';
+          filtroSemanaSelector.setOptions(data.semanas.map(semana => ({ value: String(semana), label: `Semana ${semana}` })));
           
-          data.semanas.forEach(semana => {
-            const option = document.createElement('option');
-            option.value = semana;
-            option.textContent = `Semana ${semana}`;
-            $filtroSemana.appendChild(option);
-          });
           
           console.log(`${data.total} semanas cargadas correctamente`);
         } else {
@@ -1057,10 +1146,7 @@
         console.error('Error cargando semanas:', error);
         
         // Cargar opciones de respaldo estáticas
-        $filtroSemana.innerHTML = '';
-        for (let i = 1; i <= 52; i++) {
-          $filtroSemana.innerHTML += `<option value="${i}">Semana ${i}</option>`;
-        }
+        filtroSemanaSelector.setOptions(Array.from({ length: 52 }, (_, i) => ({ value: String(i + 1), label: `Semana ${i + 1}` })));
       }
     }
 
@@ -1068,16 +1154,19 @@
     async function aplicarFiltros() {
       try {
         // Obtener filtros seleccionados
-        const anosSeleccionados = Array.from($filtroAno.selectedOptions).map(opt => opt.value);
-        const semanasSeleccionadas = Array.from($filtroSemana.selectedOptions).map(opt => opt.value);
+        const anosSeleccionados = filtroAnoSelector.getSelected();
+        const semanasSeleccionadas = filtroSemanaSelector.getSelected();
         
         console.log('Filtros seleccionados:', { anos: anosSeleccionados, semanas: semanasSeleccionadas });
         
         // Validar que hay al menos un filtro
-        if (anosSeleccionados.length === 0 && semanasSeleccionadas.length === 0) {
+        if (anosSeleccionados.length === 0 || semanasSeleccionadas.length === 0) {
           alert('Debe seleccionar al menos un año o semana');
           return;
         }
+
+        // Contraer filtros al confirmar la búsqueda para dejar sitio a la tabla.
+        ocultarPanelFiltros();
 
         // Mostrar loading
         mostrarEstado('loading');
@@ -1120,6 +1209,7 @@
       } catch (error) {
         console.error('Error aplicando filtros:', error);
         alert(`Error cargando resumen: ${error.message}`);
+        mostrarPanelFiltros();
         mostrarEstado('nodata');
       }
     }
@@ -1274,7 +1364,9 @@
           
           const tarjetas = piezasPuesto.map(pieza => {
             const claseEstado = obtenerClaseEstado(pieza.estado);
-            return `<div class="estado-tarjeta ${claseEstado}">${pieza.descripcion}</div>`;
+            const motivo = pieza.motivo_faltante || '';
+            const title = motivo ? ` title="${escapeHtml(motivo)}"` : '';
+            return `<div class="estado-tarjeta ${claseEstado}"${title}>${escapeHtml(pieza.descripcion || '')}</div>`;
           }).join('');
           
           return `<td data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}">${tarjetas}</td>`;
@@ -1301,6 +1393,12 @@
       actualizarEstadoPills();
       
       console.log(`Tabla renderizada con ${data.pedidos.length} pedidos, ${columnasDP.length} cols DP y ${data.puestos.length} puestos`);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
     }
 
     // ============================================================
@@ -1651,8 +1749,10 @@
 
     // Limpiar filtros
     function limpiarFiltros() {
-      $filtroAno.selectedIndex = -1;
-      $filtroSemana.selectedIndex = -1;
+      seleccionFiltrosPendiente = false;
+      filtroAnoSelector.clear({ emit: false });
+      filtroSemanaSelector.clear({ emit: false });
+      actualizarBotonLimpiarSeleccion();
       RESUMEN_DATA = null;
       FILTROS_ACTUALES = { anos: [], semanas: [] };
       $filtrosAplicados.style.display = 'none';
@@ -1674,19 +1774,30 @@
     $btnModificarFiltros.addEventListener('click', function() {
       mostrarPanelFiltros();
       // Restaurar selecciones de filtros actuales
-      Array.from($filtroAno.options).forEach(option => {
-        option.selected = FILTROS_ACTUALES.anos.includes(option.value);
+      filtroAnoSelector.setSelected(FILTROS_ACTUALES.anos, { emit: false });
+      filtroSemanaSelector.setSelected(FILTROS_ACTUALES.semanas, { emit: false });
+      actualizarBotonLimpiarSeleccion();
+    });
+
+    [$filtroAno, $filtroSemana].forEach(selector => {
+      selector.addEventListener('selector-multiple:change', () => {
+        seleccionFiltrosPendiente = true;
+        actualizarBotonLimpiarSeleccion();
       });
-      Array.from($filtroSemana.options).forEach(option => {
-        option.selected = FILTROS_ACTUALES.semanas.includes(option.value);
-      });
+    });
+
+    document.addEventListener('click', aplicarFiltrosAlCerrarSelector);
+    $btnLimpiarSeleccionFiltros.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      limpiarFiltros();
     });
 
       // Permitir aplicar filtros con Enter
     [$filtroAno, $filtroSemana].forEach(elemento => {
       elemento.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-          aplicarFiltros();
+          e.preventDefault();
         }
       });
     });
@@ -1712,9 +1823,13 @@
     }
     
     // Inicialización al cargar la página
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
       console.log('🟢 DOM cargado, inicializando página de resumen...');
       
+      const { initSelectorMultiple } = await import('/assets/js/selector-multiple.js');
+      filtroAnoSelector = initSelectorMultiple($filtroAno, { placeholder: 'Todos los años', placeholderBuscar: 'Buscar año...' });
+      filtroSemanaSelector = initSelectorMultiple($filtroSemana, { placeholder: 'Todas las semanas', placeholderBuscar: 'Buscar semana...' });
+
       // Cargar datos iniciales
       cargarAños();
       cargarSemanas();

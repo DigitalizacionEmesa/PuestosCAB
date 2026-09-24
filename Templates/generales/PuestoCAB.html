@@ -13,11 +13,20 @@
   <!-- CSS para el widget de usuario -->
   <link rel="stylesheet" href="/assets/css/loginModal.css">
   <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/SelectorMultiple.css?v=1.0">
   
   <!-- CSS de respaldo en caso de problemas de ruta -->
   <style>
     /* Variables de colores para toda la aplicación */
     :root{
+      --font-base: 'Segoe UI', 'Inter', 'Roboto', Arial, sans-serif;
+      --color-border-suave: rgba(90, 122, 185, 0.25);
+      --color-primary-100: rgb(232, 240, 255);
+      --color-primary-700: rgb(33, 71, 149);
+      --color-primary-800: rgb(27, 60, 124);
+      --color-primary-900: rgb(20, 45, 91);
+      --color-secondary-100: rgb(255, 255, 230);
+      --color-success: #38c96b;
       --bg:#e6f2fb;               /* Mismo fondo que las otras pantallas */
       --card:#ffffff;             /* Tarjetas blancas */
       --card-secondary:#f8fbff;   /* Tarjetas secundarias azul muy claro */
@@ -982,6 +991,34 @@
       margin-top: 20px; /* Centrar verticalmente con los selects */
     }
 
+    .filtro-grupo .selector-multiple { min-width: 220px; }
+    .filtro-grupo .selector-boton { min-height: 36px; }
+    .filtro-grupo .selector-panel {
+      position: static;
+      width: 100%;
+      min-width: 220px;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+    .filtro-grupo .selector-multiple.selector-abierto { display: block; }
+    .filtro-grupo .selector-buscar { box-sizing: border-box; min-height: 32px; }
+
+    /* Mantener los checks compactos del multiselect frente al reset global. */
+    .selector-multiple input[type="checkbox"] {
+      appearance: auto !important;
+      -webkit-appearance: checkbox !important;
+      width: 16px !important;
+      height: 16px !important;
+      min-width: 16px !important;
+      max-width: 16px !important;
+      min-height: 16px !important;
+      max-height: 16px !important;
+      border: 1px solid rgba(63, 120, 224, 0.45) !important;
+      border-radius: 4px !important;
+      background: #fff !important;
+      accent-color: rgba(63, 120, 224, 0.85);
+    }
+
     .filtro-grupo label {
       font-weight: 700;
       color: #2c6aa6;
@@ -1814,16 +1851,30 @@
         <div class="filtros-container">
           <div class="filtro-grupo">
             <label>Año:</label>
-            <select id="filtroAno" multiple size="4">
-              <option value="">Cargando años...</option>
-            </select>
+            <div id="filtroAno" class="selector-multiple" data-campo="ano">
+              <button type="button" class="selector-boton" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por año">
+                <span class="selector-resumen">Todos los años</span>
+                <span class="selector-clear-icon" aria-hidden="true"></span>
+                <span class="selector-icono" aria-hidden="true"></span>
+              </button>
+              <div class="selector-panel" role="listbox" aria-multiselectable="true" hidden>
+                <ul class="selector-opciones"></ul>
+              </div>
+            </div>
           </div>
           
           <div class="filtro-grupo">
             <label>Nº Sem.:</label>
-            <select id="filtroSemana" multiple size="4">
-              <option value="">Cargando semanas...</option>
-            </select>
+            <div id="filtroSemana" class="selector-multiple" data-campo="semana">
+              <button type="button" class="selector-boton" aria-haspopup="listbox" aria-expanded="false" aria-label="Filtrar por semana">
+                <span class="selector-resumen">Todas las semanas</span>
+                <span class="selector-clear-icon" aria-hidden="true"></span>
+                <span class="selector-icono" aria-hidden="true"></span>
+              </button>
+              <div class="selector-panel" role="listbox" aria-multiselectable="true" hidden>
+                <ul class="selector-opciones"></ul>
+              </div>
+            </div>
           </div>
           
           <div class="filtro-grupo">
@@ -1966,6 +2017,8 @@
     });
     
     let filtrosPanelColapsado = true;
+    let filtroAnoSelector = null;
+    let filtroSemanaSelector = null;
 
     // Función para colapsar/expandir el panel de filtros
     function toggleFiltrosPanel() {
@@ -2594,16 +2647,7 @@
         console.log('Respuesta de la API años:', data);
 
         if (data.success && data.anos) {
-          // Limpiar opciones existentes (sin opción vacía en multiselect)
-          $filtroAno.innerHTML = '';
-          
-          // Agregar opciones desde la API
-          data.anos.forEach(ano => {
-            const option = document.createElement('option');
-            option.value = ano;
-            option.textContent = ano;
-            $filtroAno.appendChild(option);
-          });
+          filtroAnoSelector.setOptions(data.anos.map(ano => ({ value: String(ano), label: String(ano) })));
           
           console.log(`${data.total} años cargados correctamente`);
         } else {
@@ -2614,11 +2658,7 @@
         console.error('Error cargando años:', error);
         
         // Cargar opciones de respaldo estáticas (sin opción vacía)
-        $filtroAno.innerHTML = `
-          <option value="2024">2024</option>
-          <option value="2023">2023</option>
-          <option value="2022">2022</option>
-        `;
+        filtroAnoSelector.setOptions(['2024', '2023', '2022'].map(ano => ({ value: ano, label: ano })));
       }
     }
 
@@ -2644,16 +2684,10 @@
         console.log('Respuesta de la API semanas:', data);
 
         if (data.success && data.semanas) {
-          // Limpiar opciones existentes (sin opción vacía en multiselect)
-          $filtroSemana.innerHTML = '';
-          
-          // Agregar opciones desde la API
-          data.semanas.forEach(semana => {
-            const option = document.createElement('option');
-            option.value = semana;
-            option.textContent = `Semana ${semana}`;
-            $filtroSemana.appendChild(option);
-          });
+          filtroSemanaSelector.setOptions(data.semanas.map(semana => ({
+            value: String(semana),
+            label: `Semana ${semana}`
+          })));
           
           console.log(`${data.total} semanas cargadas correctamente`);
         } else {
@@ -2664,17 +2698,17 @@
         console.error('Error cargando semanas:', error);
         
         // Cargar opciones de respaldo estáticas (sin opción vacía)
-        $filtroSemana.innerHTML = '';
-        for (let i = 1; i <= 52; i++) {
-          $filtroSemana.innerHTML += `<option value="${i}">Semana ${i}</option>`;
-        }
+        filtroSemanaSelector.setOptions(Array.from({ length: 52 }, (_, i) => ({
+          value: String(i + 1),
+          label: `Semana ${i + 1}`
+        })));
       }
     }
 
     // Aplicar filtros múltiples
     async function aplicarFiltros() {
-      const anosSeleccionados = Array.from($filtroAno.selectedOptions).map(opt => opt.value);
-      const semanasSeleccionadas = Array.from($filtroSemana.selectedOptions).map(opt => opt.value);
+      const anosSeleccionados = filtroAnoSelector.getSelected();
+      const semanasSeleccionadas = filtroSemanaSelector.getSelected();
       
       if (anosSeleccionados.length === 0 && semanasSeleccionadas.length === 0) {
         alert('Debe seleccionar al menos un año o semana para aplicar filtros');
@@ -2789,8 +2823,8 @@
     // Limpiar filtros múltiples
     function limpiarFiltros() {
       // Deseleccionar todas las opciones
-      Array.from($filtroAno.options).forEach(option => option.selected = false);
-      Array.from($filtroSemana.options).forEach(option => option.selected = false);
+      filtroAnoSelector.clear({ emit: false });
+      filtroSemanaSelector.clear({ emit: false });
       
       // Limpiar filtros de texto también
       limpiarFiltrosTexto();
@@ -3492,8 +3526,8 @@
         }
         
         // Obtener filtros actuales (los mismos que se usaron para cargar las órdenes)
-        const anosSeleccionados = Array.from($filtroAno.selectedOptions).map(opt => opt.value);
-        const semanasSeleccionadas = Array.from($filtroSemana.selectedOptions).map(opt => opt.value);
+        const anosSeleccionados = filtroAnoSelector.getSelected();
+        const semanasSeleccionadas = filtroSemanaSelector.getSelected();
         
         // Construir URL con parámetros
         const params = new URLSearchParams();
@@ -4118,6 +4152,16 @@
     // Inicialización
     document.addEventListener('DOMContentLoaded', async function() {
       console.log('🚀 Inicializando pantalla PuestoCAB...');
+
+      const { initSelectorMultiple } = await import('/assets/js/selector-multiple.js');
+      filtroAnoSelector = initSelectorMultiple($filtroAno, {
+        placeholder: 'Todos los años',
+        placeholderBuscar: 'Buscar año...'
+      });
+      filtroSemanaSelector = initSelectorMultiple($filtroSemana, {
+        placeholder: 'Todas las semanas',
+        placeholderBuscar: 'Buscar semana...'
+      });
       
       // NUEVO: Verificar estructura de la tabla al inicializar
       await verificarEstructuraTabla();

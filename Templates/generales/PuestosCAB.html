@@ -237,18 +237,20 @@
     const puestosPuestoState = { codigo: '', nombre: '' };
     const jefeSubviewLabels = {
       reportes: 'Reportes', capacidades: 'Capacidad',
-      pedidos: 'Resumen de Pedidos', datosPedidos: 'Importaci\u00f3n Datos Pedidos'
+      pedidos: 'Resumen de Pedidos', faltantes: 'Faltantes', datosPedidos: 'Importaci\u00f3n Datos Pedidos'
     };
     const jefeSubviewTitles = {
       reportes: 'REPORTES - JEFE DE EQUIPO',
       capacidades: 'CAPACIDADES CAB',
       pedidos: 'RESUMEN DE PEDIDOS CAB',
+      faltantes: 'FALTANTES CAB',
       datosPedidos: 'IMPORTACI\u00d3N DATOS PEDIDOS'
     };
     const jefeSubviewPaths = {
       reportes: '/templates/generales/indicadores.html',
       capacidades: '/templates/generales/CapacidadesCAB.html',
       pedidos: '/templates/generales/resumenpedidos.html',
+      faltantes: '/templates/generales/faltantes.html',
       datosPedidos: '/templates/generales/datospedidos.html'
     };
     let jefeSubview = '';
@@ -256,6 +258,22 @@
     const puestosHomeView = document.getElementById('puestosHomeView');
     const puestosEmbeddedView = document.getElementById('puestosEmbeddedView');
     const puestosEmbeddedFrame = document.getElementById('puestosEmbeddedFrame');
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+
+    function resetPuestosScrollPosition() {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      const embeddedWindow = puestosEmbeddedFrame.contentWindow;
+      const embeddedDocument = puestosEmbeddedFrame.contentDocument;
+      if (embeddedWindow) embeddedWindow.scrollTo(0, 0);
+      if (embeddedDocument) {
+        embeddedDocument.documentElement.scrollTop = 0;
+        embeddedDocument.body.scrollTop = 0;
+      }
+    }
+
     function updatePuestosHeaderTitle(title) {
       const headerTitle = document.querySelector('.title');
       if (headerTitle) headerTitle.textContent = title;
@@ -422,10 +440,14 @@
       puestosEmbeddedFrame.title = viewKey === 'jefe' && jefeSubview
         ? (jefeSubviewLabels[jefeSubview] || jefeSubview)
         : puestosViews[viewKey].label;
+
+      resetPuestosScrollPosition();
+      requestAnimationFrame(() => requestAnimationFrame(resetPuestosScrollPosition));
     }
 
     function openPuestosView(viewKey, options = {}) {
       const { replace = false } = options;
+      resetPuestosScrollPosition();
       if (viewKey && !puestosViews[viewKey]) viewKey = null;
       if (viewKey === 'jefe') jefeSubview = options.jefeView || '';
       if (viewKey === 'puesto') {
@@ -460,6 +482,7 @@
       const targetSrc = `${targetPath}?embedded=1${puestoQuery}`;
       if (puestosEmbeddedFrame.getAttribute('src') !== targetSrc) puestosEmbeddedFrame.src = targetSrc;
       else preparePuestosEmbeddedView();
+      requestAnimationFrame(() => requestAnimationFrame(resetPuestosScrollPosition));
     }
 
     puestosEmbeddedFrame.addEventListener('load', preparePuestosEmbeddedView);

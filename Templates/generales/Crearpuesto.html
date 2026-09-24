@@ -373,7 +373,7 @@
         </div>
         <!-- Selector de puesto existente para modificar (oculto por defecto) -->
         <div class="field-row" id="selectorPuestoExistente" style="display: none;">
-          <label for="puestoExistente">Seleccionar puesto a modificar</label>
+          <label for="puestoExistente">Nombre de puesto existente</label>
           <select id="puestoExistente" name="puestoExistente">
             <option value="" selected disabled>Selecciona un puesto existente...</option>
           </select>
@@ -507,6 +507,14 @@
     let columnasElegidas = [];
     let modoEdicion = false;
     let puestoActualId = null;
+    let cargaDatosPuestoVersion = 0;
+
+    function actualizarTituloCabecera(texto) {
+      // En modo embedded, el shell reemplaza la cabecera después de ejecutar
+      // este script; resolver el título al momento de cambiar el modo.
+      const titulo = document.querySelector('.header-title, .app-header .title');
+      if (titulo) titulo.textContent = texto;
+    }
     
     // Variables y funciones para el selector de color
     let colorSeleccionado = '#87CEEB'; // Azul claro por defecto
@@ -875,7 +883,7 @@
         // Cambiar a modo edición
         btnEditPuesto.textContent = ' CREAR PUESTO';
         btnEditPuesto.style.background = '#ff9800';
-        document.querySelector('.header-title').textContent = 'Modificar Puesto';
+        actualizarTituloCabecera('Modificar Puesto');
         btnGuardar.textContent = 'Guardar';
         btnEliminar.style.display = 'inline-block'; // Mostrar botón eliminar
         selectorPuestoExistente.style.display = 'grid';
@@ -893,7 +901,7 @@
           EDIT PUESTO
         `;
         btnEditPuesto.style.background = '#ff9800';
-        document.querySelector('.header-title').textContent = 'Crear Puesto';
+        actualizarTituloCabecera('Crear Puesto');
         btnGuardar.textContent = 'Guardar';
         btnEliminar.style.display = 'none'; // Ocultar botón eliminar
         selectorPuestoExistente.style.display = 'none';
@@ -935,7 +943,7 @@
     }
 
     // Cargar puestos existentes para modificar
-    async function cargarPuestosExistentes() {
+    async function cargarPuestosExistentes(idSeleccionado = null) {
       try {
         loadingPuestosExistentes.style.display = 'block';
         puestoExistente.disabled = true;
@@ -966,6 +974,10 @@
             puestoExistente.appendChild(option);
           });
 
+          if (idSeleccionado !== null) {
+            puestoExistente.value = String(idSeleccionado);
+          }
+
           loadingPuestosExistentes.style.display = 'none';
           puestoExistente.disabled = false;
           
@@ -983,14 +995,17 @@
 
     // Cargar datos del puesto seleccionado
     async function cargarDatosPuesto(nombrePuesto) {
+      const versionCarga = ++cargaDatosPuestoVersion;
       try {
         if (!nombrePuesto) return;
+
+        puestoActualId = null;
+        deshabilitarCamposEdicion();
         
         showMsg('Cargando datos del puesto...', 'info');
         
-        console.log(`Cargando datos para puesto: ${nombrePuesto}`);
+        console.log(`Cargando configuración del puesto: ${nombrePuesto}`);
         
-        // Usar el nuevo endpoint para obtener datos completos del puesto
         const response = await fetch(`/api/puesto-datos/${encodeURIComponent(nombrePuesto)}`, {
           method: 'GET',
           headers: {
@@ -1006,6 +1021,7 @@
         const data = await response.json();
         console.log('Datos del puesto cargados:', data);
 
+        if (versionCarga !== cargaDatosPuestoVersion) return;
         if (data.success && data.puesto) {
           const puesto = data.puesto;
           
@@ -1015,6 +1031,7 @@
           
           // Cargar códigos disponibles en el desplegable
           await cargarCodigosParaEdicion(puesto.codigo);
+          if (versionCarga !== cargaDatosPuestoVersion) return;
           
           // Cargar columnas configuradas para este puesto
           columnasElegidas = puesto.columnas || [];
@@ -1028,10 +1045,16 @@
           habilitarCamposEdicion();
           
           showMsg(`Puesto "${data.puesto.nombre}" cargado correctamente`, 'success');
+        } else {
+          throw new Error(data.message || 'No se encontró la configuración del puesto');
         }
 
       } catch (error) {
+        if (versionCarga !== cargaDatosPuestoVersion) return;
         console.error('Error cargando datos del puesto:', error);
+        puestoActualId = null;
+        limpiarFormulario();
+        deshabilitarCamposEdicion();
         showMsg('Error al cargar los datos del puesto', 'error');
       }
     }
@@ -1125,10 +1148,8 @@
 
     // Event listener para selección de puesto existente
     puestoExistente.addEventListener('change', function() {
-      const nombrePuesto = this.options[this.selectedIndex].textContent;
-      if (nombrePuesto && nombrePuesto !== "Selecciona un puesto existente") {
-        cargarDatosPuesto(nombrePuesto);
-      }
+      const nombrePuesto = this.options[this.selectedIndex]?.textContent?.trim();
+      if (this.value && nombrePuesto) cargarDatosPuesto(nombrePuesto);
     });
 
     // ============ FUNCIONES PARA ELIMINAR PUESTO ============
@@ -1180,10 +1201,11 @@
 
         if (data.success) {
           showMsg(`Puesto "${nombrePuesto}" eliminado correctamente`, 'success');
-          // Recargar lista de puestos y limpiar formulario
-          cargarPuestosExistentes();
-          limpiarFormulario();
+          // Limpiar la selección para impedir acciones sobre el puesto eliminado.
           puestoActualId = null;
+          limpiarFormulario();
+          deshabilitarCamposEdicion();
+          await cargarPuestosExistentes();
         } else {
           showMsg(data.message || 'Error al eliminar el puesto', 'error');
         }
@@ -1250,9 +1272,8 @@
 
           if (data.success) {
             showMsg(`Puesto "${nombre.value.trim()}" modificado correctamente con ${columnasElegidas.length} columnas configuradas`, 'success');
-            // Recargar la lista de puestos existentes y resetear campos
-            cargarPuestosExistentes();
-            limpiarFormulario();
+            // Refrescar el nombre del desplegable conservando el puesto activo.
+            await cargarPuestosExistentes(puestoActualId);
           } else {
             showMsg(data.message || 'Error al modificar el puesto', 'error');
           }
