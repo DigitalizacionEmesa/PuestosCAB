@@ -807,66 +807,31 @@
     }
 
     /* Píldoras de filtro rápido (toggles de grupo de columnas) */
-    .quick-filter-pills {
+    .saved-views-toolbar {
       display: flex;
       gap: 8px;
       align-items: center;
       flex-wrap: wrap;
       margin-left: 12px;
     }
+    .view-controls { display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:stretch; gap:8px; flex:1 1 360px; width:100%; max-width:480px; min-width:0; box-sizing:border-box; margin-left:8px; }
+    .view-controls select,.view-controls button { display:flex; align-items:center; justify-content:center; width:100%; height:44px; min-width:0; box-sizing:border-box; margin:0; border:1px solid #8bbbe0; border-radius:8px; background:#fff; color:#246da8; padding:5px 8px; font-size:.82rem; font-weight:600; line-height:1.15; text-align:center; white-space:normal; overflow-wrap:anywhere; }
+    .view-controls button { cursor:pointer; }
+    .view-controls button:hover { background:#edf7ff; }
+    .view-controls button:disabled { cursor:default; opacity:.8; }
+    @media (max-width: 760px) { .view-controls { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+    .view-dialog { width:min(720px, calc(100vw - 32px)); max-height:82vh; overflow:auto; border:1px solid #9ac9e7; border-radius:14px; padding:20px; color:#244b68; box-shadow:0 18px 55px #153d5c44; text-align:left !important; }
+    .view-dialog::backdrop { background:#18364f77; }
+    .view-dialog h2 { margin:0 0 14px; color:#246da8; text-align:left !important; }
+    .view-dialog > p { margin:0 0 16px; text-align:left !important; line-height:1.45; }
+    .view-columns { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:9px; max-height:52vh; max-width:100%; overflow-y:auto; overflow-x:hidden; padding:4px; box-sizing:border-box; }
+    .view-dialog .view-columns label { display:flex; align-items:center; justify-content:flex-start !important; gap:10px; width:100%; min-width:0; min-height:46px; box-sizing:border-box; margin:0 !important; padding:8px 11px; border:1px solid #d6e8f5; border-radius:8px; text-align:left !important; direction:ltr; font-size:.92rem !important; font-weight:600; line-height:1.25; }
+    .view-dialog .view-columns label input[type="checkbox"] { display:block; flex:0 0 16px; width:16px !important; min-width:16px; height:16px; padding:0 !important; margin:0 !important; box-sizing:border-box; }
+    .view-dialog .view-columns label span { display:block; flex:1 1 auto; min-width:0; margin:0; text-align:left !important; overflow-wrap:anywhere; }
+    .view-dialog-actions { display:flex; justify-content:flex-start; gap:8px; margin-top:16px; }
+    .view-dialog-actions button { padding:8px 14px; border:1px solid #8bbbe0; border-radius:8px; background:#fff; color:#246da8; cursor:pointer; }
+    .view-dialog-actions .primary { background:#347fc1; color:#fff; }
 
-    .filter-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 14px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: 2px solid;
-      transition: all 0.2s ease;
-      user-select: none;
-      white-space: nowrap;
-    }
-
-    .filter-pill.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .filter-pill.active:hover {
-      background: #2a5a8a;
-      border-color: #2a5a8a;
-    }
-
-    .filter-pill.inactive {
-      background: #e8e8e8;
-      color: #888;
-      border-color: #ccc;
-    }
-
-    .filter-pill.inactive:hover {
-      background: #d0d0d0;
-      border-color: #aaa;
-    }
-
-    .filter-pill .pill-icon {
-      font-size: 14px;
-    }
-
-    .filter-pill .pill-count {
-      background: rgba(255,255,255,0.25);
-      border-radius: 10px;
-      padding: 1px 8px;
-      font-size: 0.7rem;
-      margin-left: 2px;
-    }
-
-    .filter-pill.inactive .pill-count {
-      background: rgba(0,0,0,0.08);
-    }
   </style>
 </head>
 
@@ -940,13 +905,14 @@
         <button id="btnModificarFiltros" class="btn-modificar-filtros">
           ⚙️ Modificar filtros
         </button>
-        <div class="quick-filter-pills" id="quickFilterPills" style="display: none;">
-          <span class="filter-pill active" id="pillDatosPedidos" onclick="toggleGrupoColumnas('datospedidos')" title="Mostrar/ocultar columnas de DatosPedidos">
-            <span class="pill-icon">📋</span> DatosPedidos
-          </span>
-          <span class="filter-pill active" id="pillOFs" onclick="toggleGrupoColumnas('ofs')" title="Mostrar/ocultar columnas de OF's">
-            <span class="pill-icon">📦</span> OF's
-          </span>
+        <div class="saved-views-toolbar" id="savedViewsToolbar" style="display: none;">
+          <div class="view-controls">
+            <select id="savedViewSelect" aria-label="Vistas guardadas"><option value="">Vista actual</option></select>
+            <button type="button" id="defaultSavedViewBtn" onclick="establecerVistaPredeterminada()" style="display:none">Hacer predeterminada</button>
+            <button type="button" onclick="abrirConfiguracionColumnas()">Columnas</button>
+            <button type="button" onclick="guardarVistaActual()">Guardar vista</button>
+            <button type="button" id="deleteSavedViewBtn" onclick="eliminarVistaActual()" title="Eliminar vista seleccionada" style="display:none">Eliminar</button>
+          </div>
         </div>
         <div class="show-columns-dropdown">
           <button id="showColumnsBtn" class="show-columns-btn" style="display: none;">
@@ -974,6 +940,16 @@
       </div>
     </div>
   </main>
+
+  <dialog id="columnViewDialog" class="view-dialog">
+    <h2>Configurar columnas</h2>
+    <p>Selecciona las columnas que quieres ver. Al guardar una vista también se guardarán estos filtros y el período aplicado.</p>
+    <div id="viewColumnsList" class="view-columns"></div>
+    <div class="view-dialog-actions">
+      <button type="button" onclick="document.getElementById('columnViewDialog').close()">Cancelar</button>
+      <button type="button" class="primary" onclick="aplicarColumnasConfiguradas()">Aplicar</button>
+    </div>
+  </dialog>
 
   <script>
     // ===== CONTROL DE ACCESO - VERIFICACIÓN DE PERMISOS =====
@@ -1020,6 +996,10 @@
     // Variables globales
     let RESUMEN_DATA = null; // Datos del resumen obtenidos de la API
     let FILTROS_ACTUALES = { anos: [], semanas: [] }; // Filtros aplicados actualmente
+    let VISTAS_RESUMEN = [];
+    let VISTA_ACTIVA_ID = '';
+    let VISTA_PREDETERMINADA_ID = '';
+    let columnasVisiblesPersonalizadas = null;
     
     console.log('🟢 Página de resumen de pedidos cargada');
 
@@ -1097,7 +1077,9 @@
         console.log('Respuesta de la API años:', data);
 
         if (data.success && data.anos) {
-          filtroAnoSelector.setOptions(data.anos.map(ano => ({ value: String(ano), label: String(ano) })));
+          const opciones = data.anos.map(ano => ({ value: String(ano), label: String(ano) }));
+          filtroAnoSelector.setOptions(opciones);
+          if (!opciones.length) $filtroAno.querySelector('.selector-resumen').textContent = 'No hay años disponibles';
           
           
           console.log(`${data.total} años cargados correctamente`);
@@ -1134,7 +1116,9 @@
         console.log('Respuesta de la API semanas:', data);
 
         if (data.success && data.semanas) {
-          filtroSemanaSelector.setOptions(data.semanas.map(semana => ({ value: String(semana), label: `Semana ${semana}` })));
+          const opciones = data.semanas.map(semana => ({ value: String(semana), label: `Semana ${semana}` }));
+          filtroSemanaSelector.setOptions(opciones);
+          if (!opciones.length) $filtroSemana.querySelector('.selector-resumen').textContent = 'No hay semanas disponibles';
           
           
           console.log(`${data.total} semanas cargadas correctamente`);
@@ -1218,11 +1202,6 @@
     function renderizarTablaResumen(data) {
       console.log('Renderizando tabla de resumen...');
       
-      // Inicializar estados de grupos de columnas
-      if (window.gruposColumnas === undefined) {
-        window.gruposColumnas = { datospedidos: true, ofs: true };
-      }
-      
       // Estado de ordenación
       if (!window.sortState) {
         window.sortState = { colIndex: -1, direction: 0 }; // 0=none, 1=asc, 2=desc
@@ -1244,19 +1223,20 @@
         'Especiales': 'Op.Espe'
       };
       
-      const showDP = window.gruposColumnas.datospedidos;
-      const showOFs = window.gruposColumnas.ofs;
+      const showDP = true;
+      const showOFs = true;
       
       // 1. Generar cabecera de la tabla con filtros y sort
       const headerHtml = `
         <tr class="cabeceras-row">
-          <th class="col-numero sortable" data-col-index="0" onclick="ordenarTabla(0)" title="Clic para ordenar por Número Pedido">
+          <th class="col-numero sortable" data-col-index="0" data-col-key="pedido" onclick="ordenarTabla(0)" title="Clic para ordenar por Número Pedido">
             Número Pedido <span class="sort-icon">⇅</span>
           </th>
           ${columnasDP.map((col, idx) => {
             const colIndex = 1 + idx;
             return `<th data-col-index="${colIndex}" 
                      data-grupo="datospedidos"
+                     data-col-key="dp:${col}"
                      class="col-dp sortable ${showDP ? '' : 'col-hidden'}" 
                      onclick="ordenarTabla(${colIndex})"
                      title="Clic para ordenar por ${columnasDPLabels[col]}">
@@ -1267,6 +1247,7 @@
             const colIndex = 1 + columnasDP.length + index;
             return `<th data-col-index="${colIndex}" 
                      data-grupo="ofs"
+                     data-col-key="of:${encodeURIComponent(puesto)}"
                      class="sortable ${showOFs ? '' : 'col-hidden'}" 
                      onclick="ordenarTabla(${colIndex})"
                      title="Clic para ordenar por ${puesto}">
@@ -1275,20 +1256,20 @@
           }).join('')}
         </tr>
         <tr class="filtros-row">
-          <th class="col-numero" data-col-index="0">
+          <th class="col-numero" data-col-index="0" data-col-key="pedido">
             <input type="text" class="filtro-texto" id="filtro-numero" 
                    placeholder="Filtrar por número..." 
                    onkeyup="aplicarFiltrosTexto()">
           </th>
           ${columnasDP.map(col => {
-            return `<th data-grupo="datospedidos" class="${showDP ? '' : 'col-hidden'}">
+            return `<th data-grupo="datospedidos" data-col-key="dp:${col}" class="${showDP ? '' : 'col-hidden'}">
               <input type="text" class="filtro-texto" id="filtro-dp-${col}" 
                      placeholder="Filtrar ${columnasDPLabels[col].toLowerCase()}..." 
                      onkeyup="aplicarFiltrosTexto()">
             </th>`;
           }).join('')}
           ${data.puestos.map((puesto, index) => {
-            return `<th data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}">
+            return `<th data-grupo="ofs" data-col-key="of:${encodeURIComponent(puesto)}" class="${showOFs ? '' : 'col-hidden'}">
               <input type="text" class="filtro-texto" id="filtro-puesto-${index}" 
                      placeholder="Buscar ${puesto}..." 
                      onkeyup="aplicarFiltrosTexto()">
@@ -1315,7 +1296,7 @@
           
           // Columna Notas: editable inline
           if (col === 'Notas') {
-            return `<td data-grupo="datospedidos" class="col-dp-val col-notas ${showDP ? '' : 'col-hidden'}">
+            return `<td data-grupo="datospedidos" data-col-key="dp:${col}" class="col-dp-val col-notas ${showDP ? '' : 'col-hidden'}">
               <textarea class="notas-editable" 
                         data-pedido="${pedido.numeroPedido}"
                         data-original="${texto.replace(/"/g, '&quot;')}"
@@ -1326,7 +1307,7 @@
           
           // Columna Operario: editable inline (máx 3 dígitos)
           if (col === 'Operario') {
-            return `<td data-grupo="datospedidos" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
+            return `<td data-grupo="datospedidos" data-col-key="dp:${col}" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
               <input type="text" class="operario-editable" 
                      data-pedido="${pedido.numeroPedido}"
                      data-original="${texto}"
@@ -1339,7 +1320,7 @@
           
           // Columnas editables genéricas: Clinchado, Suelos, Techos, Bajotecho, Especiales
           if (['Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales'].includes(col)) {
-            return `<td data-grupo="datospedidos" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
+            return `<td data-grupo="datospedidos" data-col-key="dp:${col}" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
               <input type="text" class="operario-editable" 
                      data-pedido="${pedido.numeroPedido}"
                      data-campo="${col}"
@@ -1351,15 +1332,15 @@
             </td>`;
           }
           
-          return `<td data-grupo="datospedidos" class="col-dp-val ${showDP ? '' : 'col-hidden'}">${texto}</td>`;
+          return `<td data-grupo="datospedidos" data-col-key="dp:${col}" class="col-dp-val ${showDP ? '' : 'col-hidden'}">${texto}</td>`;
         }).join('');
         
         // Celdas de puestos (OF's)
-        const celdasPuestos = data.puestos.map(puesto => {
+        const celdasPuestos = data.puestos.map((puesto, index) => {
           const piezasPuesto = pedido.puestos_data[puesto] || [];
           
           if (piezasPuesto.length === 0) {
-            return `<td data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}"></td>`;
+            return `<td data-grupo="ofs" data-col-key="of:${encodeURIComponent(puesto)}" class="${showOFs ? '' : 'col-hidden'}"></td>`;
           }
           
           const tarjetas = piezasPuesto.map(pieza => {
@@ -1369,7 +1350,7 @@
             return `<div class="estado-tarjeta ${claseEstado}"${title}>${escapeHtml(pieza.descripcion || '')}</div>`;
           }).join('');
           
-          return `<td data-grupo="ofs" class="${showOFs ? '' : 'col-hidden'}">${tarjetas}</td>`;
+          return `<td data-grupo="ofs" data-col-key="of:${encodeURIComponent(puesto)}" class="${showOFs ? '' : 'col-hidden'}">${tarjetas}</td>`;
         }).join('');
         
         return `
@@ -1389,8 +1370,17 @@
       }
       
       // Mostrar píldoras de filtro rápido
-      document.getElementById('quickFilterPills').style.display = 'flex';
-      actualizarEstadoPills();
+      document.getElementById('savedViewsToolbar').style.display = 'flex';
+      actualizarSelectorVistas();
+      if (window.filtrosVistaPendiente) {
+        Object.entries(window.filtrosVistaPendiente).forEach(([key, value]) => {
+          const input = [...$tableHeader.querySelectorAll('.filtro-texto')].find(el => el.closest('th')?.dataset.colKey === key);
+          if (input) input.value = value;
+        });
+        window.filtrosVistaPendiente = null;
+        aplicarFiltrosTexto();
+      }
+      if (columnasVisiblesPersonalizadas) aplicarColumnasVisibles(columnasVisiblesPersonalizadas);
       
       console.log(`Tabla renderizada con ${data.pedidos.length} pedidos, ${columnasDP.length} cols DP y ${data.puestos.length} puestos`);
     }
@@ -1485,72 +1475,6 @@
             th.classList.add('sort-desc');
             if (icon) icon.textContent = '▼';
           }
-        }
-      }
-    }
-
-    // ============================================================
-    // TOGGLE DE GRUPOS DE COLUMNAS (PÍLDORAS)
-    // ============================================================
-    function toggleGrupoColumnas(grupo) {
-      console.log(`🔘 Toggle grupo: ${grupo}`);
-      
-      window.gruposColumnas[grupo] = !window.gruposColumnas[grupo];
-      const visible = window.gruposColumnas[grupo];
-      
-      // Mostrar/ocultar todas las celdas de este grupo
-      const elementos = document.querySelectorAll(`[data-grupo="${grupo}"]`);
-      elementos.forEach(el => {
-        if (visible) {
-          el.classList.remove('col-hidden');
-        } else {
-          el.classList.add('col-hidden');
-          // Limpiar filtros de columnas ocultas
-          const input = el.querySelector('.filtro-texto');
-          if (input && input.value.trim() !== '') {
-            input.value = '';
-          }
-        }
-      });
-      
-      // Limpiar ordenación si se oculta la columna ordenada
-      if (!visible && window.sortState.colIndex >= 0) {
-        const sortedTh = document.querySelector(`#tableHeader th.sortable[data-col-index="${window.sortState.colIndex}"]`);
-        if (sortedTh && sortedTh.getAttribute('data-grupo') === grupo) {
-          window.sortState = { colIndex: -1, direction: 0 };
-          actualizarIndicadorSort();
-          // Reordenar al orden original
-          if (RESUMEN_DATA) aplicarFiltrosTexto();
-        }
-      }
-      
-      actualizarEstadoPills();
-      actualizarContadorFiltros();
-      
-      console.log(`✅ Grupo ${grupo}: ${visible ? 'visible' : 'oculto'}`);
-    }
-    
-    function actualizarEstadoPills() {
-      const pillDP = document.getElementById('pillDatosPedidos');
-      const pillOFs = document.getElementById('pillOFs');
-      
-      if (pillDP) {
-        if (window.gruposColumnas.datospedidos) {
-          pillDP.className = 'filter-pill active';
-          pillDP.querySelector('.pill-icon').textContent = '📋';
-        } else {
-          pillDP.className = 'filter-pill inactive';
-          pillDP.querySelector('.pill-icon').textContent = '📋';
-        }
-      }
-      
-      if (pillOFs) {
-        if (window.gruposColumnas.ofs) {
-          pillOFs.className = 'filter-pill active';
-          pillOFs.querySelector('.pill-icon').textContent = '📦';
-        } else {
-          pillOFs.className = 'filter-pill inactive';
-          pillOFs.querySelector('.pill-icon').textContent = '📦';
         }
       }
     }
@@ -1707,12 +1631,12 @@
           break;
         case 'loading':
           $loadingTable.style.display = 'block';
-          document.getElementById('quickFilterPills').style.display = 'none';
+          document.getElementById('savedViewsToolbar').style.display = 'none';
           break;
         case 'nodata':
           $noDataTable.style.display = 'block';
           $filtrosAplicados.style.display = 'none';
-          document.getElementById('quickFilterPills').style.display = 'none';
+          document.getElementById('savedViewsToolbar').style.display = 'none';
           break;
       }
     }
@@ -1756,9 +1680,8 @@
       RESUMEN_DATA = null;
       FILTROS_ACTUALES = { anos: [], semanas: [] };
       $filtrosAplicados.style.display = 'none';
-      document.getElementById('quickFilterPills').style.display = 'none';
+      document.getElementById('savedViewsToolbar').style.display = 'none';
       window.sortState = { colIndex: -1, direction: 0 };
-      window.gruposColumnas = { datospedidos: true, ofs: true }; // Resetear píldoras
       
       // También limpiar filtros de texto si existen
       limpiarFiltrosTexto();
@@ -1823,16 +1746,159 @@
     }
     
     // Inicialización al cargar la página
+    async function cargarVistasResumen() {
+      try {
+        const response = await fetch('/api/resumen-pedidos/vistas', { credentials: 'same-origin' });
+        const data = await response.json();
+        if (response.ok && data.success) {
+          VISTAS_RESUMEN = Array.isArray(data.vistas) ? data.vistas : [];
+          VISTA_PREDETERMINADA_ID = data.vista_predeterminada || '';
+        }
+      } catch (error) { console.warn('No se pudieron cargar las vistas guardadas', error); }
+      actualizarSelectorVistas();
+    }
+
+    function actualizarSelectorVistas() {
+      const select = document.getElementById('savedViewSelect');
+      const deleteButton = document.getElementById('deleteSavedViewBtn');
+      const defaultButton = document.getElementById('defaultSavedViewBtn');
+      if (!select) return;
+      const actual = VISTA_ACTIVA_ID;
+      select.innerHTML = '<option value="">Vista actual</option>' + VISTAS_RESUMEN.map(v =>
+        `<option value="${escapeHtml(v.id)}">${v.id === VISTA_PREDETERMINADA_ID ? '★ ' : ''}${escapeHtml(v.nombre)}</option>`).join('');
+      select.value = actual;
+      if (deleteButton) deleteButton.style.display = actual ? 'inline-block' : 'none';
+      if (defaultButton) {
+        defaultButton.style.display = actual ? 'inline-block' : 'none';
+        defaultButton.textContent = actual === VISTA_PREDETERMINADA_ID ? 'Vista predeterminada ✓' : 'Hacer predeterminada';
+        defaultButton.disabled = actual === VISTA_PREDETERMINADA_ID;
+      }
+      select.onchange = () => { if (select.value) aplicarVistaGuardada(select.value); else VISTA_ACTIVA_ID = ''; actualizarSelectorVistas(); };
+    }
+
+    function obtenerColumnasVisibles() {
+      return [...$tableHeader.querySelectorAll('tr.cabeceras-row th[data-col-key]')]
+        .filter(th => th.dataset.colKey !== 'pedido' && !th.classList.contains('col-hidden'))
+        .map(th => th.dataset.colKey);
+    }
+
+    function aplicarColumnasVisibles(columnas) {
+      const visibles = new Set(columnas || []);
+      $tableHeader.querySelectorAll('[data-col-key]').forEach(el => {
+        if (el.dataset.colKey === 'pedido') return;
+        el.classList.toggle('col-hidden', !visibles.has(el.dataset.colKey));
+      });
+      $tableBody.querySelectorAll('[data-col-key]').forEach(el => el.classList.toggle('col-hidden', !visibles.has(el.dataset.colKey)));
+      columnasVisiblesPersonalizadas = [...visibles];
+    }
+
+    function abrirConfiguracionColumnas() {
+      if (!RESUMEN_DATA) { alert('Aplica primero los filtros para cargar las columnas disponibles.'); return; }
+      const list = document.getElementById('viewColumnsList');
+      list.innerHTML = [...$tableHeader.querySelectorAll('tr.cabeceras-row th[data-col-key]')]
+        .filter(th => th.dataset.colKey !== 'pedido')
+        .map(th => {
+          const label = th.cloneNode(true); label.querySelector('.sort-icon')?.remove();
+          return `<label><input type="checkbox" value="${escapeHtml(th.dataset.colKey)}" ${!th.classList.contains('col-hidden') ? 'checked' : ''}> <span>${escapeHtml(label.textContent.trim())}</span></label>`;
+        }).join('');
+      document.getElementById('columnViewDialog').showModal();
+    }
+
+    function aplicarColumnasConfiguradas() {
+      const visibles = [...document.querySelectorAll('#viewColumnsList input:checked')].map(input => input.value);
+      aplicarColumnasVisibles(visibles);
+      document.getElementById('columnViewDialog').close();
+      VISTA_ACTIVA_ID = '';
+      actualizarSelectorVistas();
+    }
+
+    function obtenerFiltrosTextoActuales() {
+      const filtros = {};
+      $tableHeader.querySelectorAll('.filtro-texto').forEach(input => {
+        const key = input.closest('th')?.dataset.colKey;
+        if (key && input.value.trim()) filtros[key] = input.value.trim();
+      });
+      return filtros;
+    }
+
+    async function persistirVistasResumen() {
+      const response = await fetch('/api/resumen-pedidos/vistas', {
+        method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vistas: VISTAS_RESUMEN, vista_predeterminada: VISTA_PREDETERMINADA_ID })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron guardar las vistas');
+      VISTAS_RESUMEN = data.vistas || VISTAS_RESUMEN;
+      VISTA_PREDETERMINADA_ID = data.vista_predeterminada || '';
+    }
+
+    async function establecerVistaPredeterminada() {
+      if (!VISTA_ACTIVA_ID || VISTA_ACTIVA_ID === VISTA_PREDETERMINADA_ID) return;
+      const anterior = VISTA_PREDETERMINADA_ID;
+      VISTA_PREDETERMINADA_ID = VISTA_ACTIVA_ID;
+      try { await persistirVistasResumen(); actualizarSelectorVistas(); }
+      catch (error) { VISTA_PREDETERMINADA_ID = anterior; alert(error.message); }
+    }
+
+    async function guardarVistaActual() {
+      if (!RESUMEN_DATA) { alert('Aplica primero los filtros para guardar una vista.'); return; }
+      const nombre = prompt('Nombre de la vista o filtro rápido:');
+      if (!nombre || !nombre.trim()) return;
+      const vista = {
+        id: (crypto.randomUUID ? crypto.randomUUID() : `vista-${Date.now()}`),
+        nombre: nombre.trim(), columnas: obtenerColumnasVisibles(), filtros: obtenerFiltrosTextoActuales(),
+        periodo: { anos: FILTROS_ACTUALES.anos, semanas: FILTROS_ACTUALES.semanas }
+      };
+      VISTAS_RESUMEN.push(vista);
+      try {
+        await persistirVistasResumen(); VISTA_ACTIVA_ID = vista.id; actualizarSelectorVistas();
+      } catch (error) { VISTAS_RESUMEN = VISTAS_RESUMEN.filter(v => v.id !== vista.id); alert(error.message); }
+    }
+
+    async function aplicarVistaGuardada(id) {
+      const vista = VISTAS_RESUMEN.find(v => v.id === id);
+      if (!vista) return;
+      VISTA_ACTIVA_ID = vista.id;
+      aplicarColumnasVisibles(vista.columnas || []);
+      window.filtrosVistaPendiente = vista.filtros || {};
+      if (vista.periodo?.anos?.length && vista.periodo?.semanas?.length && filtroAnoSelector && filtroSemanaSelector) {
+        filtroAnoSelector.setSelected(vista.periodo.anos.map(String), { emit: false });
+        filtroSemanaSelector.setSelected(vista.periodo.semanas.map(String), { emit: false });
+        await aplicarFiltros();
+      } else if (RESUMEN_DATA) {
+        Object.entries(window.filtrosVistaPendiente).forEach(([key, value]) => {
+          const input = [...$tableHeader.querySelectorAll('.filtro-texto')].find(el => el.closest('th')?.dataset.colKey === key);
+          if (input) input.value = value;
+        });
+        window.filtrosVistaPendiente = null; aplicarFiltrosTexto();
+      }
+      actualizarSelectorVistas();
+    }
+
+    async function eliminarVistaActual() {
+      if (!VISTA_ACTIVA_ID) return;
+      const id = VISTA_ACTIVA_ID;
+      const vista = VISTAS_RESUMEN.find(v => v.id === id);
+      const confirmacion = prompt(`Para eliminar la vista "${vista?.nombre || ''}", escribe 1234:`);
+      if (confirmacion !== '1234') return;
+      VISTAS_RESUMEN = VISTAS_RESUMEN.filter(v => v.id !== id); VISTA_ACTIVA_ID = '';
+      try { await persistirVistasResumen(); actualizarSelectorVistas(); }
+      catch (error) { alert(error.message); cargarVistasResumen(); }
+    }
+
     document.addEventListener('DOMContentLoaded', async function() {
       console.log('🟢 DOM cargado, inicializando página de resumen...');
       
       const { initSelectorMultiple } = await import('/assets/js/selector-multiple.js');
-      filtroAnoSelector = initSelectorMultiple($filtroAno, { placeholder: 'Todos los años', placeholderBuscar: 'Buscar año...' });
-      filtroSemanaSelector = initSelectorMultiple($filtroSemana, { placeholder: 'Todas las semanas', placeholderBuscar: 'Buscar semana...' });
+      filtroAnoSelector = initSelectorMultiple($filtroAno, { placeholder: 'Todos los años', placeholderBuscar: 'Buscar año...', textoSinDatos: 'Cargando...' });
+      filtroSemanaSelector = initSelectorMultiple($filtroSemana, { placeholder: 'Todas las semanas', placeholderBuscar: 'Buscar semana...', textoSinDatos: 'Cargando...' });
 
-      // Cargar datos iniciales
-      cargarAños();
-      cargarSemanas();
+      // Las vistas y las opciones de filtro se cargan en paralelo para que una
+      // consulta lenta de preferencias no deje los selectores en "Sin datos".
+      await Promise.all([cargarVistasResumen(), cargarAños(), cargarSemanas()]);
+      if (VISTA_PREDETERMINADA_ID && VISTAS_RESUMEN.some(v => v.id === VISTA_PREDETERMINADA_ID)) {
+        await aplicarVistaGuardada(VISTA_PREDETERMINADA_ID);
+      }
       
       // Agregar estilos de animación (solo para referencia, sin mostrar notificaciones)
       agregarEstilosAnimacion();

@@ -4247,6 +4247,71 @@ def indicadores_pdf():
         return jsonify({'success': False, 'message': f'Error generando PDF: {str(e)}'}), 500
 
 
+@app.route('/api/resumen-pedidos/vistas', methods=['GET', 'PUT'])
+def gestionar_vistas_resumen_pedidos():
+    """Lee y guarda las vistas personales del resumen de pedidos."""
+    usuario = obtener_usuario_sesion()
+    if not usuario or str(usuario) == 'Sistema':
+        return jsonify({'success': False, 'message': 'Debe iniciar sesión para guardar vistas'}), 401
+
+    try:
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            if request.method == 'GET':
+                cursor.execute(
+                    "SELECT Vistas, VistaPredeterminada FROM CAB.ResumenPedidosVistas WHERE Usuario = ?",
+                    (str(usuario),)
+                )
+                row = cursor.fetchone()
+                vistas = json.loads(row[0]) if row and row[0] else []
+                return jsonify({'success': True, 'vistas': vistas, 'vista_predeterminada': row[1] if row else None})
+
+            data = request.get_json(silent=True) or {}
+            vistas = data.get('vistas')
+            if not isinstance(vistas, list) or len(vistas) > 50:
+                return jsonify({'success': False, 'message': 'Formato de vistas no válido'}), 400
+            vistas_limpias = []
+            for vista in vistas:
+                if not isinstance(vista, dict):
+                    continue
+                nombre = str(vista.get('nombre', '')).strip()[:60]
+                if not nombre:
+                    continue
+                columnas = vista.get('columnas', [])
+                filtros = vista.get('filtros', {})
+                periodo = vista.get('periodo', {})
+                if not isinstance(columnas, list) or not isinstance(filtros, dict) or not isinstance(periodo, dict):
+                    continue
+                vistas_limpias.append({
+                    'id': str(vista.get('id', ''))[:80],
+                    'nombre': nombre,
+                    'columnas': [str(c)[:200] for c in columnas[:250]],
+                    'filtros': {str(k)[:200]: str(v)[:200] for k, v in list(filtros.items())[:250]},
+                    'periodo': {
+                        'anos': [str(v)[:10] for v in periodo.get('anos', [])[:20]],
+                        'semanas': [str(v)[:10] for v in periodo.get('semanas', [])[:60]]
+                    }
+                })
+            payload = json.dumps(vistas_limpias, ensure_ascii=False)
+            vista_predeterminada = str(data.get('vista_predeterminada') or '')[:80]
+            if vista_predeterminada and vista_predeterminada not in {v['id'] for v in vistas_limpias}:
+                vista_predeterminada = ''
+            cursor.execute("""
+                UPDATE CAB.ResumenPedidosVistas
+                SET Vistas = ?, VistaPredeterminada = ?, FechaActualizacion = SYSDATETIME()
+                WHERE Usuario = ?;
+                IF @@ROWCOUNT = 0
+                    INSERT INTO CAB.ResumenPedidosVistas (Usuario, Vistas, VistaPredeterminada)
+                    VALUES (?, ?, ?);
+            """, (payload, vista_predeterminada or None, str(usuario), str(usuario), payload, vista_predeterminada or None))
+            return jsonify({'success': True, 'vistas': vistas_limpias, 'vista_predeterminada': vista_predeterminada or None})
+    except Exception as e:
+        print(f"Error gestionando vistas de resumen para {usuario}: {e}")
+        return jsonify({'success': False, 'message': 'No se pudieron guardar las vistas'}), 500
+
+
 @app.route('/api/resumen-pedidos', methods=['GET'])
 def obtener_resumen_pedidos():
     """Obtener resumen de pedidos agrupados por puesto para la pantalla de resumen"""
