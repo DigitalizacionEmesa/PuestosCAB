@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Picking CAB</title>
+  <link rel="stylesheet" href="/assets/css/global-styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/loginModal.css?v=20260908-cab-pe-widget-2">
+  <link rel="stylesheet" href="/assets/css/styles.css?v=1.0">
+  <link rel="stylesheet" href="/assets/css/SelectorMultiple.css?v=1.0">
+  <style>
+    :root { font-family: 'Open Sans', Arial, sans-serif; color: #244f75; background: #e6f2fb; }
+    body { margin: 0; min-height: 100vh; background: #e6f2fb; }
+    .header { position: sticky; top: 0; z-index: 5; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; background: #3880c7; color: white; box-shadow: 0 2px 8px #174f7b33; }
+    .header-title { font-size: 1.25rem; font-weight: 700; text-align: center; }
+    .header-action { width: 42px; height: 42px; display: grid; place-items: center; color: white; border: 0; background: transparent; cursor: pointer; font-size: 1.8rem; text-decoration: none; }
+    .emesa-logo { max-width: 110px; max-height: 42px; object-fit: contain; }
+    main { width: 100%; max-width: none; box-sizing: border-box; margin: 20px 0; padding: 0 16px 32px; }
+    .filter-panel, .results-panel { background: white; border: 1px solid #b3d6ee; border-radius: 12px; box-shadow: 0 4px 14px #245d8520; }
+    .filter-panel { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; padding: 18px; }
+    .filter-group { width: min(280px, 100%); }
+    .filter-group label { display: block; margin: 0 0 6px; font-weight: 700; }
+    .filter-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { border: 1px solid #2879b9; border-radius: 8px; padding: 10px 16px; background: #3880c7; color: white; font-weight: 700; cursor: pointer; }
+    .btn.secondary { background: white; color: #2879b9; }
+    .btn:disabled { opacity: .65; cursor: wait; }
+    .results-panel { margin-top: 16px; overflow: hidden; }
+    .results-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #d9e8f3; }
+    #summary { font-weight: 700; }
+    #search { width: min(320px, 100%); border: 1px solid #9bbbd3; border-radius: 7px; padding: 9px 11px; }
+    .status { padding: 28px 16px; text-align: center; color: #56748e; }
+    .order-card { border-bottom: 1px solid #d9e8f3; }
+    .order-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 12px 16px; color: #245d8b; background: #edf7ff; font-size: 1.02rem; }
+    .order-count { margin-left: 8px; color: #66839a; font-size: .9rem; font-weight: 400; }
+    .order-status { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; color: #56748e; font-size: .82rem; font-weight: 600; }
+    .semaphore { display: inline-block; width: 13px; height: 13px; flex: 0 0 13px; border: 1px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #7890a3; vertical-align: middle; }
+    .semaphore.green { background: #20a45a; box-shadow: 0 0 0 1px #168245; }
+    .semaphore.red { background: #dc3545; box-shadow: 0 0 0 1px #b42332; }
+    .detail-toggle { flex: 0 0 auto; border: 1px solid #2879b9; border-radius: 7px; padding: 7px 12px; background: white; color: #2879b9; font-weight: 700; cursor: pointer; }
+    .detail-toggle:disabled { opacity: .65; cursor: wait; }
+    .order-detail[hidden] { display: none; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 980px; margin-top: 0; }
+    th, td { padding: 9px 11px; border-bottom: 1px solid #e4edf4; text-align: left; white-space: nowrap; }
+    th { position: static; background: #f7fbfe; color: #315f83; }
+    tbody tr:hover { background: #f6fbff; }
+    .bool { text-align: center; }
+    .missing-action { border: 1px solid #bd3744; border-radius: 6px; padding: 5px 9px; background: #fff; color: #bd3744; font-weight: 700; cursor: pointer; }
+    .missing-action.active { border-color: #23804b; color: #23804b; }
+    .missing-action:disabled { opacity: .6; cursor: wait; }
+    #userSessionWidget { position: fixed !important; right: 15px !important; bottom: 15px !important; left: auto !important; top: auto !important; z-index: 10; }
+    @media (max-width: 680px) { .header { padding: 0 8px; } .emesa-logo { max-width: 76px; } .filter-group { width: 100%; } .filter-actions { width: 100%; } .filter-actions .btn { flex: 1; } .results-toolbar { align-items: stretch; flex-direction: column; } #search { width: auto; } }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <button class="header-action" onclick="history.back()" aria-label="Volver">‹</button>
+    <a class="header-action" href="/templates/generales/PuestosCAB.html" aria-label="Inicio">⌂</a>
+    <div class="header-title">PICKING CAB</div>
+    <img class="emesa-logo" src="/IMAGENES/Logo_EMESA.png" alt="EMESA">
+  </header>
+  <div id="userSessionWidget" class="user-session-widget"></div>
+  <main>
+    <section class="filter-panel" aria-label="Filtros de año y semana">
+      <div class="filter-group">
+        <label for="filtroAno">Año</label>
+        <div id="filtroAno" class="selector-multiple" data-campo="ano">
+          <button type="button" class="selector-boton" aria-haspopup="listbox" aria-expanded="false"><span class="selector-resumen">Todos los años</span><span class="selector-clear-icon" aria-hidden="true"></span><span class="selector-icono" aria-hidden="true"></span></button>
+          <div class="selector-panel" role="listbox" aria-multiselectable="true" hidden><ul class="selector-opciones"></ul></div>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label for="filtroSemana">Semana</label>
+        <div id="filtroSemana" class="selector-multiple" data-campo="semana">
+          <button type="button" class="selector-boton" aria-haspopup="listbox" aria-expanded="false"><span class="selector-resumen">Todas las semanas</span><span class="selector-clear-icon" aria-hidden="true"></span><span class="selector-icono" aria-hidden="true"></span></button>
+          <div class="selector-panel" role="listbox" aria-multiselectable="true" hidden><ul class="selector-opciones"></ul></div>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button id="aplicar" class="btn" type="button">Aplicar filtros</button>
+        <button id="limpiar" class="btn secondary" type="button">Limpiar</button>
+      </div>
+    </section>
+
+    <section class="results-panel" aria-live="polite">
+      <div class="results-toolbar">
+        <div id="summary">Selecciona año y semana y aplica los filtros.</div>
+        <input id="search" type="search" placeholder="Buscar pedido..." aria-label="Buscar pedido" disabled>
+      </div>
+      <div id="results"><div class="status">Sin filtros aplicados.</div></div>
+    </section>
+  </main>
+  <script type="module">
+    import { initSelectorMultiple } from '/assets/js/selector-multiple.js';
+
+    const anoSelector = initSelectorMultiple(document.getElementById('filtroAno'), {
+      placeholder: 'Todos los años', placeholderBuscar: 'Buscar año...', textoSinDatos: 'Cargando...'
+    });
+    const semanaSelector = initSelectorMultiple(document.getElementById('filtroSemana'), {
+      placeholder: 'Todas las semanas', placeholderBuscar: 'Buscar semana...', textoSinDatos: 'Cargando...'
+    });
+    const results = document.getElementById('results');
+    const summary = document.getElementById('summary');
+    const search = document.getElementById('search');
+    const applyButton = document.getElementById('aplicar');
+    let pedidosActuales = [];
+    const detalleCache = new Map();
+
+    async function cargarOpciones(url, key, selector, label) {
+      try {
+        const response = await fetch(url, { headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'No se pudieron cargar los filtros.');
+        selector.setOptions((data[key] || []).map(valor => ({ value: String(valor), label: label(String(valor)) })));
+      } catch (error) {
+        selector.setOptions([]);
+        console.error(error);
+      }
+    }
+
+    function esc(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+    }
+
+    function renderizarPedidos(pedidos) {
+      const texto = search.value.trim().toLocaleLowerCase();
+      const filtrados = texto ? pedidos.filter(pedido => String(pedido.NUMEROPEDIDO ?? '').toLocaleLowerCase().includes(texto)) : pedidos;
+      if (!filtrados.length) {
+        results.innerHTML = `<div class="status">${pedidos.length ? 'No hay coincidencias con la búsqueda.' : 'No hay pedidos con materiales para los filtros seleccionados.'}</div>`;
+        return;
+      }
+
+      results.innerHTML = filtrados.map(pedido => `
+        <section class="order-card" data-pedido="${esc(pedido.NUMEROPEDIDO)}">
+          <h2 class="order-heading">
+            <span>Pedido ${esc(pedido.NUMEROPEDIDO)}<span class="order-count">${esc(pedido.TOTAL_MATERIALES)} materiales</span><span class="order-status"><i class="semaphore ${pedido.LEIDO ? 'green' : 'red'}" role="img" aria-label="${pedido.LEIDO ? 'Todas las líneas leídas' : 'Hay líneas sin leer'}"></i>${pedido.LEIDO ? 'Completo' : 'Pendiente'}</span></span>
+            <button class="detail-toggle" type="button" data-pedido="${esc(pedido.NUMEROPEDIDO)}">Ver materiales</button>
+          </h2>
+          <div class="order-detail" hidden><div class="status">Abre el pedido para cargar sus materiales.</div></div>
+        </section>`).join('');
+    }
+
+    function renderizarDetalle(registros) {
+      const encabezados = [
+        ['CODIGOPICKING', 'Código picking'], ['DESCRIPCIONPICKING', 'Descripción'],
+        ['CANTIDADPICKING', 'Cantidad picking'], ['CANTIDADPICKINGFICHADA', 'Cantidad fichada'],
+        ['LEIDO', 'Leído'], ['CODIGOLEIDO', 'Código leído']
+      ];
+      if (!registros.length) return '<div class="status">El pedido no tiene materiales.</div>';
+      return `<div class="table-wrap"><table>
+        <thead><tr>${encabezados.map(([, titulo]) => `<th>${titulo}</th>`).join('')}<th>Acciones</th><th>Estado</th></tr></thead>
+        <tbody>${registros.map(row => `<tr>
+          ${encabezados.map(([campo]) => `<td class="${campo === 'LEIDO' ? 'bool' : ''}">${esc(row[campo])}</td>`).join('')}
+          <td><button type="button" class="missing-action ${row.FALTANTE ? 'active' : ''}" data-linea="${esc(row.ID_PICKING)}" data-faltante="${row.FALTANTE ? 'true' : 'false'}" ${row.LEIDO ? 'disabled title="La línea se ha leído"' : ''}>${row.FALTANTE ? 'Quitar faltante' : 'Marcar faltante'}</button></td>
+          <td class="bool"><i class="semaphore ${row.LEIDO ? 'green' : 'red'}" role="img" aria-label="${row.LEIDO ? 'Leído' : 'No leído'}" title="${row.LEIDO ? 'Leído' : 'No leído'}"></i></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    }
+
+    async function aplicarFiltros() {
+      const anos = anoSelector.getSelected();
+      const semanas = semanaSelector.getSelected();
+      if (!anos.length && !semanas.length) {
+        alert('Selecciona al menos un año o una semana.');
+        return;
+      }
+      const params = new URLSearchParams();
+      anos.forEach(valor => params.append('anos[]', valor));
+      semanas.forEach(valor => params.append('semanas[]', valor));
+      applyButton.disabled = true;
+      results.innerHTML = '<div class="status">Cargando materiales...</div>';
+      summary.textContent = 'Consultando pedidos...';
+      try {
+        const response = await fetch(`/api/picking-pedidos?${params.toString()}`, { headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Error al cargar pedidos.');
+        pedidosActuales = data.pedidos || [];
+        detalleCache.clear();
+        summary.textContent = `${data.total_pedidos} pedidos`;
+        search.disabled = false;
+        renderizarPedidos(pedidosActuales);
+      } catch (error) {
+        pedidosActuales = [];
+        summary.textContent = 'No se pudieron cargar los materiales.';
+        results.innerHTML = `<div class="status">${esc(error.message)}</div>`;
+      } finally {
+        applyButton.disabled = false;
+      }
+    }
+
+    document.getElementById('aplicar').addEventListener('click', aplicarFiltros);
+    document.getElementById('limpiar').addEventListener('click', () => {
+      anoSelector.clear();
+      semanaSelector.clear();
+      search.value = '';
+      search.disabled = true;
+      pedidosActuales = [];
+      detalleCache.clear();
+      summary.textContent = 'Selecciona año y semana y aplica los filtros.';
+      results.innerHTML = '<div class="status">Sin filtros aplicados.</div>';
+    });
+    search.addEventListener('input', () => renderizarPedidos(pedidosActuales));
+    results.addEventListener('click', async event => {
+      const missingButton = event.target.closest('.missing-action');
+      if (missingButton) {
+        const idPicking = missingButton.dataset.linea;
+        const faltante = missingButton.dataset.faltante !== 'true';
+        missingButton.disabled = true;
+        try {
+          const response = await fetch(`/api/picking-lineas/${encodeURIComponent(idPicking)}/faltante`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ faltante })
+          });
+          const data = await response.json();
+          if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo actualizar el faltante.');
+          for (const [pedido, lineas] of detalleCache) {
+            const linea = lineas.find(registro => String(registro.ID_PICKING) === String(idPicking));
+            if (!linea) continue;
+            linea.FALTANTE = faltante;
+            const card = Array.from(results.querySelectorAll('.order-card')).find(item => item.dataset.pedido === pedido);
+            if (card) {
+              card.querySelector('.order-detail').innerHTML = renderizarDetalle(lineas);
+              const leido = lineas.every(registro => Boolean(registro.LEIDO));
+              card.querySelector('.order-status').innerHTML = `<i class="semaphore ${leido ? 'green' : 'red'}" role="img" aria-label="${leido ? 'Todas las líneas leídas' : 'Hay líneas sin leer'}"></i>${leido ? 'Completo' : 'Pendiente'}`;
+              const pedidoData = pedidosActuales.find(item => String(item.NUMEROPEDIDO) === pedido);
+              if (pedidoData) pedidoData.LEIDO = leido;
+            }
+            break;
+          }
+        } catch (error) {
+          alert(error.message);
+        }
+        return;
+      }
+      const button = event.target.closest('.detail-toggle');
+      if (!button) return;
+      const pedido = button.dataset.pedido;
+      const card = button.closest('.order-card');
+      const detail = card.querySelector('.order-detail');
+      if (!detail.hidden) {
+        detail.hidden = true;
+        button.textContent = 'Ver materiales';
+        return;
+      }
+      detail.hidden = false;
+      if (detalleCache.has(pedido)) {
+        detail.innerHTML = renderizarDetalle(detalleCache.get(pedido));
+        button.textContent = 'Ocultar materiales';
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'Cargando...';
+      detail.innerHTML = '<div class="status">Cargando materiales del pedido...</div>';
+      try {
+        const response = await fetch(`/api/picking-pedidos/${encodeURIComponent(pedido)}`, { headers: { Accept: 'application/json' } });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Error al cargar los materiales.');
+        const registros = data.registros || [];
+        detalleCache.set(pedido, registros);
+        detail.innerHTML = renderizarDetalle(registros);
+        button.textContent = 'Ocultar materiales';
+      } catch (error) {
+        detail.innerHTML = `<div class="status">${esc(error.message)}</div>`;
+        button.textContent = 'Reintentar';
+      } finally {
+        button.disabled = false;
+      }
+    });
+    await Promise.all([
+      cargarOpciones('/api/anos', 'anos', anoSelector, value => value),
+      cargarOpciones('/api/semanas', 'semanas', semanaSelector, value => `Semana ${value}`)
+    ]);
+  </script>
+  <script src="/assets/css/loginModal.js?v=20260908-cab-pe-widget-2"></script>
+</body>
+</html>

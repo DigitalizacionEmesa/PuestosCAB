@@ -179,6 +179,16 @@
   </main>
 
   <script>
+    function agregarPuestoPicking(puestosGrid) {
+      const card = document.createElement('a');
+      card.href = '/templates/generales/PickingCAB.html';
+      card.className = 'card puesto-card';
+      card.setAttribute('data-puesto', 'Picking');
+      card.setAttribute('data-codigo', 'PICKING');
+      card.textContent = 'Picking';
+      puestosGrid.appendChild(card);
+    }
+
     // Forzar recarga de CSS
     if (performance.navigation.type == performance.navigation.TYPE_RELOAD) {
       window.location.reload(true);
@@ -238,6 +248,9 @@
             
             puestosGrid.appendChild(card);
           });
+
+          // Picking es un puesto hardcodeado y está disponible para cualquier nivel.
+          agregarPuestoPicking(puestosGrid);
 
           // Verificar permisos del usuario antes de agregar Jefe de Equipo
           try {
@@ -349,6 +362,9 @@
           
           puestosGrid.appendChild(card);
         });
+
+        // Mantener Picking accesible también si falla la carga de puestos configurados.
+        agregarPuestoPicking(puestosGrid);
 
         // Verificar permisos del usuario antes de agregar Jefe de Equipo en modo respaldo
         try {

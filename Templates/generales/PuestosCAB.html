@@ -231,6 +231,7 @@
       configuracion: { label: 'Configuraci\u00f3n', title: 'CONFIGURACI\u00d3N CAB', path: '/templates/generales/ConfiguracionCAB.html' },
       crear: { label: 'Crear puesto', title: 'CREAR PUESTO', path: '/templates/generales/Crearpuesto.html' },
       motivos: { label: 'Motivos de faltante', title: 'ADMINISTRAR MOTIVOS DE FALTANTE', path: '/templates/generales/AdminMotivosFaltante.html' },
+      picking: { label: 'Picking', title: 'PICKING CAB', path: '/templates/generales/PickingCAB.html' },
       puesto: { label: '', title: 'PUESTOS CAB', path: '/templates/generales/PuestoCAB.html' },
       jefe: { label: 'Jefe de Equipo', title: 'CONTROL - JEFE DE EQUIPO', path: '/templates/generales/control.html' }
     };
@@ -289,6 +290,7 @@
       if (key === 'puesto') {
         puestosPuestoState.codigo = hashParams.get('puesto') || '';
         puestosPuestoState.nombre = hashParams.get('nombre') || getPuestoNombre(puestosPuestoState.codigo);
+        if (puestosPuestoState.codigo.toUpperCase() === 'PICKING') return 'picking';
       }
       if (key === 'jefe') jefeSubview = hashParams.get('subview') || '';
       return key && puestosViews[key] ? key : null;
@@ -390,9 +392,9 @@
         body > nav[aria-label="Breadcrumb"], body > nav.control-breadcrumb-wrapper,
         #userSessionWidget,
         #legacyUserSessionWidget { display: none !important; }
-        ${viewKey === 'puesto' ? `
+        ${viewKey === 'puesto' || viewKey === 'picking' ? `
           html, body { height: 100% !important; overflow: hidden !important; }
-          body > main { height: 100% !important; min-height: 0 !important; }
+          body > main { height: 100% !important; min-height: 0 !important; overflow-y: auto !important; box-sizing: border-box !important; }
           body > main .scrollable-content { min-height: 0 !important; overflow-y: auto !important; }
         ` : ''}
       `;
@@ -430,6 +432,10 @@
             window.parent.openPuestosView('jefe');
             return;
           }
+          if (card.dataset.codigo === 'PICKING') {
+            window.parent.openPuestosView('picking');
+            return;
+          }
           window.parent.openPuestosView('puesto', {
             puestoCode: card.dataset.codigo,
             puestoName: card.dataset.puesto || card.textContent.trim()
@@ -453,6 +459,7 @@
       if (viewKey === 'puesto') {
         puestosPuestoState.codigo = options.puestoCode || puestosPuestoState.codigo;
         puestosPuestoState.nombre = options.puestoName || puestosPuestoState.nombre || getPuestoNombre(puestosPuestoState.codigo);
+        if (puestosPuestoState.codigo.toUpperCase() === 'PICKING') viewKey = 'picking';
         if (!puestosPuestoState.codigo) viewKey = 'lista';
       }
       const nextHash = viewKey === 'puesto'

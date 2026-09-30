@@ -1254,6 +1254,9 @@
               ${puesto} <span class="sort-icon">⇅</span>
             </th>`;
           }).join('')}
+          <th data-col-index="${1 + columnasDP.length + data.puestos.length}" data-col-key="picking" class="sortable" onclick="ordenarTabla(${1 + columnasDP.length + data.puestos.length})" title="Clic para ordenar por Picking">
+            Picking <span class="sort-icon">⇅</span>
+          </th>
         </tr>
         <tr class="filtros-row">
           <th class="col-numero" data-col-index="0" data-col-key="pedido">
@@ -1275,6 +1278,9 @@
                      onkeyup="aplicarFiltrosTexto()">
             </th>`;
           }).join('')}
+          <th data-grupo="picking" data-col-key="picking">
+            <input type="text" class="filtro-texto" id="filtro-picking" placeholder="Buscar Picking..." onkeyup="aplicarFiltrosTexto()">
+          </th>
         </tr>
       `;
       $tableHeader.innerHTML = headerHtml;
@@ -1334,6 +1340,21 @@
           
           return `<td data-grupo="datospedidos" data-col-key="dp:${col}" class="col-dp-val ${showDP ? '' : 'col-hidden'}">${texto}</td>`;
         }).join('');
+
+        const picking = pedido.picking || { total: 0, leidos: 0, codigos_no_leidos: [], faltantes: [] };
+        const celdasEstadoPicking = [];
+        if (picking.total > 0 && picking.leidos === picking.total) {
+          celdasEstadoPicking.push('<span class="estado-tarjeta estado-hecho">Hecho</span>');
+        } else if (picking.leidos > 0) {
+          const noLeidos = (picking.codigos_no_leidos || []).join(', ');
+          const tooltip = `Componentes no leídos: ${noLeidos || 'Sin código identificado'}`;
+          celdasEstadoPicking.push(`<span class="estado-tarjeta estado-enproceso" title="${escapeHtml(tooltip)}">En proceso</span>`);
+        }
+        if ((picking.faltantes || []).length > 0) {
+          const tooltip = `Materiales faltantes: ${picking.faltantes.join('; ')}`;
+          celdasEstadoPicking.push(`<span class="estado-tarjeta estado-faltante" title="${escapeHtml(tooltip)}">Faltante</span>`);
+        }
+        const celdaPicking = `<td data-grupo="picking" data-col-key="picking">${celdasEstadoPicking.join('')}</td>`;
         
         // Celdas de puestos (OF's)
         const celdasPuestos = data.puestos.map((puesto, index) => {
@@ -1358,6 +1379,7 @@
             <td class="pedido-numero">${pedido.numeroPedido}</td>
             ${celdasDP}
             ${celdasPuestos}
+            ${celdaPicking}
           </tr>
         `;
       }).join('');
@@ -1859,7 +1881,8 @@
       const vista = VISTAS_RESUMEN.find(v => v.id === id);
       if (!vista) return;
       VISTA_ACTIVA_ID = vista.id;
-      aplicarColumnasVisibles(vista.columnas || []);
+      const columnasGuardadas = vista.columnas || [];
+      aplicarColumnasVisibles(columnasGuardadas.includes('picking') ? columnasGuardadas : [...columnasGuardadas, 'picking']);
       window.filtrosVistaPendiente = vista.filtros || {};
       if (vista.periodo?.anos?.length && vista.periodo?.semanas?.length && filtroAnoSelector && filtroSemanaSelector) {
         filtroAnoSelector.setSelected(vista.periodo.anos.map(String), { emit: false });

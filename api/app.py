@@ -1786,6 +1786,175 @@ def obtener_ordenes():
             'message': f'Error del servidor: {str(e)}'
         }), 500
 
+@app.route('/api/picking-pedidos', methods=['GET'])
+def obtener_pedidos_picking():
+    """Obtener el resumen de pedidos con materiales de picking para año y semana."""
+    try:
+        anos = [valor.strip() for valor in request.args.getlist('anos[]') if valor.strip()]
+        semanas = [valor.strip() for valor in request.args.getlist('semanas[]') if valor.strip()]
+
+        if not anos and not semanas:
+            return jsonify({'success': False, 'message': 'Debe seleccionar al menos un año o semana'}), 400
+
+        condiciones = []
+        parametros = []
+        if anos:
+            condiciones.append("f.[Año] IN (" + ','.join('?' for _ in anos) + ")")
+            parametros.extend(anos)
+
+        if semanas:
+            semanas_expandidas = []
+            for semana in semanas:
+                semanas_expandidas.append(semana)
+                if semana.isdigit() and len(semana) == 1:
+                    semanas_expandidas.append(f'0{semana}')
+                elif semana.isdigit() and len(semana) == 2 and semana.startswith('0'):
+                    semanas_expandidas.append(semana[1:])
+            semanas_validas = list(dict.fromkeys(semanas_expandidas))
+            condiciones.append("f.[NumSemana] IN (" + ','.join('?' for _ in semanas_validas) + ")")
+            parametros.extend(semanas_validas)
+
+        where_periodo = ' AND '.join(condiciones)
+        consulta = f"""
+            WITH PedidosFiltrados AS (
+                SELECT DISTINCT f.[NumeroPedido]
+                FROM [Digitalizacion].[CAB].[Fact_Procesos_Tiempos_Cabinas] f
+                WHERE {where_periodo}
+                  AND f.[NumeroPedido] IS NOT NULL
+            )
+            SELECT
+                CONVERT(nvarchar(50), f.[NumeroPedido]) AS [NUMEROPEDIDO],
+                COUNT_BIG(p.[id]) AS [TOTAL_MATERIALES],
+                CONVERT(bit, MAX(CASE WHEN ISNULL(p.[LEIDO], 0) = 0 THEN 1 ELSE 0 END)) AS [TIENE_PENDIENTES]
+            FROM PedidosFiltrados f
+            INNER JOIN [Datalake].[dbo].[GPE_PEDIDOS_PRODUCTOS_PICKING_TRIGGER_CONTROL_CAMBIOS] p
+                ON p.[NUMEROPEDIDO] = f.[NumeroPedido]
+            GROUP BY f.[NumeroPedido]
+            ORDER BY f.[NumeroPedido] DESC
+        """
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            cursor.execute(consulta, parametros)
+            pedidos = [
+                {'NUMEROPEDIDO': str(row[0]), 'TOTAL_MATERIALES': int(row[1]), 'LEIDO': not bool(row[2])}
+                for row in cursor.fetchall()
+            ]
+
+        return jsonify({
+            'success': True,
+            'pedidos': pedidos,
+            'total_pedidos': len(pedidos)
+        })
+    except Exception as e:
+        print(f"Error obteniendo resumen de pedidos de picking: {e}")
+        return jsonify({'success': False, 'message': f'Error del servidor: {str(e)}'}), 500
+
+@app.route('/api/picking-pedidos/<string:numero_pedido>', methods=['GET'])
+def obtener_detalle_pedido_picking(numero_pedido):
+    """Obtener las líneas de materiales de un pedido al abrir su detalle."""
+    try:
+        numero_pedido = numero_pedido.strip()
+        if not numero_pedido:
+            return jsonify({'success': False, 'message': 'El número de pedido es requerido'}), 400
+
+        consulta = """
+            SELECT
+                p.[NUMEROPEDIDO],
+                p.[id] AS [ID_PICKING],
+                p.[CODIGOPICKING],
+                c.[Descripcion] AS [DESCRIPCIONPICKING],
+                p.[CANTIDADPICKING],
+                p.[CANTIDADPICKINGFICHADA],
+                p.[LEIDO],
+                p.[CODIGOLEIDO],
+                CONVERT(bit, CASE WHEN EXISTS (
+                    SELECT 1 FROM [Digitalizacion].[CAB].[faltantes_picking] fp
+                    WHERE fp.[ID_PICKING] = p.[id] AND fp.[DESMARCADO_EN] IS NULL
+                ) THEN 1 ELSE 0 END) AS [FALTANTE]
+            FROM [Datalake].[dbo].[GPE_PEDIDOS_PRODUCTOS_PICKING_TRIGGER_CONTROL_CAMBIOS] p
+            LEFT JOIN [Datalake].[dbo].[GPE_CODIGOS_TRIGGER_CONTROL_CAMBIOS] c
+                ON c.[Codigo] = p.[CODIGOPICKING]
+            WHERE p.[NUMEROPEDIDO] = ?
+            ORDER BY p.[CODIGOPICKING], p.[id]
+        """
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos'}), 500
+            cursor = conn.cursor()
+            cursor.execute(consulta, (numero_pedido,))
+            nombres_columnas = [columna[0] for columna in cursor.description]
+            registros = []
+            for row in cursor.fetchall():
+                registro = {}
+                for indice, valor in enumerate(row):
+                    if isinstance(valor, Decimal):
+                        valor = float(valor)
+                    elif hasattr(valor, 'isoformat'):
+                        valor = valor.isoformat()
+                    elif isinstance(valor, (bytes, bytearray)):
+                        valor = str(valor)
+                    registro[nombres_columnas[indice]] = valor
+                registros.append(registro)
+
+        return jsonify({'success': True, 'registros': registros, 'total': len(registros)})
+    except Exception as e:
+        print(f"Error obteniendo detalle de picking del pedido {numero_pedido}: {e}")
+        return jsonify({'success': False, 'message': f'Error del servidor: {str(e)}'}), 500
+
+@app.route('/api/picking-lineas/<int:id_picking>/faltante', methods=['POST'])
+def actualizar_faltante_picking(id_picking):
+    """Marcar o desmarcar un faltante, conservando un registro por cada episodio."""
+    try:
+        user_data = session.get('user_data') or {}
+        if not user_data:
+            return jsonify({'success': False, 'message': 'Debes iniciar sesión para registrar faltantes.'}), 401
+        data = request.get_json(silent=True) or {}
+        faltante = data.get('faltante')
+        if not isinstance(faltante, bool):
+            return jsonify({'success': False, 'message': 'El campo faltante debe ser true o false.'}), 400
+        actor = str(user_data.get('num_operario') or user_data.get('nombre') or user_data.get('id') or 'Usuario')[:100]
+
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos.'}), 500
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT p.[NUMEROPEDIDO], p.[CODIGOPICKING], p.[LEIDO]
+                FROM [Datalake].[dbo].[GPE_PEDIDOS_PRODUCTOS_PICKING_TRIGGER_CONTROL_CAMBIOS] p
+                WHERE p.[id] = ?
+            """, (id_picking,))
+            linea = cursor.fetchone()
+            if not linea:
+                return jsonify({'success': False, 'message': 'La línea de picking ya no existe.'}), 404
+            if faltante and bool(linea[2]):
+                return jsonify({'success': False, 'message': 'Una línea leída no se puede marcar como faltante.'}), 409
+
+            if faltante:
+                cursor.execute("""
+                    IF NOT EXISTS (
+                        SELECT 1 FROM [CAB].[faltantes_picking] WITH (UPDLOCK, HOLDLOCK)
+                        WHERE [ID_PICKING] = ? AND [DESMARCADO_EN] IS NULL
+                    )
+                    INSERT INTO [CAB].[faltantes_picking]
+                        ([ID_PICKING], [NUMEROPEDIDO], [CODIGOPICKING], [MARCADO_POR])
+                    VALUES (?, ?, ?, ?)
+                """, (id_picking, id_picking, str(linea[0]), str(linea[1] or ''), actor))
+            else:
+                cursor.execute("""
+                    UPDATE [CAB].[faltantes_picking]
+                    SET [DESMARCADO_EN] = SYSDATETIME(), [DESMARCADO_POR] = ?
+                    WHERE [ID_PICKING] = ? AND [DESMARCADO_EN] IS NULL
+                """, (actor, id_picking))
+
+        return jsonify({'success': True, 'faltante': faltante})
+    except Exception as e:
+        print(f"Error actualizando faltante de línea {id_picking}: {e}")
+        return jsonify({'success': False, 'message': f'Error del servidor: {str(e)}'}), 500
+
 @app.route('/api/puestos-mapping', methods=['GET'])
 def obtener_puestos_mapping():
     """Obtener mapeo de Nombre_Puesto → Codigo_Puesto desde tabla Puestos"""
@@ -4449,7 +4618,55 @@ def obtener_resumen_pedidos():
                 pedidos_list = list(pedidos_dict.values())
                 
                 print(f"Pedidos procesados: {len(pedidos_list)}")
-                
+
+                # Consolidar lectura y faltantes activos de Picking por pedido.
+                for pedido in pedidos_list:
+                    pedido['picking'] = {'total': 0, 'leidos': 0, 'codigos_no_leidos': [], 'faltantes': []}
+                pedidos_picking = [p['numeroPedido'] for p in pedidos_list if p['numeroPedido'] is not None]
+                if pedidos_picking:
+                    try:
+                        estado_picking = {
+                            str(numero): {'total': 0, 'leidos': 0, 'codigos_no_leidos': [], 'faltantes': []}
+                            for numero in pedidos_picking
+                        }
+                        cursor_picking = conn.cursor()
+                        for inicio in range(0, len(pedidos_picking), 900):
+                            lote = pedidos_picking[inicio:inicio + 900]
+                            placeholders = ','.join('?' for _ in lote)
+                            cursor_picking.execute(f"""
+                                SELECT CONVERT(NVARCHAR(50), pk.[NUMEROPEDIDO]), pk.[CODIGOPICKING],
+                                       cod.[Descripcion], pk.[LEIDO],
+                                       CASE WHEN fp.[ID_PICKING] IS NULL THEN 0 ELSE 1 END
+                                FROM [Datalake].[dbo].[GPE_PEDIDOS_PRODUCTOS_PICKING_TRIGGER_CONTROL_CAMBIOS] pk
+                                OUTER APPLY (
+                                    SELECT TOP (1) c.[Descripcion]
+                                    FROM [Datalake].[dbo].[GPE_CODIGOS_TRIGGER_CONTROL_CAMBIOS] c
+                                    WHERE c.[Codigo] = pk.[CODIGOPICKING]
+                                ) cod
+                                LEFT JOIN [Digitalizacion].[CAB].[faltantes_picking] fp
+                                    ON fp.[ID_PICKING] = pk.[id] AND fp.[DESMARCADO_EN] IS NULL
+                                WHERE pk.[NUMEROPEDIDO] IN ({placeholders})
+                            """, lote)
+                            for fila in cursor_picking.fetchall():
+                                estado = estado_picking.get(str(fila[0]))
+                                if estado is None:
+                                    continue
+                                estado['total'] += 1
+                                codigo = str(fila[1] or '').strip()
+                                descripcion = str(fila[2] or '').strip()
+                                if bool(fila[3]):
+                                    estado['leidos'] += 1
+                                elif codigo:
+                                    estado['codigos_no_leidos'].append(codigo)
+                                if bool(fila[4]):
+                                    detalle = f'{codigo} — {descripcion}' if codigo and descripcion else (codigo or descripcion or 'Material sin código')
+                                    estado['faltantes'].append(detalle)
+                        cursor_picking.close()
+                        for pedido in pedidos_list:
+                            pedido['picking'] = estado_picking.get(str(pedido['numeroPedido']), pedido['picking'])
+                    except Exception as e:
+                        print(f"Error consultando estados de Picking para resumen: {e}")
+
                 # ============================================================
                 # 4. Enriquecer pedidos con datos de DatosPedidos
                 # ============================================================
@@ -4590,9 +4807,9 @@ def obtener_faltantes():
                            ROW_NUMBER() OVER (PARTITION BY CODLINEA, GFH ORDER BY ID DESC) AS rn
                     FROM [Digitalizacion].[CAB].[DatosUserCAB]
                 )
-                SELECT d.ID, f.NumeroPedido, f.[Año], f.NumSemana, f.CodigoPieza, f.DESCRIPCIONPIEZA, f.MODELO,
+                SELECT d.ID, CONVERT(NVARCHAR(50), f.NumeroPedido) AS [NumeroPedido], f.[Año], f.NumSemana, f.CodigoPieza, f.DESCRIPCIONPIEZA, f.MODELO,
                        f.TIEMPO_TOTAL, f.CODLINEA, f.GFH, p.Nombre_Puesto,
-                       d.Operario, d.Realizacion, d.Fecha, d.ESTADO, d.Faltante,
+                       CONVERT(NVARCHAR(100), d.Operario) AS [Operario], CONVERT(NVARCHAR(30), d.Realizacion) AS [Realizacion], d.Fecha, d.ESTADO, d.Faltante,
                        CASE WHEN d.ID = ea.ID AND d.Activo = 1 AND ea.ESTADO = 'Faltante'
                             THEN 1 ELSE 0 END AS Vigente
                 FROM [Digitalizacion].[CAB].[DatosUserCAB] d
@@ -4606,7 +4823,40 @@ def obtener_faltantes():
             """
             if modo == 'vigentes':
                 sql += " AND d.ID = ea.ID AND d.Activo = 1 AND ea.ESTADO = 'Faltante'"
-            sql += " ORDER BY p.Nombre_Puesto, f.NumeroPedido, f.CODLINEA, f.GFH"
+            sql += """
+                UNION ALL
+                SELECT
+                    fp.[ID_FALTANTE],
+                    fp.[NUMEROPEDIDO],
+                    COALESCE(periodo.[Año], YEAR(fp.[MARCADO_EN])) AS [Año],
+                    COALESCE(periodo.[NumSemana], DATEPART(ISO_WEEK, fp.[MARCADO_EN])) AS [NumSemana],
+                    fp.[CODIGOPICKING] AS [CodigoPieza],
+                    codigos.[Descripcion] AS [DESCRIPCIONPIEZA],
+                    periodo.[MODELO],
+                    CAST(NULL AS DECIMAL(18,2)) AS [TIEMPO_TOTAL],
+                    CAST(NULL AS NVARCHAR(50)) AS [CODLINEA],
+                    CAST(NULL AS NVARCHAR(50)) AS [GFH],
+                    N'Picking' AS [Puesto],
+                    fp.[MARCADO_POR] AS [Operario],
+                    N'N/A' AS [Realizacion],
+                    fp.[MARCADO_EN] AS [Fecha],
+                    N'Faltante' AS [ESTADO],
+                    N'Faltante registrado en Picking' AS [Faltante],
+                    CASE WHEN fp.[DESMARCADO_EN] IS NULL THEN 1 ELSE 0 END AS [Vigente]
+                FROM [Digitalizacion].[CAB].[faltantes_picking] fp
+                LEFT JOIN [Datalake].[dbo].[GPE_CODIGOS_TRIGGER_CONTROL_CAMBIOS] codigos
+                    ON codigos.[Codigo] = fp.[CODIGOPICKING]
+                OUTER APPLY (
+                    SELECT TOP (1) f.[Año], f.[NumSemana], f.[MODELO]
+                    FROM [Digitalizacion].[CAB].[Fact_Procesos_Tiempos_Cabinas] f
+                    WHERE CONVERT(NVARCHAR(50), f.[NumeroPedido]) = fp.[NUMEROPEDIDO]
+                    ORDER BY f.[Año] DESC, f.[NumSemana] DESC
+                ) periodo
+                WHERE 1 = 1
+            """
+            if modo == 'vigentes':
+                sql += " AND fp.[DESMARCADO_EN] IS NULL"
+            sql += " ORDER BY 11, 2, 9, 10"
             cursor.execute(sql, ('2026-09-21',))
             faltantes = [{
                 'id': r[0], 'numeroPedido': r[1], 'ano': r[2], 'semana': r[3],

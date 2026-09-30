@@ -152,24 +152,6 @@
       margin: 12px auto 6px auto;
       padding: 0 10px;
     }
-    .filter-btn {
-      text-decoration: none;
-      border: 1px solid #c6d4e1;
-      background: #e6f0fa;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-weight: 700;
-      color: #2c6aa6;
-      cursor: pointer;
-      font-size: 0.95rem;
-      transition: transform .1s ease, filter .15s ease;
-    }
-    .filter-btn:hover { transform: translateY(-1px); filter: brightness(0.98); }
-    .filter-btn.active {
-      background: #d6e6f5;
-      box-shadow: 0 0 0 2px rgba(44,106,166,0.15) inset;
-    }
-
     /* Lista de órdenes de fabricación - CONVERTIDA A TABLA */
     .table-container {
       margin: 16px 0;
@@ -1893,12 +1875,8 @@
         </div>
       </div>
 
-      <!-- Filtros existentes (Todo, Pendientes, etc.) -->
+      <!-- Indicador de carga de trabajo; los filtros rápidos se han retirado. -->
       <div class="filters">
-        <button class="filter-btn active" data-filter="all">Todo</button>
-        <button class="filter-btn" data-filter="pending">Pendientes</button>
-        <button class="filter-btn" data-filter="missing">Faltantes</button>
-        <button class="filter-btn" data-filter="pendingNomissing">Pendientes sin faltantes</button>
         <span id="cargaTrabajo" class="carga-trabajo" style="display: none;"></span>
       </div>
     </div>
@@ -1986,7 +1964,6 @@
     const $tableBody = document.getElementById('tableBody');
     const $loadingTable = document.getElementById('loadingTable');
     const $noDataTable = document.getElementById('noDataTable');
-    const $buttons = document.querySelectorAll('.filter-btn');
     
     console.log('🟢 Elementos DOM tabla obtenidos:', {
       tableContainer: !!$tableContainer,
@@ -3978,15 +3955,6 @@
         
         console.log(`🕐 Timer iniciado para ${filaKey}: ${val}% (esperando ${DEBOUNCE_DELAY}ms)`);
       }
-    });
-
-    // Botones de filtro
-    $buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        $buttons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        applyFilterSync(btn.dataset.filter);
-      });
     });
 
     // Event listeners para los filtros
