@@ -16,6 +16,7 @@ BEGIN
         [ID_PICKING] BIGINT NOT NULL,
         [NUMEROPEDIDO] NVARCHAR(50) NOT NULL,
         [CODIGOPICKING] NVARCHAR(100) NULL,
+        [MOTIVO_FALTANTE] NVARCHAR(500) NULL,
         [MARCADO_EN] DATETIME2(0) NOT NULL
             CONSTRAINT [DF_faltantes_picking_MARCADO_EN] DEFAULT (SYSDATETIME()),
         [MARCADO_POR] NVARCHAR(100) NOT NULL,
@@ -33,6 +34,14 @@ BEGIN
 
     CREATE INDEX [IX_faltantes_picking_pedido_historial]
         ON [CAB].[faltantes_picking] ([NUMEROPEDIDO], [MARCADO_EN] DESC);
+END;
+GO
+
+/* Adaptar también las instalaciones que ya tienen el historial de Picking. */
+IF COL_LENGTH(N'CAB.faltantes_picking', N'MOTIVO_FALTANTE') IS NULL
+BEGIN
+    ALTER TABLE [CAB].[faltantes_picking]
+        ADD [MOTIVO_FALTANTE] NVARCHAR(500) NULL;
 END;
 GO
 

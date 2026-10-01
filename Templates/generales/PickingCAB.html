@@ -53,6 +53,21 @@
     .missing-action { border: 1px solid #bd3744; border-radius: 6px; padding: 5px 9px; background: #fff; color: #bd3744; font-weight: 700; cursor: pointer; }
     .missing-action.active { border-color: #23804b; color: #23804b; }
     .missing-action:disabled { opacity: .6; cursor: wait; }
+    .missing-dialog { width: min(500px, calc(100% - 32px)); max-height: 85vh; box-sizing: border-box; padding: 0; border: 0; border-radius: 12px; background: white; color: #244f75; box-shadow: 0 8px 32px #0005; }
+    .missing-dialog::backdrop { background: #0008; }
+    .missing-dialog-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; background: #3880c7; color: white; }
+    .missing-dialog-header h2 { margin: 0; font-size: 1.2rem; }
+    .missing-dialog-close { border: 0; background: transparent; color: white; font-size: 1.5rem; cursor: pointer; }
+    .missing-dialog-close:disabled { opacity: .65; cursor: wait; }
+    .missing-dialog-body { padding: 20px; }
+    .missing-dialog-body p { margin: 0 0 16px; overflow-wrap: anywhere; }
+    .missing-dialog-body label { display: block; margin-bottom: 8px; font-weight: 700; }
+    .missing-dialog-body textarea { display: block; width: 100%; min-height: 110px; box-sizing: border-box; padding: 10px; border: 1px solid #9bbbd3; border-radius: 7px; resize: vertical; font: inherit; color: #244f75; }
+    .missing-dialog-body textarea:focus { outline: 2px solid #3880c7; outline-offset: 2px; }
+    .missing-dialog-help { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; font-size: .82rem; color: #56748e; }
+    #missingReasonCount { white-space: nowrap; }
+    .missing-dialog-body .missing-dialog-error { margin: 14px 0 0; color: #bd3744; }
+    .missing-dialog-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 16px 20px; border-top: 1px solid #d9e8f3; }
     #userSessionWidget { position: fixed !important; right: 15px !important; bottom: 15px !important; left: auto !important; top: auto !important; z-index: 10; }
     @media (max-width: 680px) { .header { padding: 0 8px; } .emesa-logo { max-width: 76px; } .filter-group { width: 100%; } .filter-actions { width: 100%; } .filter-actions .btn { flex: 1; } .results-toolbar { align-items: stretch; flex-direction: column; } .results-tools { flex-direction: column; align-items: stretch; } #search, #filterRead { width: 100%; } }
   </style>
@@ -102,6 +117,25 @@
       <div id="results"><div class="status">Sin filtros aplicados.</div></div>
     </section>
   </main>
+  <dialog id="missingDialog" class="missing-dialog" aria-labelledby="missingDialogTitle" aria-describedby="missingDialogMaterial">
+    <form id="missingForm">
+      <div class="missing-dialog-header">
+        <h2 id="missingDialogTitle">Confirmar faltante de Picking</h2>
+        <button id="missingClose" class="missing-dialog-close" type="button" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="missing-dialog-body">
+        <p id="missingDialogMaterial"></p>
+        <label for="missingReason">Motivo del faltante (opcional)</label>
+        <textarea id="missingReason" name="texto_faltante" rows="4" maxlength="500" placeholder="Escribe el motivo del faltante..." aria-describedby="missingReasonHelp missingReasonCount"></textarea>
+        <div class="missing-dialog-help"><span id="missingReasonHelp">Puedes confirmar sin introducir un motivo.</span><span id="missingReasonCount">0 / 500</span></div>
+        <p id="missingError" class="missing-dialog-error" role="alert" hidden></p>
+      </div>
+      <div class="missing-dialog-footer">
+        <button id="missingCancel" class="btn secondary" type="button">Cancelar</button>
+        <button id="missingConfirm" class="btn" type="submit">Confirmar faltante</button>
+      </div>
+    </form>
+  </dialog>
   <script type="module">
     import { initSelectorMultiple } from '/assets/js/selector-multiple.js';
 
@@ -116,6 +150,14 @@
     const search = document.getElementById('search');
     const filterRead = document.getElementById('filterRead');
     const applyButton = document.getElementById('aplicar');
+    const missingDialog = document.getElementById('missingDialog');
+    const missingReason = document.getElementById('missingReason');
+    const missingConfirm = document.getElementById('missingConfirm');
+    const missingCancel = document.getElementById('missingCancel');
+    const missingClose = document.getElementById('missingClose');
+    const missingError = document.getElementById('missingError');
+    let faltantePendiente = null;
+    let guardandoFaltante = false;
     let pedidosActuales = [];
     const detalleCache = new Map();
 
@@ -238,35 +280,88 @@
     });
     search.addEventListener('input', () => renderizarPedidos(pedidosActuales));
     filterRead.addEventListener('change', actualizarFiltroLectura);
+    async function guardarFaltante(missingButton, faltante, textoFaltante = '') {
+      const idPicking = missingButton.dataset.linea;
+      missingButton.disabled = true;
+      try {
+        const response = await fetch(`/api/picking-lineas/${encodeURIComponent(idPicking)}/faltante`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ faltante, texto_faltante: textoFaltante })
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo actualizar el faltante.');
+        for (const [pedido, lineas] of detalleCache) {
+          const linea = lineas.find(registro => String(registro.ID_PICKING) === String(idPicking));
+          if (!linea) continue;
+          linea.FALTANTE = faltante;
+          const card = Array.from(results.querySelectorAll('.order-card')).find(item => item.dataset.pedido === pedido);
+          if (card) {
+            card.querySelector('.order-detail').innerHTML = renderizarDetalle(lineas);
+            const leido = lineas.every(registro => esLeido(registro.LEIDO));
+            card.querySelector('.order-status').innerHTML = `<i class="semaphore ${leido ? 'green' : 'red'}" role="img" aria-label="${leido ? 'Todas las líneas leídas' : 'Hay líneas sin leer'}"></i>${leido ? 'Completo' : 'Pendiente'}`;
+            const pedidoData = pedidosActuales.find(item => String(item.NUMEROPEDIDO) === pedido);
+            if (pedidoData) pedidoData.LEIDO = leido;
+          }
+          break;
+        }
+      } finally {
+        missingButton.disabled = false;
+      }
+    }
+
+    function abrirModalFaltante(missingButton) {
+      const pedido = missingButton.closest('.order-card').dataset.pedido;
+      const linea = (detalleCache.get(pedido) || []).find(registro => String(registro.ID_PICKING) === missingButton.dataset.linea);
+      faltantePendiente = missingButton;
+      document.getElementById('missingDialogMaterial').textContent = `Pedido ${pedido} · ${linea?.CODIGOPICKING || ''} — ${linea?.DESCRIPCIONPICKING || ''}`;
+      missingReason.value = '';
+      document.getElementById('missingReasonCount').textContent = '0 / 500';
+      missingError.hidden = true;
+      missingDialog.showModal();
+      missingReason.focus();
+    }
+
+    missingReason.addEventListener('input', () => {
+      document.getElementById('missingReasonCount').textContent = `${missingReason.value.length} / 500`;
+    });
+    [missingCancel, missingClose].forEach(button => button.addEventListener('click', () => {
+      if (!guardandoFaltante) missingDialog.close();
+    }));
+    missingDialog.addEventListener('cancel', event => {
+      if (guardandoFaltante) event.preventDefault();
+    });
+    missingDialog.addEventListener('close', () => { faltantePendiente = null; });
+    document.getElementById('missingForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!faltantePendiente || guardandoFaltante) return;
+      guardandoFaltante = true;
+      [missingConfirm, missingCancel, missingClose, missingReason].forEach(control => { control.disabled = true; });
+      missingConfirm.textContent = 'Guardando...';
+      missingError.hidden = true;
+      try {
+        await guardarFaltante(faltantePendiente, true, missingReason.value.trim());
+        missingDialog.close();
+      } catch (error) {
+        missingError.textContent = error.message;
+        missingError.hidden = false;
+      } finally {
+        guardandoFaltante = false;
+        [missingConfirm, missingCancel, missingClose, missingReason].forEach(control => { control.disabled = false; });
+        missingConfirm.textContent = 'Confirmar faltante';
+      }
+    });
+
     results.addEventListener('click', async event => {
       const missingButton = event.target.closest('.missing-action');
       if (missingButton) {
-        const idPicking = missingButton.dataset.linea;
-        const faltante = missingButton.dataset.faltante !== 'true';
-        missingButton.disabled = true;
-        try {
-          const response = await fetch(`/api/picking-lineas/${encodeURIComponent(idPicking)}/faltante`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({ faltante })
-          });
-          const data = await response.json();
-          if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo actualizar el faltante.');
-          for (const [pedido, lineas] of detalleCache) {
-            const linea = lineas.find(registro => String(registro.ID_PICKING) === String(idPicking));
-            if (!linea) continue;
-            linea.FALTANTE = faltante;
-            const card = Array.from(results.querySelectorAll('.order-card')).find(item => item.dataset.pedido === pedido);
-            if (card) {
-              card.querySelector('.order-detail').innerHTML = renderizarDetalle(lineas);
-              const leido = lineas.every(registro => Boolean(registro.LEIDO));
-              card.querySelector('.order-status').innerHTML = `<i class="semaphore ${leido ? 'green' : 'red'}" role="img" aria-label="${leido ? 'Todas las líneas leídas' : 'Hay líneas sin leer'}"></i>${leido ? 'Completo' : 'Pendiente'}`;
-              const pedidoData = pedidosActuales.find(item => String(item.NUMEROPEDIDO) === pedido);
-              if (pedidoData) pedidoData.LEIDO = leido;
-            }
-            break;
+        if (missingButton.dataset.faltante !== 'true') {
+          abrirModalFaltante(missingButton);
+        } else {
+          try {
+            await guardarFaltante(missingButton, false);
+          } catch (error) {
+            alert(error.message);
           }
-        } catch (error) {
-          alert(error.message);
         }
         return;
       }

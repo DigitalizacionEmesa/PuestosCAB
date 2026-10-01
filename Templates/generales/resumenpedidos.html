@@ -1351,7 +1351,7 @@
           celdasEstadoPicking.push(`<span class="estado-tarjeta estado-enproceso" title="${escapeHtml(tooltip)}">En proceso</span>`);
         }
         if ((picking.faltantes || []).length > 0) {
-          const tooltip = `Materiales faltantes: ${picking.faltantes.join('; ')}`;
+          const tooltip = `Materiales faltantes:\n${picking.faltantes.join('\n\n')}`;
           celdasEstadoPicking.push(`<span class="estado-tarjeta estado-faltante" title="${escapeHtml(tooltip)}">Faltante</span>`);
         }
         const celdaPicking = `<td data-grupo="picking" data-col-key="picking">${celdasEstadoPicking.join('')}</td>`;

@@ -1916,6 +1916,13 @@ def actualizar_faltante_picking(id_picking):
         faltante = data.get('faltante')
         if not isinstance(faltante, bool):
             return jsonify({'success': False, 'message': 'El campo faltante debe ser true o false.'}), 400
+        texto_faltante = data.get('texto_faltante', '')
+        if not isinstance(texto_faltante, str):
+            return jsonify({'success': False, 'message': 'El motivo del faltante debe ser un texto.'}), 400
+        texto_faltante = texto_faltante.strip()
+        # NVARCHAR(500) y maxlength cuentan unidades UTF-16, incluidos los emojis.
+        if len(texto_faltante.encode('utf-16-le')) > 1000:
+            return jsonify({'success': False, 'message': 'El motivo del faltante no puede exceder 500 caracteres.'}), 400
         actor = str(user_data.get('num_operario') or user_data.get('nombre') or user_data.get('id') or 'Usuario')[:100]
 
         with ConexionODBC('Digitalizacion') as conn:
@@ -1940,9 +1947,9 @@ def actualizar_faltante_picking(id_picking):
                         WHERE [ID_PICKING] = ? AND [DESMARCADO_EN] IS NULL
                     )
                     INSERT INTO [CAB].[faltantes_picking]
-                        ([ID_PICKING], [NUMEROPEDIDO], [CODIGOPICKING], [MARCADO_POR])
-                    VALUES (?, ?, ?, ?)
-                """, (id_picking, id_picking, str(linea[0]), str(linea[1] or ''), actor))
+                        ([ID_PICKING], [NUMEROPEDIDO], [CODIGOPICKING], [MARCADO_POR], [MOTIVO_FALTANTE])
+                    VALUES (?, ?, ?, ?, ?)
+                """, (id_picking, id_picking, str(linea[0]), str(linea[1] or ''), actor, texto_faltante or None))
             else:
                 cursor.execute("""
                     UPDATE [CAB].[faltantes_picking]
@@ -4636,7 +4643,8 @@ def obtener_resumen_pedidos():
                             cursor_picking.execute(f"""
                                 SELECT CONVERT(NVARCHAR(50), pk.[NUMEROPEDIDO]), pk.[CODIGOPICKING],
                                        cod.[Descripcion], pk.[LEIDO],
-                                       CASE WHEN fp.[ID_PICKING] IS NULL THEN 0 ELSE 1 END
+                                       CASE WHEN fp.[ID_PICKING] IS NULL THEN 0 ELSE 1 END,
+                                       fp.[MOTIVO_FALTANTE]
                                 FROM [Datalake].[dbo].[GPE_PEDIDOS_PRODUCTOS_PICKING_TRIGGER_CONTROL_CAMBIOS] pk
                                 OUTER APPLY (
                                     SELECT TOP (1) c.[Descripcion]
@@ -4660,6 +4668,9 @@ def obtener_resumen_pedidos():
                                     estado['codigos_no_leidos'].append(codigo)
                                 if bool(fila[4]):
                                     detalle = f'{codigo} — {descripcion}' if codigo and descripcion else (codigo or descripcion or 'Material sin código')
+                                    motivo = str(fila[5] or '').strip()
+                                    if motivo:
+                                        detalle += f'\nMotivo: {motivo}'
                                     estado['faltantes'].append(detalle)
                         cursor_picking.close()
                         for pedido in pedidos_list:
@@ -4841,7 +4852,8 @@ def obtener_faltantes():
                     N'N/A' AS [Realizacion],
                     fp.[MARCADO_EN] AS [Fecha],
                     N'Faltante' AS [ESTADO],
-                    N'Faltante registrado en Picking' AS [Faltante],
+                    COALESCE(NULLIF(LTRIM(RTRIM(fp.[MOTIVO_FALTANTE])), N''),
+                             N'Faltante registrado en Picking') AS [Faltante],
                     CASE WHEN fp.[DESMARCADO_EN] IS NULL THEN 1 ELSE 0 END AS [Vigente]
                 FROM [Digitalizacion].[CAB].[faltantes_picking] fp
                 LEFT JOIN [Datalake].[dbo].[GPE_CODIGOS_TRIGGER_CONTROL_CAMBIOS] codigos
