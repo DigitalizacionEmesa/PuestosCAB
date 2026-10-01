@@ -27,8 +27,11 @@
     .btn:disabled { opacity: .65; cursor: wait; }
     .results-panel { margin-top: 16px; overflow: hidden; }
     .results-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #d9e8f3; }
+    .results-tools { display: flex; align-items: center; gap: 8px; }
     #summary { font-weight: 700; }
     #search { width: min(320px, 100%); border: 1px solid #9bbbd3; border-radius: 7px; padding: 9px 11px; }
+    #filterRead { min-width: 150px; border: 1px solid #9bbbd3; border-radius: 7px; padding: 9px 11px; background: white; color: #315f83; }
+    #filterRead:disabled { opacity: .65; }
     .status { padding: 28px 16px; text-align: center; color: #56748e; }
     .order-card { border-bottom: 1px solid #d9e8f3; }
     .order-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 12px 16px; color: #245d8b; background: #edf7ff; font-size: 1.02rem; }
@@ -46,11 +49,12 @@
     th { position: static; background: #f7fbfe; color: #315f83; }
     tbody tr:hover { background: #f6fbff; }
     .bool { text-align: center; }
+    .read-checkbox { width: 16px; height: 16px; margin: 0; accent-color: #20a45a; vertical-align: middle; opacity: 1; cursor: default; }
     .missing-action { border: 1px solid #bd3744; border-radius: 6px; padding: 5px 9px; background: #fff; color: #bd3744; font-weight: 700; cursor: pointer; }
     .missing-action.active { border-color: #23804b; color: #23804b; }
     .missing-action:disabled { opacity: .6; cursor: wait; }
     #userSessionWidget { position: fixed !important; right: 15px !important; bottom: 15px !important; left: auto !important; top: auto !important; z-index: 10; }
-    @media (max-width: 680px) { .header { padding: 0 8px; } .emesa-logo { max-width: 76px; } .filter-group { width: 100%; } .filter-actions { width: 100%; } .filter-actions .btn { flex: 1; } .results-toolbar { align-items: stretch; flex-direction: column; } #search { width: auto; } }
+    @media (max-width: 680px) { .header { padding: 0 8px; } .emesa-logo { max-width: 76px; } .filter-group { width: 100%; } .filter-actions { width: 100%; } .filter-actions .btn { flex: 1; } .results-toolbar { align-items: stretch; flex-direction: column; } .results-tools { flex-direction: column; align-items: stretch; } #search, #filterRead { width: 100%; } }
   </style>
 </head>
 <body>
@@ -86,7 +90,14 @@
     <section class="results-panel" aria-live="polite">
       <div class="results-toolbar">
         <div id="summary">Selecciona año y semana y aplica los filtros.</div>
-        <input id="search" type="search" placeholder="Buscar pedido..." aria-label="Buscar pedido" disabled>
+        <div class="results-tools">
+          <select id="filterRead" aria-label="Filtrar materiales por lectura" disabled>
+            <option value="todos">Todos los materiales</option>
+            <option value="leidos">Leídos</option>
+            <option value="no-leidos">No leídos</option>
+          </select>
+          <input id="search" type="search" placeholder="Buscar pedido..." aria-label="Buscar pedido" disabled>
+        </div>
       </div>
       <div id="results"><div class="status">Sin filtros aplicados.</div></div>
     </section>
@@ -103,6 +114,7 @@
     const results = document.getElementById('results');
     const summary = document.getElementById('summary');
     const search = document.getElementById('search');
+    const filterRead = document.getElementById('filterRead');
     const applyButton = document.getElementById('aplicar');
     let pedidosActuales = [];
     const detalleCache = new Map();
@@ -148,14 +160,35 @@
         ['LEIDO', 'Leído'], ['CODIGOLEIDO', 'Código leído']
       ];
       if (!registros.length) return '<div class="status">El pedido no tiene materiales.</div>';
+      const criterio = filterRead.value;
+      const visibles = criterio === 'todos' ? registros : registros.filter(row => criterio === 'leidos' ? esLeido(row.LEIDO) : !esLeido(row.LEIDO));
+      if (!visibles.length) return '<div class="status">No hay materiales que coincidan con el filtro de lectura.</div>';
       return `<div class="table-wrap"><table>
         <thead><tr>${encabezados.map(([, titulo]) => `<th>${titulo}</th>`).join('')}<th>Acciones</th><th>Estado</th></tr></thead>
-        <tbody>${registros.map(row => `<tr>
-          ${encabezados.map(([campo]) => `<td class="${campo === 'LEIDO' ? 'bool' : ''}">${esc(row[campo])}</td>`).join('')}
-          <td><button type="button" class="missing-action ${row.FALTANTE ? 'active' : ''}" data-linea="${esc(row.ID_PICKING)}" data-faltante="${row.FALTANTE ? 'true' : 'false'}" ${row.LEIDO ? 'disabled title="La línea se ha leído"' : ''}>${row.FALTANTE ? 'Quitar faltante' : 'Marcar faltante'}</button></td>
-          <td class="bool"><i class="semaphore ${row.LEIDO ? 'green' : 'red'}" role="img" aria-label="${row.LEIDO ? 'Leído' : 'No leído'}" title="${row.LEIDO ? 'Leído' : 'No leído'}"></i></td>
-        </tr>`).join('')}</tbody>
+        <tbody>${visibles.map(row => {
+          const leido = esLeido(row.LEIDO);
+          return `<tr>
+            ${encabezados.map(([campo]) => campo === 'LEIDO'
+              ? `<td class="bool"><input class="read-checkbox" type="checkbox" disabled ${leido ? 'checked' : ''} aria-label="Leído: ${leido ? 'true' : 'false'}" title="${leido ? 'true' : 'false'}"></td>`
+              : `<td>${esc(row[campo])}</td>`).join('')}
+            <td><button type="button" class="missing-action ${row.FALTANTE ? 'active' : ''}" data-linea="${esc(row.ID_PICKING)}" data-faltante="${row.FALTANTE ? 'true' : 'false'}" ${leido ? 'disabled title="La línea se ha leído"' : ''}>${row.FALTANTE ? 'Quitar faltante' : 'Marcar faltante'}</button></td>
+            <td class="bool"><i class="semaphore ${leido ? 'green' : 'red'}" role="img" aria-label="${leido ? 'Leído' : 'No leído'}" title="${leido ? 'Leído' : 'No leído'}"></i></td>
+          </tr>`;
+        }).join('')}</tbody>
       </table></div>`;
+    }
+
+    function esLeido(valor) {
+      return valor === true || valor === 1 || ['true', '1'].includes(String(valor).toLowerCase());
+    }
+
+    function actualizarFiltroLectura() {
+      for (const [pedido, registros] of detalleCache) {
+        const card = Array.from(results.querySelectorAll('.order-card')).find(item => item.dataset.pedido === pedido);
+        if (card && !card.querySelector('.order-detail').hidden) {
+          card.querySelector('.order-detail').innerHTML = renderizarDetalle(registros);
+        }
+      }
     }
 
     async function aplicarFiltros() {
@@ -179,6 +212,7 @@
         detalleCache.clear();
         summary.textContent = `${data.total_pedidos} pedidos`;
         search.disabled = false;
+        filterRead.disabled = false;
         renderizarPedidos(pedidosActuales);
       } catch (error) {
         pedidosActuales = [];
@@ -195,12 +229,15 @@
       semanaSelector.clear();
       search.value = '';
       search.disabled = true;
+      filterRead.value = 'todos';
+      filterRead.disabled = true;
       pedidosActuales = [];
       detalleCache.clear();
       summary.textContent = 'Selecciona año y semana y aplica los filtros.';
       results.innerHTML = '<div class="status">Sin filtros aplicados.</div>';
     });
     search.addEventListener('input', () => renderizarPedidos(pedidosActuales));
+    filterRead.addEventListener('change', actualizarFiltroLectura);
     results.addEventListener('click', async event => {
       const missingButton = event.target.closest('.missing-action');
       if (missingButton) {
