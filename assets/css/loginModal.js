@@ -462,6 +462,7 @@ const CAB_ROUTE_METADATA = [
   { test: /^\/$/, title: 'PUESTOS CAB', crumbs: [{ label: 'Inicio' }] },
   { test: /puestoscab\.html$/i, title: 'PUESTOS CAB', crumbs: [{ label: 'Inicio' }] },
   { test: /listapuestoscab\.html$/i, title: 'PUESTOS CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos' }] },
+  { test: /pickingcab\.html$/i, title: 'PICKING CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Picking' }] },
   { test: /puestocab\.html$/i, title: 'Puesto Cabinas', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Puestos', href: CAB_PUESTOS_URL }, { label: 'Puesto Cabinas' }] },
   { test: /configuracioncab\.html$/i, title: 'CONFIGURACIÓN CAB', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración' }] },
   { test: /crearpuesto\.html$/i, title: 'CREAR PUESTO', crumbs: [{ label: 'Inicio', href: CAB_HOME_URL }, { label: 'Configuración', href: CAB_CONFIG_URL }, { label: 'Crear Puesto' }] },

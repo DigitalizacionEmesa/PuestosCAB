@@ -25,6 +25,7 @@ import socket
 from flask_cors import CORS, cross_origin
 from datetime import datetime
 import hashlib
+import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 # ====================================================================================
@@ -1815,6 +1816,15 @@ def obtener_pedidos_picking():
             parametros.extend(semanas_validas)
 
         where_periodo = ' AND '.join(condiciones)
+        tabla_pesos = "[Digitalizacion].[CAB].[PesosPedidos]"
+        try:
+            with ConexionODBC('Digitalizacion') as conn_check:
+                pesos_disponibles = bool(conn_check and conn_check.cursor().execute("SELECT OBJECT_ID(N'[CAB].[PesosPedidos]', N'U')").fetchone()[0])
+        except Exception:
+            pesos_disponibles = False
+        peso_select = "peso.[PesoKg]" if pesos_disponibles else "CAST(NULL AS DECIMAL(12,3))"
+        peso_join = f"LEFT JOIN {tabla_pesos} peso ON peso.[Pedido] = CONVERT(NVARCHAR(50), f.[NumeroPedido])" if pesos_disponibles else ""
+        peso_group = ", peso.[PesoKg]" if pesos_disponibles else ""
         consulta = f"""
             WITH PedidosFiltrados AS (
                 SELECT DISTINCT f.[NumeroPedido]
@@ -1825,11 +1835,13 @@ def obtener_pedidos_picking():
             SELECT
                 CONVERT(nvarchar(50), f.[NumeroPedido]) AS [NUMEROPEDIDO],
                 COUNT_BIG(p.[id]) AS [TOTAL_MATERIALES],
-                CONVERT(bit, MAX(CASE WHEN ISNULL(p.[LEIDO], 0) = 0 THEN 1 ELSE 0 END)) AS [TIENE_PENDIENTES]
+                CONVERT(bit, MAX(CASE WHEN ISNULL(p.[LEIDO], 0) = 0 THEN 1 ELSE 0 END)) AS [TIENE_PENDIENTES],
+                {peso_select} AS [PESO_KG]
             FROM PedidosFiltrados f
             INNER JOIN [Datalake].[dbo].[GPE_PEDIDOS_PRODUCTOS_PICKING_TRIGGER_CONTROL_CAMBIOS] p
                 ON p.[NUMEROPEDIDO] = f.[NumeroPedido]
-            GROUP BY f.[NumeroPedido]
+            {peso_join}
+            GROUP BY f.[NumeroPedido]{peso_group}
             ORDER BY f.[NumeroPedido] DESC
         """
 
@@ -1839,7 +1851,7 @@ def obtener_pedidos_picking():
             cursor = conn.cursor()
             cursor.execute(consulta, parametros)
             pedidos = [
-                {'NUMEROPEDIDO': str(row[0]), 'TOTAL_MATERIALES': int(row[1]), 'LEIDO': not bool(row[2])}
+                {'NUMEROPEDIDO': str(row[0]), 'TOTAL_MATERIALES': int(row[1]), 'LEIDO': not bool(row[2]), 'PESO_KG': str(row[3]) if row[3] is not None else None, 'PESO_EDITABLE': pesos_disponibles}
                 for row in cursor.fetchall()
             ]
 
@@ -1850,6 +1862,68 @@ def obtener_pedidos_picking():
         })
     except Exception as e:
         print(f"Error obteniendo resumen de pedidos de picking: {e}")
+        return jsonify({'success': False, 'message': f'Error del servidor: {str(e)}'}), 500
+
+@app.route('/api/picking-pedidos/<string:numero_pedido>/peso', methods=['PUT'])
+def actualizar_peso_pedido_picking(numero_pedido):
+    """Guarda un peso único por pedido, validando que pertenece a los filtros enviados."""
+    user_data = session.get('user_data') or {}
+    if not user_data:
+        return jsonify({'success': False, 'message': 'Debes iniciar sesión para guardar el peso.'}), 401
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or 'peso_kg' not in data:
+        return jsonify({'success': False, 'message': 'El campo peso_kg es obligatorio; usa null para borrar el peso.'}), 400
+    raw = data.get('peso_kg')
+    if raw is None or (isinstance(raw, str) and not raw.strip()):
+        peso = None
+    elif isinstance(raw, bool) or not isinstance(raw, (str, int, float, Decimal)):
+        return jsonify({'success': False, 'message': 'El peso debe ser un número entre 0 y 999999999,999 kg, con hasta tres decimales.'}), 400
+    else:
+        texto = str(raw).strip().replace(',', '.')
+        if not re.fullmatch(r'(?:[0-9]+(?:\.[0-9]{1,3})?|\.[0-9]{1,3})', texto):
+            return jsonify({'success': False, 'message': 'El peso debe ser un número entre 0 y 999999999,999 kg, con hasta tres decimales.'}), 400
+        try:
+            peso = Decimal(texto).quantize(Decimal('0.001'))
+        except (InvalidOperation, ValueError):
+            return jsonify({'success': False, 'message': 'El peso no es válido.'}), 400
+        if peso > Decimal('999999999.999'):
+            return jsonify({'success': False, 'message': 'El peso supera el máximo permitido.'}), 400
+    anos = [str(v).strip() for v in data.get('anos', []) if str(v).strip()] if isinstance(data.get('anos', []), list) else []
+    semanas = [str(v).strip() for v in data.get('semanas', []) if str(v).strip()] if isinstance(data.get('semanas', []), list) else []
+    if not anos and not semanas:
+        return jsonify({'success': False, 'message': 'Selecciona al menos un año o semana.'}), 400
+    condiciones, parametros = [], []
+    if anos:
+        condiciones.append("f.[Año] IN (" + ','.join('?' for _ in anos) + ")")
+        parametros.extend(anos)
+    if semanas:
+        expand = []
+        for semana in semanas:
+            expand.extend([semana, f'0{semana}'] if semana.isdigit() and len(semana) == 1 else [semana, semana[1:]] if semana.isdigit() and len(semana) == 2 and semana.startswith('0') else [semana])
+        expand = list(dict.fromkeys(expand))
+        condiciones.append("f.[NumSemana] IN (" + ','.join('?' for _ in expand) + ")")
+        parametros.extend(expand)
+    actor = str(user_data.get('num_operario') or user_data.get('nombre') or user_data.get('id') or 'Usuario')[:100]
+    try:
+        with ConexionODBC('Digitalizacion') as conn:
+            if not conn:
+                return jsonify({'success': False, 'message': 'Error de conexión a base de datos.'}), 500
+            cursor = conn.cursor()
+            if not cursor.execute("SELECT OBJECT_ID(N'[CAB].[PesosPedidos]', N'U')").fetchone()[0]:
+                return jsonify({'success': False, 'message': 'Ejecuta sql/pesos_pedidos.sql en Digitalizacion para habilitar el peso.'}), 503
+            pedido = numero_pedido.strip()
+            where = ' AND '.join(condiciones)
+            if not cursor.execute(f"SELECT TOP (1) f.[NumeroPedido] FROM [CAB].[Fact_Procesos_Tiempos_Cabinas] f WHERE {where} AND CONVERT(NVARCHAR(50), f.[NumeroPedido]) = ?", parametros + [pedido]).fetchone():
+                return jsonify({'success': False, 'message': 'El pedido no pertenece a los filtros seleccionados.'}), 404
+            existing = cursor.execute("SELECT [Pedido] FROM [CAB].[PesosPedidos] WITH (UPDLOCK, HOLDLOCK) WHERE [Pedido] = ?", (pedido,)).fetchone()
+            if existing:
+                cursor.execute("UPDATE [CAB].[PesosPedidos] SET [PesoKg]=?, [FechaModificacion]=SYSDATETIME(), [ModificadoPor]=? WHERE [Pedido]=?", (peso, actor, pedido))
+            else:
+                cursor.execute("INSERT INTO [CAB].[PesosPedidos] ([Pedido],[PesoKg],[ModificadoPor]) VALUES (?,?,?)", (pedido, peso, actor))
+            conn.commit()
+        return jsonify({'success': True, 'NUMEROPEDIDO': pedido, 'PESO_KG': str(peso) if peso is not None else None, 'message': 'Peso guardado'})
+    except Exception as e:
+        print(f"Error guardando peso del pedido {numero_pedido}: {e}")
         return jsonify({'success': False, 'message': f'Error del servidor: {str(e)}'}), 500
 
 @app.route('/api/picking-pedidos/<string:numero_pedido>', methods=['GET'])
@@ -1864,6 +1938,7 @@ def obtener_detalle_pedido_picking(numero_pedido):
             SELECT
                 p.[NUMEROPEDIDO],
                 p.[id] AS [ID_PICKING],
+                p.[IDPADRESUBOPERACIONES],
                 p.[CODIGOPICKING],
                 c.[Descripcion] AS [DESCRIPCIONPICKING],
                 p.[CANTIDADPICKING],

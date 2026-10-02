@@ -343,6 +343,15 @@
         return;
       }
 
+      if (viewKey === 'picking') {
+        puestosBreadcrumb.appendChild(puestosBreadcrumbItem('Puestos', 'lista'));
+        const pickingSeparator = document.createElement('span');
+        pickingSeparator.className = 'breadcrumb-separator';
+        pickingSeparator.textContent = '>';
+        puestosBreadcrumb.append(pickingSeparator, puestosBreadcrumbItem('Picking', null));
+        return;
+      }
+
       if (viewKey === 'jefe') {
         puestosBreadcrumb.appendChild(puestosBreadcrumbItem('Puestos', 'lista'));
         const puestosSeparator = document.createElement('span');

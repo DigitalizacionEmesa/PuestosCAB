@@ -34,12 +34,21 @@
     #filterRead:disabled { opacity: .65; }
     .status { padding: 28px 16px; text-align: center; color: #56748e; }
     .order-card { border-bottom: 1px solid #d9e8f3; }
-    .order-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 12px 16px; color: #245d8b; background: #edf7ff; font-size: 1.02rem; }
+    .order-heading { display: flex; align-items: center; gap: 12px; margin: 0; padding: 8px 16px; color: #245d8b; background: var(--order-background, #edf7ff); font-size: 1.02rem; }
+    .order-heading.is-read { --order-background: #e6f4ea; --order-hover: #d4ebdc; }
+    .order-heading.is-unread { --order-background: #fde9e8; --order-hover: #f8d7d5; }
+    .order-heading:hover { background: var(--order-hover, #e4f2fd); }
+    .order-title { flex: 0 0 166px; }
     .order-count { margin-left: 8px; color: #66839a; font-size: .9rem; font-weight: 400; }
-    .order-status { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; color: #56748e; font-size: .82rem; font-weight: 600; }
-    .semaphore { display: inline-block; width: 13px; height: 13px; flex: 0 0 13px; border: 1px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #7890a3; vertical-align: middle; }
-    .semaphore.green { background: #20a45a; box-shadow: 0 0 0 1px #168245; }
-    .semaphore.red { background: #dc3545; box-shadow: 0 0 0 1px #b42332; }
+    .order-status { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; color: #56748e; font-size: .82rem; font-weight: 600; }
+    .semaphore { display: none; }
+    .order-weight { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 5px; font-size: .85rem; font-weight: 600; }
+    .weight-input { width: 104px; box-sizing: border-box; border: 1px solid #9bbbd3; border-radius: 5px; padding: 5px 7px; color: #315f83; font: inherit; text-align: right; }
+    .weight-input:focus { outline: 2px solid #3880c7; outline-offset: 1px; }
+    .weight-input[aria-invalid="true"] { border-color: #bd3744; }
+    .weight-input:disabled { opacity: .65; cursor: wait; }
+    .weight-message { max-width: 250px; font-size: .78rem; font-weight: 400; overflow-wrap: anywhere; }
+    .weight-message.error { color: #bd3744; }
     .detail-toggle { flex: 0 0 auto; border: 1px solid #2879b9; border-radius: 7px; padding: 7px 12px; background: white; color: #2879b9; font-weight: 700; cursor: pointer; }
     .detail-toggle:disabled { opacity: .65; cursor: wait; }
     .order-detail[hidden] { display: none; }
@@ -47,9 +56,28 @@
     table { width: 100%; border-collapse: collapse; min-width: 980px; margin-top: 0; }
     th, td { padding: 9px 11px; border-bottom: 1px solid #e4edf4; text-align: left; white-space: nowrap; }
     th { position: static; background: #f7fbfe; color: #315f83; }
-    tbody tr:hover { background: #f6fbff; }
+    tbody tr.is-read { background: #e6f4ea; }
+    tbody tr.is-unread { background: #fde9e8; }
+    tbody tr:hover { background: #d4ebdc; }
+    tbody tr.is-unread:hover { background: #f8d7d5; }
     .bool { text-align: center; }
     .read-checkbox { width: 16px; height: 16px; margin: 0; accent-color: #20a45a; vertical-align: middle; opacity: 1; cursor: default; }
+    .material-tree { display: grid; gap: 9px; padding: 12px 16px; }
+    .material-node { overflow: hidden; border: 1px solid #d4e4f0; border-radius: 8px; background: var(--order-background, #fff); }
+    .material-node.is-read { --order-background: #e6f4ea; --order-hover: #d4ebdc; }
+    .material-node.is-unread { --order-background: #fde9e8; --order-hover: #f8d7d5; }
+    .material-node > summary, .material-summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--order-background); color: #245d8b; cursor: pointer; list-style: none; }
+    .material-node > summary::-webkit-details-marker { display: none; }
+    .material-chevron { width: 8px; height: 8px; flex: 0 0 8px; margin: 0 3px 3px 2px; border-right: 2px solid #52738e; border-bottom: 2px solid #52738e; transform: rotate(45deg); }
+    .material-chevron.hidden { visibility: hidden; }
+    .material-title { display: inline-flex; flex: 1 1 auto; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+    .material-title small { color: #56748e; font-size: .74rem; font-weight: 700; text-transform: uppercase; }
+    .material-title strong { overflow-wrap: anywhere; }
+    .material-state { margin-left: auto; color: #315f83; font-size: .86rem; font-weight: 700; }
+    .material-line { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; padding: 10px 14px; border-top: 1px solid #e3edf4; background: var(--order-background); color: #56748e; font-size: .88rem; }
+    .material-line strong { color: #315f83; }
+    .material-children { display: grid; gap: 8px; padding: 0 10px 10px 22px; }
+    .material-context { padding: 7px 13px; background: var(--order-background); color: #71869a; font-size: .8rem; font-style: italic; }
     .missing-action { border: 1px solid #bd3744; border-radius: 6px; padding: 5px 9px; background: #fff; color: #bd3744; font-weight: 700; cursor: pointer; }
     .missing-action.active { border-color: #23804b; color: #23804b; }
     .missing-action:disabled { opacity: .6; cursor: wait; }
@@ -69,7 +97,7 @@
     .missing-dialog-body .missing-dialog-error { margin: 14px 0 0; color: #bd3744; }
     .missing-dialog-footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; padding: 16px 20px; border-top: 1px solid #d9e8f3; }
     #userSessionWidget { position: fixed !important; right: 15px !important; bottom: 15px !important; left: auto !important; top: auto !important; z-index: 10; }
-    @media (max-width: 680px) { .header { padding: 0 8px; } .emesa-logo { max-width: 76px; } .filter-group { width: 100%; } .filter-actions { width: 100%; } .filter-actions .btn { flex: 1; } .results-toolbar { align-items: stretch; flex-direction: column; } .results-tools { flex-direction: column; align-items: stretch; } #search, #filterRead { width: 100%; } }
+    @media (max-width: 680px) { .header { padding: 0 8px; } .emesa-logo { max-width: 76px; } .filter-group { width: 100%; } .filter-actions { width: 100%; } .filter-actions .btn { flex: 1; } .results-toolbar { align-items: stretch; flex-direction: column; } .results-tools { flex-direction: column; align-items: stretch; } #search, #filterRead { width: 100%; } .order-heading { flex-wrap: wrap; } .order-title { flex: 1 1 auto; } .order-status { flex-basis: 100%; margin-left: 0; } .order-weight { flex: 1 1 auto; } }
   </style>
 </head>
 <body>
@@ -159,6 +187,9 @@
     let faltantePendiente = null;
     let guardandoFaltante = false;
     let pedidosActuales = [];
+    let filtrosActuales = { anos: [], semanas: [] };
+    let pedidosAbort = null;
+    let detalleAbort = null;
     const detalleCache = new Map();
 
     async function cargarOpciones(url, key, selector, label) {
@@ -177,6 +208,38 @@
       return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
     }
 
+    function formatearPeso(value) {
+      return String(value ?? '').replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '').replace('.', ',');
+    }
+
+    function pesoValido(value) {
+      const normalized = value.trim().replace(',', '.');
+      return !normalized || (/^(?:[0-9]+(?:\.[0-9]{1,3})?|\.[0-9]{1,3})$/.test(normalized) && Number(normalized) <= 999999999.999);
+    }
+
+    async function guardarPeso(input) {
+      const card = input.closest('.order-card');
+      const pedido = card?.dataset.pedido;
+      const order = pedidosActuales.find(item => String(item.NUMEROPEDIDO) === pedido);
+      if (!order || order.PESO_EDITABLE === false || input.dataset.saving === '1') return;
+      const texto = input.value.trim();
+      const message = card.querySelector('.weight-message');
+      if (!pesoValido(texto)) {
+        input.setAttribute('aria-invalid', 'true'); message.textContent = 'Peso no válido (máximo 3 decimales).'; message.classList.add('error'); return;
+      }
+      input.setAttribute('aria-invalid', 'false'); message.classList.remove('error');
+      const previous = formatearPeso(order.PESO_KG);
+      if ((!texto && !previous) || (texto && previous && Number(texto.replace(',', '.')) === Number(previous.replace(',', '.')))) { input.value = previous; message.textContent = ''; return; }
+      input.dataset.saving = '1'; input.disabled = true; message.textContent = 'Guardando...';
+      try {
+        const response = await fetch(`/api/picking-pedidos/${encodeURIComponent(pedido)}/peso`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ peso_kg: texto || null, ...filtrosActuales }) });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'No se pudo guardar el peso.');
+        order.PESO_KG = data.PESO_KG; input.value = formatearPeso(data.PESO_KG); message.textContent = 'Guardado';
+      } catch (error) { message.textContent = error.message; message.classList.add('error'); input.setAttribute('aria-invalid', 'true'); }
+      finally { input.dataset.saving = ''; input.disabled = false; }
+    }
+
     function renderizarPedidos(pedidos) {
       const texto = search.value.trim().toLocaleLowerCase();
       const filtrados = texto ? pedidos.filter(pedido => String(pedido.NUMEROPEDIDO ?? '').toLocaleLowerCase().includes(texto)) : pedidos;
@@ -187,8 +250,10 @@
 
       results.innerHTML = filtrados.map(pedido => `
         <section class="order-card" data-pedido="${esc(pedido.NUMEROPEDIDO)}">
-          <h2 class="order-heading">
-            <span>Pedido ${esc(pedido.NUMEROPEDIDO)}<span class="order-count">${esc(pedido.TOTAL_MATERIALES)} materiales</span><span class="order-status"><i class="semaphore ${pedido.LEIDO ? 'green' : 'red'}" role="img" aria-label="${pedido.LEIDO ? 'Todas las líneas leídas' : 'Hay líneas sin leer'}"></i>${pedido.LEIDO ? 'Completo' : 'Pendiente'}</span></span>
+          <h2 class="order-heading ${pedido.LEIDO ? 'is-read' : 'is-unread'}">
+            <span class="order-title">Pedido ${esc(pedido.NUMEROPEDIDO)}<span class="order-count">${esc(pedido.TOTAL_MATERIALES)} materiales</span></span>
+            <label class="order-weight"><input class="weight-input" type="text" inputmode="decimal" maxlength="32" placeholder="Peso" value="${esc(formatearPeso(pedido.PESO_KG))}" aria-label="Peso en kg del pedido ${esc(pedido.NUMEROPEDIDO)}" title="Peso en kg. Se guarda al salir o pulsar Intro. Vacío para borrar." ${pedido.PESO_EDITABLE === false ? 'disabled' : ''}><span>kg</span><span class="weight-message" role="status"></span></label>
+            <span class="order-status"><i class="semaphore ${pedido.LEIDO ? 'green' : 'red'}"></i>${pedido.LEIDO ? 'Completo' : 'Pendiente'}</span>
             <button class="detail-toggle" type="button" data-pedido="${esc(pedido.NUMEROPEDIDO)}">Ver materiales</button>
           </h2>
           <div class="order-detail" hidden><div class="status">Abre el pedido para cargar sus materiales.</div></div>
@@ -196,28 +261,30 @@
     }
 
     function renderizarDetalle(registros) {
-      const encabezados = [
-        ['CODIGOPICKING', 'Código picking'], ['DESCRIPCIONPICKING', 'Descripción'],
-        ['CANTIDADPICKING', 'Cantidad picking'], ['CANTIDADPICKINGFICHADA', 'Cantidad fichada'],
-        ['LEIDO', 'Leído'], ['CODIGOLEIDO', 'Código leído']
-      ];
       if (!registros.length) return '<div class="status">El pedido no tiene materiales.</div>';
       const criterio = filterRead.value;
-      const visibles = criterio === 'todos' ? registros : registros.filter(row => criterio === 'leidos' ? esLeido(row.LEIDO) : !esLeido(row.LEIDO));
-      if (!visibles.length) return '<div class="status">No hay materiales que coincidan con el filtro de lectura.</div>';
-      return `<div class="table-wrap"><table>
-        <thead><tr>${encabezados.map(([, titulo]) => `<th>${titulo}</th>`).join('')}<th>Acciones</th><th>Estado</th></tr></thead>
-        <tbody>${visibles.map(row => {
-          const leido = esLeido(row.LEIDO);
-          return `<tr>
-            ${encabezados.map(([campo]) => campo === 'LEIDO'
-              ? `<td class="bool"><input class="read-checkbox" type="checkbox" disabled ${leido ? 'checked' : ''} aria-label="Leído: ${leido ? 'true' : 'false'}" title="${leido ? 'true' : 'false'}"></td>`
-              : `<td>${esc(row[campo])}</td>`).join('')}
-            <td><button type="button" class="missing-action ${row.FALTANTE ? 'active' : ''}" data-linea="${esc(row.ID_PICKING)}" data-faltante="${row.FALTANTE ? 'true' : 'false'}" ${leido ? 'disabled title="La línea se ha leído"' : ''}>${row.FALTANTE ? 'Quitar faltante' : 'Marcar faltante'}</button></td>
-            <td class="bool"><i class="semaphore ${leido ? 'green' : 'red'}" role="img" aria-label="${leido ? 'Leído' : 'No leído'}" title="${leido ? 'Leído' : 'No leído'}"></i></td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table></div>`;
+      const passes = row => criterio === 'todos' || (criterio === 'leidos' ? esLeido(row.LEIDO) : !esLeido(row.LEIDO));
+      const byId = new Map(registros.map(row => [String(row.ID_PICKING), row]));
+      const children = new Map();
+      registros.forEach(row => { const parent = String(row.IDPADRESUBOPERACIONES ?? '').trim(); if (parent && parent !== '0') { if (!children.has(parent)) children.set(parent, []); children.get(parent).push(row); } });
+      const rendered = new Set();
+      const renderNode = (row, depth, ancestors = new Set()) => {
+        const id = String(row.ID_PICKING);
+        if (ancestors.has(id)) return '';
+        const next = new Set(ancestors); next.add(id); rendered.add(id);
+        const childHtml = (children.get(id) || []).map(child => renderNode(child, depth + 1, next)).join('');
+        const ownVisible = passes(row);
+        if (!ownVisible && !childHtml) return '';
+        const leido = esLeido(row.LEIDO);
+        const kind = depth === 0 ? 'Padre' : depth === 1 ? 'Componente' : 'Subcomponente';
+        const heading = `<span class="material-chevron${childHtml ? '' : ' hidden'}"></span><span class="material-title"><small>${kind}</small><strong>${esc(row.CODIGOPICKING)}${row.DESCRIPCIONPICKING ? ` / ${esc(row.DESCRIPCIONPICKING)}` : ''}</strong></span><span class="material-state">${leido ? 'Completo' : 'Pendiente'}</span>`;
+        const content = ownVisible ? `<div class="material-line"><span>Cantidad: <strong>${esc(row.CANTIDADPICKING)}</strong></span><span>Fichada: <strong>${esc(row.CANTIDADPICKINGFICHADA)}</strong></span>${row.CODIGOLEIDO ? `<span>Código leído: <strong>${esc(row.CODIGOLEIDO)}</strong></span>` : ''}<label><input class="read-checkbox" type="checkbox" disabled ${leido ? 'checked' : ''}> Leído</label><button type="button" class="missing-action ${row.FALTANTE ? 'active' : ''}" data-linea="${esc(row.ID_PICKING)}" data-faltante="${row.FALTANTE ? 'true' : 'false'}" ${leido ? 'disabled title="La línea se ha leído"' : ''}>${row.FALTANTE ? 'Quitar faltante' : 'Marcar faltante'}</button></div>` : '<div class="material-context">Material oculto por el filtro.</div>';
+        return childHtml ? `<details class="material-node ${leido ? 'is-read' : 'is-unread'} depth-${Math.min(depth, 2)}"><summary>${heading}</summary>${content}<div class="material-children">${childHtml}</div></details>` : `<div class="material-node ${leido ? 'is-read' : 'is-unread'} depth-${Math.min(depth, 2)}"><div class="material-summary">${heading}</div>${content}</div>`;
+      };
+      const roots = registros.filter(row => { const parent = String(row.IDPADRESUBOPERACIONES ?? '').trim(); return !parent || parent === '0' || !byId.has(parent); });
+      let tree = roots.map(row => renderNode(row, 0)).join('');
+      tree += registros.filter(row => !rendered.has(String(row.ID_PICKING))).map(row => renderNode(row, 0)).join('');
+      return tree ? `<div class="material-tree">${tree}</div>` : '<div class="status">No hay materiales que coincidan con el filtro de lectura.</div>';
     }
 
     function esLeido(valor) {
@@ -246,17 +313,22 @@
       applyButton.disabled = true;
       results.innerHTML = '<div class="status">Cargando materiales...</div>';
       summary.textContent = 'Consultando pedidos...';
+      filtrosActuales = { anos, semanas };
+      if (pedidosAbort) pedidosAbort.abort();
+      pedidosAbort = new AbortController();
       try {
-        const response = await fetch(`/api/picking-pedidos?${params.toString()}`, { headers: { Accept: 'application/json' } });
+        const response = await fetch(`/api/picking-pedidos?${params.toString()}`, { headers: { Accept: 'application/json' }, signal: pedidosAbort.signal });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.message || 'Error al cargar pedidos.');
         pedidosActuales = data.pedidos || [];
+        if (!document.body.contains(results)) return;
         detalleCache.clear();
         summary.textContent = `${data.total_pedidos} pedidos`;
         search.disabled = false;
         filterRead.disabled = false;
         renderizarPedidos(pedidosActuales);
       } catch (error) {
+        if (error.name === 'AbortError') return;
         pedidosActuales = [];
         summary.textContent = 'No se pudieron cargar los materiales.';
         results.innerHTML = `<div class="status">${esc(error.message)}</div>`;
@@ -274,12 +346,20 @@
       filterRead.value = 'todos';
       filterRead.disabled = true;
       pedidosActuales = [];
+      filtrosActuales = { anos: [], semanas: [] };
       detalleCache.clear();
       summary.textContent = 'Selecciona año y semana y aplica los filtros.';
       results.innerHTML = '<div class="status">Sin filtros aplicados.</div>';
     });
     search.addEventListener('input', () => renderizarPedidos(pedidosActuales));
     filterRead.addEventListener('change', actualizarFiltroLectura);
+    results.addEventListener('input', event => {
+      if (!event.target.matches('.weight-input')) return;
+      event.target.setAttribute('aria-invalid', 'false');
+      const message = event.target.closest('.order-card').querySelector('.weight-message'); message.textContent = 'Sin guardar'; message.classList.remove('error');
+    });
+    results.addEventListener('change', event => { if (event.target.matches('.weight-input')) guardarPeso(event.target); });
+    results.addEventListener('keydown', event => { if (event.key === 'Enter' && event.target.matches('.weight-input')) { event.preventDefault(); guardarPeso(event.target); event.target.blur(); } });
     async function guardarFaltante(missingButton, faltante, textoFaltante = '') {
       const idPicking = missingButton.dataset.linea;
       missingButton.disabled = true;
@@ -386,14 +466,18 @@
       button.textContent = 'Cargando...';
       detail.innerHTML = '<div class="status">Cargando materiales del pedido...</div>';
       try {
-        const response = await fetch(`/api/picking-pedidos/${encodeURIComponent(pedido)}`, { headers: { Accept: 'application/json' } });
+        if (detalleAbort) detalleAbort.abort();
+        detalleAbort = new AbortController();
+        const response = await fetch(`/api/picking-pedidos/${encodeURIComponent(pedido)}`, { headers: { Accept: 'application/json' }, signal: detalleAbort.signal });
         const data = await response.json();
         if (!response.ok || !data.success) throw new Error(data.message || 'Error al cargar los materiales.');
         const registros = data.registros || [];
+        if (!document.body.contains(detail)) return;
         detalleCache.set(pedido, registros);
         detail.innerHTML = renderizarDetalle(registros);
         button.textContent = 'Ocultar materiales';
       } catch (error) {
+        if (error.name === 'AbortError') return;
         detail.innerHTML = `<div class="status">${esc(error.message)}</div>`;
         button.textContent = 'Reintentar';
       } finally {
@@ -405,6 +489,6 @@
       cargarOpciones('/api/semanas', 'semanas', semanaSelector, value => `Semana ${value}`)
     ]);
   </script>
-  <script src="/assets/css/loginModal.js?v=20260908-cab-pe-widget-2"></script>
+  <script src="/assets/css/loginModal.js?v=20261002-cab-breadcrumb-3"></script>
 </body>
 </html>
