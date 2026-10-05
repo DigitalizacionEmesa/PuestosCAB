@@ -4970,7 +4970,7 @@ def guardar_nota_pedido():
     Campos permitidos: Notas, Operario, Clinchado, Suelos, Techos, Bajotecho, Especiales,
                        EMB, TipoDecoracion, Modelo, FechaEntrega"""
     CAMPOS_PERMITIDOS = [
-        'Notas', 'Operario', 'Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales',
+        'Notas', 'Decoracion', 'Operario', 'Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales',
         'EMB', 'TipoDecoracion', 'Modelo', 'FechaEntrega'
     ]
     
@@ -4998,6 +4998,8 @@ def guardar_nota_pedido():
             
             # Normalizar: si el valor es string vacío, guardar como None (NULL en BD)
             valor_final = valor if valor != '' else None
+            # Compatibilidad con el payload antiguo: la columna real es Decoracion.
+            campo_bd = 'Decoracion' if campo == 'Operario' else campo
             
             with ConexionODBC('Digitalizacion') as conn:
                 if not conn:
@@ -5015,7 +5017,7 @@ def guardar_nota_pedido():
                 if existe:
                     cursor.execute(f"""
                         UPDATE [Digitalizacion].[CAB].[DatosPedidos]
-                        SET [{campo}] = ?, FechaImport = SYSDATETIME()
+                        SET [{campo_bd}] = ?, FechaImport = SYSDATETIME()
                         WHERE Pedido = ?
                     """, (valor_final, pedido))
                 else:
@@ -5027,7 +5029,7 @@ def guardar_nota_pedido():
                         fecha_entrega_default = None
                     
                     cursor.execute(f"""
-                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, [{campo}])
+                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, [{campo_bd}])
                         VALUES (?, ?, ?)
                     """, (pedido, fecha_entrega_default, valor_final))
                 
@@ -5038,7 +5040,7 @@ def guardar_nota_pedido():
                 'success': True,
                 'message': f'Campo {campo} guardado correctamente',
                 'pedido': pedido,
-                'campo': campo,
+                'campo': campo_bd,
                 'valor': valor_final
             })
         
@@ -5069,12 +5071,12 @@ def guardar_nota_pedido():
                 if existe:
                     cursor.execute("""
                         UPDATE [Digitalizacion].[CAB].[DatosPedidos]
-                        SET Notas = ?, Operario = ?, FechaImport = SYSDATETIME()
+                        SET Notas = ?, Decoracion = ?, FechaImport = SYSDATETIME()
                         WHERE Pedido = ?
                     """, (notas if notas else None, operario if operario else None, pedido))
                 else:
                     cursor.execute("""
-                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, Notas, Operario)
+                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, Notas, Decoracion)
                         VALUES (?, ?, ?, ?)
                     """, (pedido, fecha_entrega_default, notas if notas else None, operario if operario else None))
                 print(f"✅ Notas y Operario actualizados para pedido {pedido}")
@@ -5095,12 +5097,12 @@ def guardar_nota_pedido():
                 if existe:
                     cursor.execute("""
                         UPDATE [Digitalizacion].[CAB].[DatosPedidos]
-                        SET Operario = ?, FechaImport = SYSDATETIME()
+                        SET Decoracion = ?, FechaImport = SYSDATETIME()
                         WHERE Pedido = ?
                     """, (operario if operario else None, pedido))
                 else:
                     cursor.execute("""
-                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, Operario)
+                        INSERT INTO [Digitalizacion].[CAB].[DatosPedidos] (Pedido, FechaEntrega, Decoracion)
                         VALUES (?, ?, ?)
                     """, (pedido, fecha_entrega_default, operario if operario else None))
                 print(f"✅ Operario actualizado para pedido {pedido}")

@@ -1208,14 +1208,14 @@
       }
       
       // Definir TODAS las columnas de DatosPedidos a mostrar
-      const columnasDP = ['FechaEntrega', 'EMB', 'TipoDecoracion', 'Modelo', 'Notas', 'Operario', 'Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales'];
+      const columnasDP = ['FechaEntrega', 'EMB', 'TipoDecoracion', 'Modelo', 'Notas', 'Decoracion', 'Clinchado', 'Suelos', 'Techos', 'Bajotecho', 'Especiales'];
       const columnasDPLabels = {
         'FechaEntrega': 'Fecha Entrega',
         'EMB': 'EMB',
         'TipoDecoracion': 'Tipo Dec.',
         'Modelo': 'Modelo',
         'Notas': 'Notas',
-        'Operario': 'Op.Deco',
+        'Decoracion': 'Op.Deco',
         'Clinchado': 'Op.Clin',
         'Suelos': 'Op.Suel',
         'Techos': 'Op.Tech',
@@ -1312,7 +1312,7 @@
           }
           
           // Columna Operario: editable inline (máx 3 dígitos)
-          if (col === 'Operario') {
+          if (col === 'Decoracion') {
             return `<td data-grupo="datospedidos" data-col-key="dp:${col}" class="col-dp-val col-operario ${showDP ? '' : 'col-hidden'}">
               <input type="text" class="operario-editable" 
                      data-pedido="${pedido.numeroPedido}"
